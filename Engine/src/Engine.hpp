@@ -2,8 +2,8 @@
 
 //For use by applications that want to use the engine
 
-#include <stdio.h>
-#include "Engine/Application.h"
+#include "Engine/Application.hpp"
+#include "Engine/Log.hpp"
 
 //________ENTRY POINT___________
 #include "Engine/EntryPoint.hpp"
