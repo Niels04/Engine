@@ -11,6 +11,14 @@ workspace "Engine"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+--we make a luaTable(this will grow) and put in "GLFW" as an element
+includeDir = {}
+includeDir["GLFW"] = "Engine/vendor/GLFW/include"
+includeDir["Glad"] = "Engine/vendor/Glad/include"
+--we include the GLFW folder, which basically means the lua-premake-file in this directory gets included
+include "Engine/vendor/GLFW"
+include "Engine/vendor/Glad"
+
 project "Engine"
 	location "Engine"
 	kind "SharedLib"
@@ -19,6 +27,9 @@ project "Engine"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 
+	pchheader "Engpch.hpp"
+	pchsource "Engine/src/Engpch.cpp"
+		
 	files
 	{
 		"%{prj.name}/src/**.h",
@@ -28,9 +39,19 @@ project "Engine"
 
 	includedirs
 	{
-		"%{prj.name}/vendor/spdlog/include"
+		"%{prj.name}/vendor/spdlog/include",
+		"%{prj.name}/src",
+		"%{includeDir.GLFW}",
+		"%{includeDir.Glad}"
 	}
-
+	
+	links
+	{
+		"GLFW",--we link the created project to the engine-project
+		"Glad",
+		"opengl32.lib"
+	}
+	
 	filter "system:windows"
 		cppdialect "C++17"
 		staticruntime "on"
@@ -49,15 +70,18 @@ project "Engine"
 		}
 
 	filter "configurations:Debug"
-		defines "ENG_DEBUG"
+		defines {"ENG_DEBUG", "ENG_ENABLE_ASSERTS"}
+		buildoptions "/MDd"
 		symbols "On"
 
 	filter "configurations:Release"
 		defines "ENG_RELEASE"
+		buildoptions "/MD"
 		optimize "On"
 
 	filter "configurations:Dist"
 		defines "ENG_DIST"
+		buildoptions "/MD"
 		optimize "On"
 		
 project "Sandbox"
@@ -98,12 +122,15 @@ project "Sandbox"
 
 	filter "configurations:Debug"
 		defines "ENG_DEBUG"
+		buildoptions "/MDd"
 		symbols "on"
 
 	filter "configurations:Release"
 		defines "ENG_RELEASE"
+		buildoptions "/MD"
 		optimize "on"
 
 	filter "configurations:Dist"
+		buildoptions "/MD"
 		defines "ENG_DIST"
 		optimize "on"

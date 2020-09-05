@@ -3,6 +3,7 @@
 //For use by applications that want to use the engine
 
 #include "Engine/Application.hpp"
+#include "Engine/layerStack.hpp"
 #include "Engine/Log.hpp"
 
 //________ENTRY POINT___________

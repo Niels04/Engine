@@ -1,9 +1,8 @@
 #pragma once
 
-#include <memory>
-
 #include "core.hpp"
 #include "spdlog/spdlog.h"
+#include "spdlog/fmt/ostr.h"//so we can log custom types
 
 namespace Engine
 {
