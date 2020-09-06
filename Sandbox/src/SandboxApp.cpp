@@ -7,7 +7,7 @@ public:
 		: layer("example") {  }
 	void onUpdate() override
 	{
-		ENG_INFO("ExampleLayer::Update");
+		//ENG_INFO("ExampleLayer::Update");
 	}
 	void onEvent(Engine::Event& e) override
 	{
@@ -21,6 +21,7 @@ public:
 	Sandbox()
 	{
 		pushLayer(new exampleLayer);
+		pushOverlay(new Engine::imGuiLayer);
 	}
 	~Sandbox()
 	{

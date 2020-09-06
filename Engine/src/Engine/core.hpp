@@ -20,3 +20,5 @@
 
 //this means the value 1 gets bitshifted by whatever "x" is, so we can easily filter things using this
 #define BIT(x) (1 << x)
+
+#define ENG_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)

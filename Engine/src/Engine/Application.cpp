@@ -7,8 +7,13 @@ namespace Engine
 {
 #define BIND_EVENT_FN(x) std::bind(&Application::x, this, std::placeholders::_1)//this means, that the functionPointer gets bound with the current instance of Application
 
+	Application* Application::s_instance = nullptr;
+
 	Application::Application()
 	{
+		ENG_CORE_ASSERT(!s_instance, "Application already exists!");
+		s_instance = this;
+
 		m_window = std::unique_ptr<window>(window::create());
 		m_window->setEventCallbackFn(BIND_EVENT_FN(onEvent));
 	}
@@ -52,6 +57,8 @@ namespace Engine
 
 	bool Application::onWindowCloseEvent(windowCloseEvent& e)
 	{
+		ENG_TRACE("{0}", e);
+
 		m_running = false;
 		return true;
 	}
@@ -59,11 +66,13 @@ namespace Engine
 	void Application::pushLayer(layer* layer)
 	{
 		m_layerStack.pushLayer(layer);
+		layer->onAttach();
 	}
 
 	void Application::pushOverlay(layer* overlay)
 	{
 		m_layerStack.pushOverlay(overlay);
+		overlay->onAttach();
 	}
 
 }

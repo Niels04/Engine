@@ -97,6 +97,12 @@ namespace Engine
 			}
 		});
 
+		glfwSetCharCallback(m_window, [](GLFWwindow* window, unsigned int keycode) {
+			windowData& data = *(windowData*)glfwGetWindowUserPointer(window);
+			keyTypedEvent event(keycode);
+			data.callback(event);
+			});
+
 		glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods) {
 			windowData& data = *(windowData*)glfwGetWindowUserPointer(window);
 

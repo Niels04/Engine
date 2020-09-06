@@ -47,4 +47,18 @@ namespace Engine
 		}
 		EVENT_CLASS_TYPE(KeyReleased)
 	};
+
+	class ENGINE_API keyTypedEvent : public keyEvent
+	{
+	public:
+		keyTypedEvent(int keycode)
+			: keyEvent(keycode)/*we call the protected constructor of the base class here*/{  }
+		std::string toString() const override
+		{
+			std::stringstream ss;
+			ss << "KeyTypedEvent: " << m_keycode;
+			return ss.str();
+		}
+		EVENT_CLASS_TYPE(KeyTyped)
+	};
 }

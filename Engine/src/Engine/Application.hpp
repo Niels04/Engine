@@ -24,12 +24,18 @@ namespace Engine
 
 		void pushLayer(layer* layer);
 		void pushOverlay(layer* overlay);
+
+		inline static Application& Get() { return *s_instance; }
+
+		inline window& getWindow() { return *m_window; }
 	private:
 		bool onWindowCloseEvent(windowCloseEvent& e);
 
 		std::unique_ptr<window> m_window;
 		bool m_running = true;
 		layerStack m_layerStack;//created on the stack->kinda inherits the lifetime of the ApplicationClass
+	private:
+		static Application* s_instance;
 	};
 
 	//to be defined in client

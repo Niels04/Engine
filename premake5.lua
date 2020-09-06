@@ -15,9 +15,11 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 includeDir = {}
 includeDir["GLFW"] = "Engine/vendor/GLFW/include"
 includeDir["Glad"] = "Engine/vendor/Glad/include"
+includeDir["ImGui"] = "Engine/vendor/imgui"
 --we include the GLFW folder, which basically means the lua-premake-file in this directory gets included
 include "Engine/vendor/GLFW"
 include "Engine/vendor/Glad"
+include "Engine/vendor/imgui"
 
 project "Engine"
 	location "Engine"
@@ -42,14 +44,16 @@ project "Engine"
 		"%{prj.name}/vendor/spdlog/include",
 		"%{prj.name}/src",
 		"%{includeDir.GLFW}",
-		"%{includeDir.Glad}"
+		"%{includeDir.Glad}",
+		"%{includeDir.ImGui}"
 	}
 	
 	links
 	{
 		"GLFW",--we link the created project to the engine-project
 		"Glad",
-		"opengl32.lib"
+		"opengl32.lib",
+		"ImGui"
 	}
 	
 	filter "system:windows"
@@ -61,7 +65,8 @@ project "Engine"
 		{
 			"ENG_PLATFORM_WINDOWS",
 			"ENG_BUILD_DLL",
-			"_WINDLL"
+			"_WINDLL",
+			"GLFW_INCLUDE_NONE"
 		}
 
 		postbuildcommands
