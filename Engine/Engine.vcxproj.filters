@@ -49,10 +49,19 @@
     <ClInclude Include="src\Engine\core.hpp">
       <Filter>Engine</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\input.hpp">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\keyCodes.hpp">
+      <Filter>Engine</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\layer.hpp">
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\layerStack.hpp">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\mouseButtonCodes.hpp">
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\window.hpp">
@@ -61,6 +70,9 @@
     <ClInclude Include="src\Engpch.hpp" />
     <ClInclude Include="src\Platform\OpenGL\imGuiOpenGLrenderer.h">
       <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\Windows\windowsInput.hpp">
+      <Filter>Platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\Platform\Windows\windowsWindow.hpp">
       <Filter>Platform\Windows</Filter>
@@ -85,6 +97,9 @@
     <ClCompile Include="src\Engpch.cpp" />
     <ClCompile Include="src\Platform\OpenGL\imGuiOpenGLrenderer.cpp">
       <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\Windows\windowsInput.cpp">
+      <Filter>Platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\Windows\windowsWindow.cpp">
       <Filter>Platform\Windows</Filter>

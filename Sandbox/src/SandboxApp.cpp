@@ -7,11 +7,11 @@ public:
 		: layer("example") {  }
 	void onUpdate() override
 	{
-		//ENG_INFO("ExampleLayer::Update");
+		
 	}
 	void onEvent(Engine::Event& e) override
 	{
-		ENG_TRACE("{0}", e);
+		
 	}
 };
 

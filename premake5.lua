@@ -66,16 +66,18 @@ project "Engine"
 			"ENG_PLATFORM_WINDOWS",
 			"ENG_BUILD_DLL",
 			"_WINDLL",
-			"GLFW_INCLUDE_NONE"
+			"GLFW_INCLUDE_NONE",
+			"KEYCODES_GLFW"
 		}
 
 		postbuildcommands
 		{
-			"{COPY} %{cfg.buildtarget.relpath} ../bin/" ..outputdir .. "/Sandbox"
+			--"{COPY} %{cfg.buildtarget.relpath} ../bin/" ..outputdir .. "/Sandbox"
+			"{COPY} %{cfg.buildtarget.relpath} \"../bin/" ..outputdir .. "/Sandbox/\""
 		}
 
 	filter "configurations:Debug"
-		defines {"ENG_DEBUG", "ENG_ENABLE_ASSERTS"}
+		defines "ENG_DEBUG"
 		runtime "Debug"
 		symbols "On"
 
@@ -122,7 +124,8 @@ project "Sandbox"
 
 		defines
 		{
-			"ENG_PLATFORM_WINDOWS"
+			"ENG_PLATFORM_WINDOWS",
+			"KEYCODES_GLFW"
 		}
 
 	filter "configurations:Debug"

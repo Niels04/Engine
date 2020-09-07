@@ -1,6 +1,8 @@
 #include "Engpch.hpp"
 #include "Application.hpp"
 
+#include "input.hpp"
+
 #include <glad/glad.h>
 
 namespace Engine
