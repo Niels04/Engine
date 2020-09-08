@@ -22,6 +22,6 @@ namespace Engine
 		std::vector<layer*>::iterator end() { return m_layers.end(); };
 	private:
 		std::vector<layer*> m_layers;
-		std::vector<layer*>::iterator m_layerInsert;
+		unsigned int m_layerInsertIndex = 0;
 	};
 }

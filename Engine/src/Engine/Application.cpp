@@ -18,6 +18,9 @@ namespace Engine
 
 		m_window = std::unique_ptr<window>(window::create());
 		m_window->setEventCallbackFn(BIND_EVENT_FN(onEvent));
+
+		m_ImGuiLayer = new imGuiLayer;//we create the imGuiLayer by default and push it as an overlay onto the layerstack
+		pushOverlay(m_ImGuiLayer);
 	}
 
 	Application::~Application()
@@ -52,6 +55,11 @@ namespace Engine
 
 			for (layer* layer : m_layerStack)//can use a range-based for-loop, because we implemented layerStack::begin() and layerStack::end()
 				layer->onUpdate();
+
+			m_ImGuiLayer->begin();//we begin a new frame in our ImGuiLayer
+			for (layer* layer : m_layerStack)//we iterate through all layers and call each layer's onImGuiRender func
+				layer->onImGuiRender();
+			m_ImGuiLayer->end();//then we render everything and end the ImGui-Frame
 
 			m_window->onUpdate();
 		}

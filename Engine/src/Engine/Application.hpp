@@ -8,6 +8,7 @@
 #include "Events/ApplicationEvent.hpp"
 
 #include "layerStack.hpp"
+#include "ImGui/ImGuiLayer.hpp"
 
 namespace Engine
 {
@@ -32,6 +33,7 @@ namespace Engine
 		bool onWindowCloseEvent(windowCloseEvent& e);
 
 		std::unique_ptr<window> m_window;
+		imGuiLayer* m_ImGuiLayer;
 		bool m_running = true;
 		layerStack m_layerStack;//created on the stack->kinda inherits the lifetime of the ApplicationClass
 	private:

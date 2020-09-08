@@ -16,6 +16,7 @@ includeDir = {}
 includeDir["GLFW"] = "Engine/vendor/GLFW/include"
 includeDir["Glad"] = "Engine/vendor/Glad/include"
 includeDir["ImGui"] = "Engine/vendor/imgui"
+includeDir["glm"] = "Engine/vendor/glm"
 --we include the GLFW folder, which basically means the lua-premake-file in this directory gets included
 include "Engine/vendor/GLFW"
 include "Engine/vendor/Glad"
@@ -46,7 +47,8 @@ project "Engine"
 		"%{prj.name}/src",
 		"%{includeDir.GLFW}",
 		"%{includeDir.Glad}",
-		"%{includeDir.ImGui}"
+		"%{includeDir.ImGui}",
+		"%{includeDir.glm}"
 	}
 	
 	links
@@ -110,6 +112,8 @@ project "Sandbox"
 	includedirs
 	{
 		"Engine/vendor/spdlog/include",
+		"%{includeDir.glm}",
+		"Engine/vendor",
 		"Engine/src"
 	}
 

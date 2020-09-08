@@ -1,5 +1,7 @@
 #include <Engine.hpp>
 
+#include "imgui/imgui.h"
+
 class exampleLayer : public Engine::layer
 {
 public:
@@ -9,6 +11,14 @@ public:
 	{
 		
 	}
+
+	void onImGuiRender() override
+	{
+		ImGui::Begin("Some Window!");
+		ImGui::Text("Some text inside the window!");
+		ImGui::End();
+	}
+
 	void onEvent(Engine::Event& e) override
 	{
 		
@@ -21,7 +31,6 @@ public:
 	Sandbox()
 	{
 		pushLayer(new exampleLayer);
-		pushOverlay(new Engine::imGuiLayer);
 	}
 	~Sandbox()
 	{

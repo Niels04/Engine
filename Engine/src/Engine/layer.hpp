@@ -14,6 +14,7 @@ namespace Engine
 		virtual void onAttach() {  }//when the layer is pushed onto the layerStack
 		virtual void onDetach() {  }//when the layer is removed from the layerStack
 		virtual void onUpdate() {  }//when the layer is updated
+		virtual void onImGuiRender() {  }//in this function we specify what we want this layer to render in ImGui (the rest gets done in imGuiLayer::begin() and imGuiLayer::end()
 		virtual void onEvent(Event& e) {  }//when an event gets sent to the layer
 
 		inline const std::string& getName() const { return m_DebugName; }
