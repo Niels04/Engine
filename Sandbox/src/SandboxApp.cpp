@@ -14,8 +14,8 @@ public:
 
 	void onImGuiRender() override
 	{
-		ImGui::Begin("Some Window!");
-		ImGui::Text("Some text inside the window!");
+		ImGui::Begin("Example layer window!");
+		ImGui::Text("Example layer window text!");
 		ImGui::End();
 	}
 

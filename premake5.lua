@@ -24,9 +24,10 @@ include "Engine/vendor/imgui"
 
 project "Engine"
 	location "Engine"
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
-	staticruntime "off"
+	cppdialect "C++17"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -39,6 +40,11 @@ project "Engine"
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.hpp",
 		"%{prj.name}/src/**.cpp"
+	}
+
+	defines
+	{
+		"_CRT_SECURE_NO_WARNINGS"
 	}
 
 	includedirs
@@ -60,22 +66,13 @@ project "Engine"
 	}
 	
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
 		{
 			"ENG_PLATFORM_WINDOWS",
-			"ENG_BUILD_DLL",
-			"_WINDLL",
 			"GLFW_INCLUDE_NONE",
 			"KEYCODES_GLFW"
-		}
-
-		postbuildcommands
-		{
-			--"{COPY} %{cfg.buildtarget.relpath} ../bin/" ..outputdir .. "/Sandbox"
-			"{COPY} %{cfg.buildtarget.relpath} \"../bin/" ..outputdir .. "/Sandbox/\""
 		}
 
 	filter "configurations:Debug"
@@ -97,7 +94,8 @@ project "Sandbox"
 	location "Sandbox"
 	kind "ConsoleApp"
 	language "C++"
-	staticruntime "off"
+	cppdialect "C++17"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -123,7 +121,6 @@ project "Sandbox"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines

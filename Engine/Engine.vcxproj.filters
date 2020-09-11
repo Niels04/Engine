@@ -76,6 +76,9 @@
     <ClCompile Include="src\Engine\Application.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp">
+      <Filter>Engine\ImGui</Filter>
+    </ClCompile>
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp">
       <Filter>Engine\ImGui</Filter>
     </ClCompile>
@@ -95,6 +98,5 @@
     <ClCompile Include="src\Platform\Windows\windowsWindow.cpp">
       <Filter>Platform\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
   </ItemGroup>
 </Project>
