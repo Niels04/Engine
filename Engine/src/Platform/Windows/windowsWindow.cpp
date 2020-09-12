@@ -6,7 +6,8 @@
 
 #include "windowsWindow.hpp"
 
-#include <glad/glad.h>
+#include "Platform/OpenGL/OpenGLContext.hpp"
+
 #include "GLFW/glfw3.h"
 
 namespace Engine
@@ -39,7 +40,7 @@ namespace Engine
 		m_data.height = props.height;
 		m_data.width = props.width;
 
-		ENG_CORE_INFO("Creating window {0} ({1} x {2}).", m_data.title, m_data.width, m_data.height);
+		ENG_CORE_INFO("Creating window \"{0}\" ({1} x {2}).", m_data.title, m_data.width, m_data.height);
 
 		if (!s_GLFW_initialized)
 		{
@@ -51,9 +52,10 @@ namespace Engine
 		}
 
 		m_window = glfwCreateWindow((int)m_data.width, (int)m_data.height, m_data.title.c_str(), nullptr, nullptr);
-		glfwMakeContextCurrent(m_window);
-		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);//initialize the glLoader
-		ENG_CORE_ASSERT(status, "Failed to initialize Glad!");
+		
+		m_context = new GRAPHICS_API_CONTEXT(m_window);//later gonna write a macro (m_context = new "GRAPHICS_API"GraphicsContext;, where "GRAPHICS_API" is replaced with whatever API we are using
+		m_context->init();
+
 		glfwSetWindowUserPointer(m_window, &m_data);
 		setVsync(true);
 
@@ -143,7 +145,7 @@ namespace Engine
 	void windowsWindow::onUpdate()
 	{
 		glfwPollEvents();
-		glfwSwapBuffers(m_window);
+		m_context->swapBuffers();
 	}
 
 	void windowsWindow::setVsync(bool enabled)

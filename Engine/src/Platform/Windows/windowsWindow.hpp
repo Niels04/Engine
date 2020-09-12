@@ -2,6 +2,8 @@
 
 #include "Engine/window.hpp"
 
+#include "Engine/Rendering/GraphicsContext.hpp"
+
 struct GLFWwindow;
 
 namespace Engine
@@ -28,6 +30,7 @@ namespace Engine
 		virtual void shutdown();
 
 		GLFWwindow* m_window;
+		graphicsContext* m_context;
 
 		struct windowData
 		{

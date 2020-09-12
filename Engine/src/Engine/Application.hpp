@@ -36,6 +36,8 @@ namespace Engine
 		imGuiLayer* m_ImGuiLayer;
 		bool m_running = true;
 		layerStack m_layerStack;//created on the stack->kinda inherits the lifetime of the ApplicationClass
+
+		unsigned int m_vertexBuffer, m_indexBuffer, m_vertexArray;
 	private:
 		static Application* s_instance;
 	};
