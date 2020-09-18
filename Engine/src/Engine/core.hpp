@@ -1,7 +1,5 @@
 #pragma once
 
-#define GRAPHICS_API_CONTEXT openGLContext//we specify we want to use openGL for rendering(context will be created as openGLContexts)
-
 #ifdef ENG_PLATFORM_WINDOWS
 #ifdef ENG_DYNAMIC_LINK
 	#ifdef ENG_BUILD_DLL

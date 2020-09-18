@@ -10,6 +10,12 @@
 #include "layerStack.hpp"
 #include "ImGui/ImGuiLayer.hpp"
 
+#include "Rendering/buffers.hpp"
+#include "Rendering/vertexBufferLayout.hpp"
+#include "Rendering/shader.hpp"
+//openGL specific includes(because OpenGL has some features other APIs don't have
+#include "Platform/OpenGL/OpenGLVertexArray.hpp"
+
 namespace Engine
 {
 
@@ -36,13 +42,16 @@ namespace Engine
 		imGuiLayer* m_ImGuiLayer;
 		bool m_running = true;
 		layerStack m_layerStack;//created on the stack->kinda inherits the lifetime of the ApplicationClass
-
-		unsigned int m_vertexBuffer, m_indexBuffer, m_vertexArray;
+		//these are just temporary
+		std::unique_ptr<shader> m_shader;
+		std::unique_ptr<indexBuffer> m_indexBuffer;
+		std::unique_ptr<vertexBuffer> m_vertexBuffer;
+		std::unique_ptr<vertexBufferLayout> m_vertexBufferLayout;
+		std::unique_ptr<GLvertexArray> m_vertexArray;
 	private:
 		static Application* s_instance;
 	};
 
 	//to be defined in client
 	Application* CreateApplication();
-
 }

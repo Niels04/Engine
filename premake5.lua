@@ -111,6 +111,7 @@ project "Sandbox"
 	{
 		"Engine/vendor/spdlog/include",
 		"%{includeDir.glm}",
+		"%{includeDir.Glad}",
 		"Engine/vendor",
 		"Engine/src"
 	}

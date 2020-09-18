@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Engine/window.hpp"
+
 namespace Engine
 {
 	class graphicsContext
@@ -7,6 +9,7 @@ namespace Engine
 	public:
 		virtual void init() = 0;
 		virtual void swapBuffers() const  = 0;
-	protected:
+
+		static graphicsContext* create(window* window);
 	};
 }

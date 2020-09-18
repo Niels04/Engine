@@ -4,9 +4,11 @@
 #include "Engine/Events/KeyEvent.hpp"
 #include "Engine/Events/MouseEvent.hpp"
 
-#include "windowsWindow.hpp"
+#include "Engine/Rendering/GraphicsContext.hpp"
+//for using the appropriate graphics API
+#include "Engine/Rendering/renderer.hpp"
 
-#include "Platform/OpenGL/OpenGLContext.hpp"
+#include "windowsWindow.hpp"
 
 #include "GLFW/glfw3.h"
 
@@ -53,7 +55,7 @@ namespace Engine
 
 		m_window = glfwCreateWindow((int)m_data.width, (int)m_data.height, m_data.title.c_str(), nullptr, nullptr);
 		
-		m_context = new GRAPHICS_API_CONTEXT(m_window);//later gonna write a macro (m_context = new "GRAPHICS_API"GraphicsContext;, where "GRAPHICS_API" is replaced with whatever API we are using
+		m_context = graphicsContext::create((window*)m_window);//cast back to a normal window
 		m_context->init();
 
 		glfwSetWindowUserPointer(m_window, &m_data);

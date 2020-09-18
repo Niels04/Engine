@@ -1,18 +1,18 @@
 #include "Engpch.hpp"
+#include "glCore.hpp"
 #include "OpenGLContext.hpp"
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 namespace Engine
 {
-	openGLContext::openGLContext(GLFWwindow* window)
+	GLcontext::GLcontext(GLFWwindow* window)
 		:m_window(window)
 	{
 		ENG_CORE_ASSERT(window, "GLFWwindow* was NULL when trying to create OpenGL context!");
 	}
 
-	void openGLContext::init()
+	void GLcontext::init()
 	{
 		glfwMakeContextCurrent(m_window);
 		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);//initialize the glLoader
@@ -22,7 +22,7 @@ namespace Engine
 		ENG_CORE_INFO("OpenGL version: {0}", glGetString(GL_VERSION));
 	}
 
-	void openGLContext::swapBuffers() const
+	void GLcontext::swapBuffers() const
 	{
 		glfwSwapBuffers(m_window);
 	}

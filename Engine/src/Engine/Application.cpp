@@ -3,7 +3,7 @@
 
 #include "input.hpp"
 
-#include <glad/glad.h>
+#include <glad/glad.h>//temporary, we are going to remove all glCode from here
 
 namespace Engine
 {
@@ -21,36 +21,43 @@ namespace Engine
 
 		m_ImGuiLayer = new imGuiLayer;//we create the imGuiLayer by default and push it as an overlay onto the layerstack
 		pushOverlay(m_ImGuiLayer);
+		{
+			//temporary code
+			m_vertexArray.reset(new GLvertexArray);//we don't use a generalized implementation here because vertexArrays only exist in openGL
+			m_vertexArray->bind();
 
-		glGenVertexArrays(1, &m_vertexArray);
-		glBindVertexArray(m_vertexArray);
+			float pVertexBuffer[7 * 3] = {
+				-0.5f, -0.5f, 0.0f, 0.8f, 0.8f, 0.2f, 1.0f,
+				0.5f, -0.5f, 0.0f, 0.8f, 0.2f, 0.8f, 1.0f,
+				0.0f, 0.5f, 0.0f, 0.2f, 0.8f, 0.2f
+			};
+			m_vertexBuffer.reset(vertexBuffer::create(sizeof(pVertexBuffer), pVertexBuffer, STATIC_DRAW));
+			unsigned int pIndexBuffer[3] = {
+				0, 1, 2
+			};
+			m_indexBuffer.reset(indexBuffer::create(3, pIndexBuffer, STATIC_DRAW));
 
-		glGenBuffers(1, &m_vertexBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
-		float vertexBuffer[3 * 3] = {
-			-0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f
-		};
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBuffer), vertexBuffer, GL_STATIC_DRAW);
+			m_vertexBufferLayout.reset(vertexBufferLayout::create());
+			m_vertexBufferLayout->push(ShaderDataType::vec3);//could also use "vertexBufferLayout.pushFloat(3);" to achieve the same thing
+			m_vertexBufferLayout->push(ShaderDataType::vec4);
+			//m_vertexArray->addBuffer((GLvertexBuffer*)m_vertexBuffer.get(), (GLvertexBufferLayout*)m_vertexBufferLayout.get());
 
-		glGenBuffers(1, &m_indexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
-		unsigned int indexBuffer[3] = {
-			0, 1, 2
-		};
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexBuffer), indexBuffer, GL_STATIC_DRAW);
+			m_vertexBuffer->setLayout(m_vertexBufferLayout.get());
+			m_vertexBuffer->bindLayout();
 
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), NULL);
+			m_shader.reset(shader::create("basic.shader"));//we create a new shader with the graphicsAPI we are currently using(defined in core.hpp)
+
+			//unbind everything
+			m_vertexArray->unbind();
+			m_vertexBuffer->unbind();
+			m_indexBuffer->unbind();
+			m_shader->unbind();
+		}
 	}
 
 	Application::~Application()
 	{
-
-	}
-
-	int testfunc(int testparam)
-	{
-		return testparam;
+		
 	}
 
 	void Application::onEvent(Event& event)
@@ -70,12 +77,15 @@ namespace Engine
 	{
 		while (m_running)
 		{
-			glClearColor(0.1f, 0.1f, 0.1f, 1);
-			glClear(GL_COLOR_BUFFER_BIT);
+			{
+				glClearColor(0.1f, 0.1f, 0.1f, 1);
+				glClear(GL_COLOR_BUFFER_BIT);
 
-			glBindVertexArray(m_vertexArray);
-			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, NULL);
-
+				m_shader->bind();
+				m_vertexArray->bind();
+				m_indexBuffer->bind();
+				glDrawElements(GL_TRIANGLES, m_indexBuffer->getCount(), GL_UNSIGNED_INT, nullptr);
+			}
 			for (layer* layer : m_layerStack)//can use a range-based for-loop, because we implemented layerStack::begin() and layerStack::end()
 				layer->onUpdate();
 
