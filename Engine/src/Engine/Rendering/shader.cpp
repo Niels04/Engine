@@ -10,11 +10,11 @@ namespace Engine
 	{
 		switch (Renderer::getAPI())
 		{
-		case RenderingAPI::OpenGL:
+		case RendererAPI::API::OpenGL:
 		{
 			return new GLshader(name);
 		}break;
-		case RenderingAPI::NONE:
+		case RendererAPI::API::NONE:
 		{
 			ENG_CORE_WARN("Tried to create vertexBuffer while RenderingAPI was set to \"NONE\". Returning nullptr.");
 			return nullptr;

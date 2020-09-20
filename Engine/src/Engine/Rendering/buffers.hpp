@@ -23,7 +23,7 @@ namespace Engine
 		static vertexBuffer* create(const uint32_t size, const void* data, const uint32_t usage = STATIC_DRAW);//usage is STATIC_DRAW by default
 		virtual ~vertexBuffer() {  }
 
-		virtual inline void setLayout(vertexBufferLayout* layout) = 0;
+		virtual inline void setLayout(std::weak_ptr<vertexBufferLayout> layout) = 0;
 		virtual inline void bindLayout() const = 0;
 
 		virtual inline void bind() const = 0;

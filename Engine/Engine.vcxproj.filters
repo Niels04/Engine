@@ -110,6 +110,9 @@
     <ClInclude Include="src\Platform\Windows\windowsWindow.hpp">
       <Filter>Platform\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\rendererAPI.hpp" />
+    <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
+    <ClInclude Include="src\Platform\OpenGL\openGLRendererAPI.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -168,5 +171,8 @@
       <Filter>Platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp" />
+    <ClCompile Include="src\Engine\Rendering\rendererAPI.cpp" />
+    <ClCompile Include="src\Engine\Rendering\renderCommand.cpp" />
+    <ClCompile Include="src\Platform\OpenGL\openGLRendererAPI.cpp" />
   </ItemGroup>
 </Project>

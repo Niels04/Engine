@@ -12,14 +12,14 @@ namespace Engine
 		GLvertexBuffer(const uint32_t size, const void* data, const uint32_t usage);
 		~GLvertexBuffer();
 
-		virtual inline void setLayout(vertexBufferLayout* layout) override;
+		virtual inline void setLayout(std::weak_ptr<vertexBufferLayout> layout) override;
 		virtual inline void bindLayout() const override;//not gonna use this often in gl cuz we have vertexArrays
 
 		virtual inline void bind() const override;
 		virtual inline void unbind() const override;
 	private:
 		unsigned int m_renderer_id;
-		GLvertexBufferLayout* m_layout;
+		std::shared_ptr<GLvertexBufferLayout> m_layout;
 	};
 	//::::::::::INDEX::BUFFER:::::::::::::
 	class GLindexBuffer : public indexBuffer

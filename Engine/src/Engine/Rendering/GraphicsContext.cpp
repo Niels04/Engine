@@ -10,7 +10,7 @@ namespace Engine
 	{
 		switch (Renderer::getAPI())
 		{
-		case RenderingAPI::OpenGL:
+		case RendererAPI::API::OpenGL:
 		{
 			#ifdef ENG_PLATFORM_WINDOWS//GLFW is the default on windows right now
 			return new GLcontext((GLFWwindow*)window);
@@ -18,7 +18,7 @@ namespace Engine
 			ENG_CORE_ASSERT(false, "Right now only windows is supportet, and thererfore only GLFW windows.");
 			#endif
 		}break;
-		case RenderingAPI::NONE:
+		case RendererAPI::API::NONE:
 		{
 			ENG_CORE_WARN("Tried to create graphicsContext while RenderingAPI was set to \"NONE\". Returning nullptr.");
 			return nullptr;

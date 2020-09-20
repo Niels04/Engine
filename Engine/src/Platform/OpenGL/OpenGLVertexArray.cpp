@@ -13,12 +13,13 @@ namespace Engine
 	{
 		GLCALL(glDeleteVertexArrays(1, &m_renderer_id));
 	}
-	//::::::::::Remove the vertexArray-interface completely, since we only use it for OpenGL
-	void GLvertexArray::addBuffer(GLvertexBuffer* buffer, GLvertexBufferLayout* Clayout)
+
+	void GLvertexArray::addBuffer(GLvertexBuffer* buffer, GLvertexBufferLayout* Clayout)//warning, deprecated
 	{
 		bind();
 		buffer->bind();
 		const auto& layouts = Clayout->getLayouts();
+		ENG_CORE_ASSERT(layouts.size(), "Tried to tie vertexBuffer to vertexArray, but layout wasn't specified.");
 		unsigned int offset = 0;
 		for (unsigned int i = 0; i < layouts.size(); i++)
 		{
@@ -27,6 +28,21 @@ namespace Engine
 			GLCALL(glVertexAttribPointer(i, layout.count, layout.type, layout.normalized, Clayout->getStride(), (const void*)offset));
 			offset += layout.count * vertexBufferElement::getTypeSize(layout.type);
 		}
+	}
+
+	void GLvertexArray::addBuffer(std::weak_ptr<GLvertexBuffer> buffer)
+	{
+		p_vertexBuffer = buffer.lock();
+		bind();
+		p_vertexBuffer->bind();
+		p_vertexBuffer->bindLayout();
+	}
+
+	void GLvertexArray::addBuffer(std::weak_ptr<GLindexBuffer> buffer)
+	{
+		p_indexBuffer = buffer.lock();
+		bind();
+		p_indexBuffer->bind();
 	}
 
 	void GLvertexArray::bind() const

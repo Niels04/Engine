@@ -17,9 +17,9 @@ namespace Engine
         GLCALL(glDeleteBuffers(1, &m_renderer_id));
     }
 
-    void GLvertexBuffer::setLayout(vertexBufferLayout* layout)
+    void GLvertexBuffer::setLayout(std::weak_ptr<vertexBufferLayout> layout)
     {
-        m_layout = (GLvertexBufferLayout*)layout;
+        m_layout = std::dynamic_pointer_cast<GLvertexBufferLayout, vertexBufferLayout>(layout.lock());
     }
 
     void GLvertexBuffer::bind() const
@@ -36,6 +36,7 @@ namespace Engine
     {
         bind();
         const auto& layouts = m_layout->getLayouts();
+        ENG_CORE_ASSERT(layouts.size(), "Tried to bind vertexBufferLayout but size was 0.");
         uint32_t offset = 0;
         for (uint32_t i = 0; i < layouts.size(); i++)
         {
