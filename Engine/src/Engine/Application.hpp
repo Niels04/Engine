@@ -10,15 +10,11 @@
 #include "layerStack.hpp"
 #include "ImGui/ImGuiLayer.hpp"
 
-#include "Rendering/buffers.hpp"
-#include "Rendering/vertexBufferLayout.hpp"
-#include "Rendering/shader.hpp"
-//openGL specific includes(because OpenGL has some features other APIs don't have)
-#include "Platform/OpenGL/OpenGLVertexArray.hpp"
+#include "Engine/core/timeStep.hpp"
 
 namespace Engine
 {
-	class  ENGINE_API Application
+	class Application
 	{
 	public:
 		Application();
@@ -36,11 +32,12 @@ namespace Engine
 		inline window& getWindow() { return *m_window; }
 	private:
 		bool onWindowCloseEvent(windowCloseEvent& e);
-
+	private:
 		std::unique_ptr<window> m_window;
 		imGuiLayer* m_ImGuiLayer;
 		bool m_running = true;
 		layerStack m_layerStack;//created on the stack->kinda inherits the lifetime of the ApplicationClass
+		float m_lastFrameTime = 0.0f;
 	private:
 		static Application* s_instance;
 	};

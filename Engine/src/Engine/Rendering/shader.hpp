@@ -19,5 +19,7 @@ namespace Engine
 		virtual void setUniform4f(const std::string& name, float v0, float v1, float v2, float v3) = 0;
 
 		virtual void setUniform1i(const std::string& name, int value) = 0;
+
+		virtual void setUniformMat4(const std::string& name, const mat4& mat) = 0;
 	};
 }

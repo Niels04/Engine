@@ -151,26 +151,34 @@
     <ClInclude Include="src\Engine\Log.hpp" />
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp" />
     <ClInclude Include="src\Engine\Rendering\buffers.hpp" />
+    <ClInclude Include="src\Engine\Rendering\perspCam.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderer.hpp" />
     <ClInclude Include="src\Engine\Rendering\rendererAPI.hpp" />
     <ClInclude Include="src\Engine\Rendering\shader.hpp" />
     <ClInclude Include="src\Engine\Rendering\vertexBufferLayout.hpp" />
     <ClInclude Include="src\Engine\core.hpp" />
+    <ClInclude Include="src\Engine\datatypes.hpp" />
+    <ClInclude Include="src\Engine\datatypes\include.hpp" />
+    <ClInclude Include="src\Engine\datatypes\mat4.hpp" />
+    <ClInclude Include="src\Engine\datatypes\types.hpp" />
+    <ClInclude Include="src\Engine\datatypes\vec3.hpp" />
+    <ClInclude Include="src\Engine\datatypes\vec4.hpp" />
     <ClInclude Include="src\Engine\input.hpp" />
     <ClInclude Include="src\Engine\keyCodes.hpp" />
     <ClInclude Include="src\Engine\layer.hpp" />
     <ClInclude Include="src\Engine\layerStack.hpp" />
     <ClInclude Include="src\Engine\mouseButtonCodes.hpp" />
+    <ClInclude Include="src\Engine\core\timeStep.hpp" />
     <ClInclude Include="src\Engine\window.hpp" />
     <ClInclude Include="src\Engpch.hpp" />
     <ClInclude Include="src\Platform\OpenGL\GLbuffers.hpp" />
     <ClInclude Include="src\Platform\OpenGL\OpenGLContext.hpp" />
-    <ClInclude Include="src\Platform\OpenGL\openGLRendererAPI.hpp" />
     <ClInclude Include="src\Platform\OpenGL\OpenGLShader.hpp" />
     <ClInclude Include="src\Platform\OpenGL\OpenGLVertexArray.hpp" />
     <ClInclude Include="src\Platform\OpenGL\OpenGLVertexBufferLayout.hpp" />
     <ClInclude Include="src\Platform\OpenGL\glCore.hpp" />
+    <ClInclude Include="src\Platform\OpenGL\openGLRendererAPI.hpp" />
     <ClInclude Include="src\Platform\Windows\windowsInput.hpp" />
     <ClInclude Include="src\Platform\Windows\windowsWindow.hpp" />
   </ItemGroup>
@@ -179,8 +187,9 @@
     <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp" />
     <ClCompile Include="src\Engine\Log.cpp" />
-    <ClCompile Include="src\Engine\Rendering\buffers.cpp" />
     <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp" />
+    <ClCompile Include="src\Engine\Rendering\buffers.cpp" />
+    <ClCompile Include="src\Engine\Rendering\perspCam.cpp" />
     <ClCompile Include="src\Engine\Rendering\renderCommand.cpp" />
     <ClCompile Include="src\Engine\Rendering\renderer.cpp" />
     <ClCompile Include="src\Engine\Rendering\rendererAPI.cpp" />
@@ -192,12 +201,12 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\OpenGLContext.cpp" />
-    <ClCompile Include="src\Platform\OpenGL\openGLRendererAPI.cpp" />
     <ClCompile Include="src\Platform\OpenGL\OpenGLShader.cpp" />
     <ClCompile Include="src\Platform\OpenGL\OpenGLVertexArray.cpp" />
     <ClCompile Include="src\Platform\OpenGL\OpenGLVertexBufferLayout.cpp" />
     <ClCompile Include="src\Platform\OpenGL\glBuffers.cpp" />
     <ClCompile Include="src\Platform\OpenGL\glCore.cpp" />
+    <ClCompile Include="src\Platform\OpenGL\openGLRendererAPI.cpp" />
     <ClCompile Include="src\Platform\Windows\windowsInput.cpp" />
     <ClCompile Include="src\Platform\Windows\windowsWindow.cpp" />
   </ItemGroup>

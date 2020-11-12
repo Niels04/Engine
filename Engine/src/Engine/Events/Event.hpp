@@ -77,5 +77,4 @@ namespace Engine
 	{
 		return os << event.toString();
 	}
-
 }

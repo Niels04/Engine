@@ -45,6 +45,6 @@ namespace Engine
 
 			virtual void setUniform1i(const std::string& name, int value) override;
 
-			//void setUniformMat4f(const std::string& name, const mat44f& mat);//maybe gonna implement that later, but with a glm-mat
+			virtual void setUniformMat4(const std::string& name, const mat4& mat) override;//maybe gonna implement that later, but with a glm-mat
 		};
 }

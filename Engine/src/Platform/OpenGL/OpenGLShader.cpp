@@ -245,11 +245,11 @@ namespace Engine
     {
         GLCALL(glUniform1i(getUniformLocation(name), value));
     }
-    /*void Cshader::setUniformMat4f(const std::string& name, const mat44f& mat)
+    void GLshader::setUniformMat4(const std::string& name, const mat4& mat)
     {
-        GLCALL(glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &mat.m_mat[0][0]));//last param specifies a pointer to our array of numbers
-        //third param set to true when our matrix needs to get transposed, so that openGl can read it properly, but glm automatically does that for us
-    }*/
+        GLCALL(glUniformMatrix4fv(getUniformLocation(name), 1, GL_TRUE, &mat.mat[0][0]));//last param specifies a pointer to our array of numbers
+        //third param set to true when our matrix needs to get transposed, gets set to true here, because I use my own library, that doesn't do that automatically
+    }
     //setuniforms end
 
     int GLshader::getUniformLocation(const std::string& name)//returns an int or an unsigned int?

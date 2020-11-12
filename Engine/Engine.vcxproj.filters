@@ -13,6 +13,9 @@
     <Filter Include="Engine\Rendering">
       <UniqueIdentifier>{E85EBB83-D457-DAD5-FD89-BF5AE9E1B9E1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\datatypes">
+      <UniqueIdentifier>{F95265CB-E54B-841D-0E7E-69A2FAD56329}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Platform">
       <UniqueIdentifier>{2AC788B4-1694-E3BF-3FAD-D1672BD9184E}</UniqueIdentifier>
     </Filter>
@@ -55,7 +58,16 @@
     <ClInclude Include="src\Engine\Rendering\buffers.hpp">
       <Filter>Engine\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\perspCam.hpp">
+      <Filter>Engine\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\renderCommand.hpp">
+      <Filter>Engine\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\Rendering\renderer.hpp">
+      <Filter>Engine\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\rendererAPI.hpp">
       <Filter>Engine\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\Rendering\shader.hpp">
@@ -66,6 +78,24 @@
     </ClInclude>
     <ClInclude Include="src\Engine\core.hpp">
       <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\datatypes.hpp">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\datatypes\include.hpp">
+      <Filter>Engine\datatypes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\datatypes\mat4.hpp">
+      <Filter>Engine\datatypes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\datatypes\types.hpp">
+      <Filter>Engine\datatypes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\datatypes\vec3.hpp">
+      <Filter>Engine\datatypes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\datatypes\vec4.hpp">
+      <Filter>Engine\datatypes</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\input.hpp">
       <Filter>Engine</Filter>
@@ -104,15 +134,16 @@
     <ClInclude Include="src\Platform\OpenGL\glCore.hpp">
       <Filter>Platform\OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\openGLRendererAPI.hpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
     <ClInclude Include="src\Platform\Windows\windowsInput.hpp">
       <Filter>Platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\Platform\Windows\windowsWindow.hpp">
       <Filter>Platform\Windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\rendererAPI.hpp" />
-    <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
-    <ClInclude Include="src\Platform\OpenGL\openGLRendererAPI.hpp" />
+    <ClInclude Include="src\Engine\core\timeStep.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -127,10 +158,22 @@
     <ClCompile Include="src\Engine\Log.cpp">
       <Filter>Engine</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp">
+      <Filter>Engine\Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Engine\Rendering\buffers.cpp">
       <Filter>Engine\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\perspCam.cpp">
+      <Filter>Engine\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\renderCommand.cpp">
+      <Filter>Engine\Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Engine\Rendering\renderer.cpp">
+      <Filter>Engine\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\rendererAPI.cpp">
       <Filter>Engine\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\shader.cpp">
@@ -164,15 +207,14 @@
     <ClCompile Include="src\Platform\OpenGL\glCore.cpp">
       <Filter>Platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\openGLRendererAPI.cpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="src\Platform\Windows\windowsInput.cpp">
       <Filter>Platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\Windows\windowsWindow.cpp">
       <Filter>Platform\Windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp" />
-    <ClCompile Include="src\Engine\Rendering\rendererAPI.cpp" />
-    <ClCompile Include="src\Engine\Rendering\renderCommand.cpp" />
-    <ClCompile Include="src\Platform\OpenGL\openGLRendererAPI.cpp" />
   </ItemGroup>
 </Project>

@@ -4,6 +4,9 @@
 
 #include "Rendering/renderer.hpp"
 
+//temporary includes
+#include "GLFW/glfw3.h"
+
 namespace Engine
 {
 #define BIND_EVENT_FN(x) std::bind(&Application::x, this, std::placeholders::_1)//this means, that the functionPointer gets bound with the current instance of Application
@@ -14,8 +17,8 @@ namespace Engine
 	{
 		ENG_CORE_ASSERT(!s_instance, "Application already exists!");
 		s_instance = this;
-
-		m_window = std::unique_ptr<window>(window::create());
+		//															  height width
+		m_window = std::unique_ptr<window>(window::create({ "Engine", 720U, 1080U, }));
 		m_window->setEventCallbackFn(BIND_EVENT_FN(onEvent));
 
 		m_ImGuiLayer = new imGuiLayer;//we create the imGuiLayer by default and push it as an overlay onto the layerstack
@@ -44,8 +47,13 @@ namespace Engine
 	{
 		while (m_running)
 		{
+			//calculate delta-time
+			float time = (float)glfwGetTime();//::::::::::SHOULD::BE::PLATFORM::SPECIFIC:::: //e.g. Platform::getTime()
+			timestep Timestep(time - m_lastFrameTime);
+			m_lastFrameTime = time;
+
 			for (layer* layer : m_layerStack)//can use a range-based for-loop, because we implemented layerStack::begin() and layerStack::end()
-				layer->onUpdate();
+				layer->onUpdate(Timestep);
 
 			m_ImGuiLayer->begin();//we begin a new frame in our ImGuiLayer
 			for (layer* layer : m_layerStack)//we iterate through all layers and call each layer's onImGuiRender func

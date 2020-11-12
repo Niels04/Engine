@@ -14,6 +14,10 @@
 #include <fstream>
 
 #include "Engine/Log.hpp"
+#include "Engine/datatypes/include.hpp"
+
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 #ifdef ENG_PLATFORM_WINDOWS
 	#include <windows.h>

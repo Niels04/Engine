@@ -13,7 +13,7 @@ namespace Engine
 		GLFWwindow* window = static_cast<GLFWwindow*>(Application::Get().getWindow().getNativeWindow());
 		int state = glfwGetKey(window, keycode);
 
-		return state == GLFW_PRESS || state == GLFW_REPEAT;//if the key is pressed of beeing pressed repeatedly, we return true, otherwise we return false
+		return state == GLFW_PRESS || state == GLFW_REPEAT;//if the key is pressed or beeing pressed repeatedly, we return true, otherwise we return false
 	}
 
 	bool windowsInput::isMouseButtonDownImpl(int button)

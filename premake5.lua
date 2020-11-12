@@ -17,6 +17,7 @@ includeDir["GLFW"] = "Engine/vendor/GLFW/include"
 includeDir["Glad"] = "Engine/vendor/Glad/include"
 includeDir["ImGui"] = "Engine/vendor/imgui"
 includeDir["glm"] = "Engine/vendor/glm"
+includeDir["vendor"] = "Engine/vendor"
 --we include the GLFW folder, which basically means the lua-premake-file in this directory gets included
 include "Engine/vendor/GLFW"
 include "Engine/vendor/Glad"
