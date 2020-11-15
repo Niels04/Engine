@@ -21,7 +21,7 @@ namespace Engine
 		}break;
 		default:
 		{
-			ENG_CORE_ASSERT(false, "RenderingAPI was out of range of the possible values.");
+			ENG_CORE_ASSERT(false, "RenderingAPI was an unknown value.");
 		}break;
 		}
 	}
@@ -41,7 +41,27 @@ namespace Engine
 		}break;
 		default:
 		{
-			ENG_CORE_ASSERT(false, "RenderingAPI was out of range of the possible values.");
+			ENG_CORE_ASSERT(false, "RenderingAPI was an unknown value.");
+		}break;
+		}
+	}
+
+	globalBuffer* globalBuffer::create(const uint16_t size, const uint32_t usage)
+	{
+		switch (Renderer::getAPI())
+		{
+		case RendererAPI::API::OpenGL:
+		{
+			return new GLglobalBuffer(size, usage);
+		}break;
+		case RendererAPI::API::NONE:
+		{
+			ENG_CORE_WARN("Tried to create globalBuffe while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			return nullptr;
+		}break;
+		default:
+		{
+			ENG_CORE_ASSERT(false, "RenderingAPI was an unknown value.");
 		}break;
 		}
 	}

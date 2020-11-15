@@ -41,10 +41,14 @@ namespace Engine
 			virtual void setUniform1f(const std::string& name, float fValue) override;
 			virtual void setUniform2f(const std::string& name, float v0, float v1) override;
 			virtual void setUniform3f(const std::string& name, float v0, float v1, float v2) override;
+			virtual void setUniform3f(const std::string& name, const vec3& vec) override;
 			virtual void setUniform4f(const std::string& name, float v0, float v1, float v2, float v3) override;
+			virtual void setUniform4f(const std::string& name, const vec4& vec) override;
 
 			virtual void setUniform1i(const std::string& name, int value) override;
 
 			virtual void setUniformMat4(const std::string& name, const mat4& mat) override;//maybe gonna implement that later, but with a glm-mat
+
+			virtual void bindUniformBlock(const std::string& name, const uint32_t bindingPoint) override;
 		};
 }

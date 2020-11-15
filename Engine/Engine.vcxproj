@@ -158,6 +158,7 @@
     <ClInclude Include="src\Engine\Rendering\shader.hpp" />
     <ClInclude Include="src\Engine\Rendering\vertexBufferLayout.hpp" />
     <ClInclude Include="src\Engine\core.hpp" />
+    <ClInclude Include="src\Engine\core\timeStep.hpp" />
     <ClInclude Include="src\Engine\datatypes.hpp" />
     <ClInclude Include="src\Engine\datatypes\include.hpp" />
     <ClInclude Include="src\Engine\datatypes\mat4.hpp" />
@@ -169,7 +170,6 @@
     <ClInclude Include="src\Engine\layer.hpp" />
     <ClInclude Include="src\Engine\layerStack.hpp" />
     <ClInclude Include="src\Engine\mouseButtonCodes.hpp" />
-    <ClInclude Include="src\Engine\core\timeStep.hpp" />
     <ClInclude Include="src\Engine\window.hpp" />
     <ClInclude Include="src\Engpch.hpp" />
     <ClInclude Include="src\Platform\OpenGL\GLbuffers.hpp" />

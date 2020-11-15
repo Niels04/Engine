@@ -32,6 +32,18 @@ struct mat4
 		}
 		*this = result;
 	}
+	static mat4 transposed(const mat4& mat)
+	{
+		mat4 result;
+		for (uint8_t i = 0; i < 4; i++)
+		{
+			for (uint8_t j = 0; j < 4; j++)
+			{
+				result[i][j] = mat.mat[j][i];
+			}
+		}
+		return result;
+	}
 	//operators
 	inline real* operator[](const uint8_t index) { _ASSERT(index < 4); return mat[index]; }
 	mat4 multip(const mat4& rhs) const

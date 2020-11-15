@@ -233,6 +233,10 @@ namespace Engine
     {
         GLCALL(glUniform3f(getUniformLocation(name), v0, v1, v2));
     }
+    void GLshader::setUniform3f(const std::string& name, const vec3& vec)
+    {
+        GLCALL(glUniform3f(getUniformLocation(name), vec.x, vec.y, vec.z));
+    }
     /*void Cshader::setUniform3f(const std::string& name, vec3<float> values)
     {
         GLCALL(glUniform3f(getUniformLocation(name), values.v0, values.v1, values.v2));
@@ -240,6 +244,10 @@ namespace Engine
     void GLshader::setUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
     {
         GLCALL(glUniform4f(getUniformLocation(name), v0, v1, v2, v3));
+    }
+    void GLshader::setUniform4f(const std::string& name, const vec4& vec)
+    {
+        GLCALL(glUniform4f(getUniformLocation(name), vec.x, vec.y, vec.z, vec.w));
     }
     void GLshader::setUniform1i(const std::string& name, int value)
     {
@@ -251,6 +259,12 @@ namespace Engine
         //third param set to true when our matrix needs to get transposed, gets set to true here, because I use my own library, that doesn't do that automatically
     }
     //setuniforms end
+    void GLshader::bindUniformBlock(const std::string& name, uint32_t bindingPoint)
+    {
+        GLCALL(uint32_t index = glGetUniformBlockIndex(m_renderer_id, name.c_str()));
+        ENG_CORE_ASSERT(index != GL_INVALID_INDEX, "Error when trying to retrieve uniform block location \"{0}\". Could not find the block in the shader.", name.c_str());
+        GLCALL(glUniformBlockBinding(m_renderer_id, index, bindingPoint));
+    }
 
     int GLshader::getUniformLocation(const std::string& name)//returns an int or an unsigned int?
     {

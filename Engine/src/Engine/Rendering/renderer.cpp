@@ -5,9 +5,20 @@ namespace Engine
 {
 	Renderer::sceneData* Renderer::s_sceneData = new Renderer::sceneData;
 
+	void Renderer::init()
+	{
+		s_sceneData->init();
+	}
+
 	void Renderer::beginScene(perspectiveCamera& cam)//submit camera when beginning scene
 	{
-		s_sceneData->viewProjMat = cam.getViewProjMat();//cam.getViewProjMat();//copy the camera's viewProjMat, because it will be needed, to be uploaded to the shaders later
+		s_sceneData->viewMat = cam.getViewMat();
+		s_sceneData->projMat = cam.getProjMat();
+		//set uniformBuffers for view - and projection matrices here, they will be used by many shaders
+		s_sceneData->viewProjBuffer->bind();
+		s_sceneData->viewProjBuffer->updateElement(0, &mat4::transposed(s_sceneData->viewMat));
+		s_sceneData->viewProjBuffer->updateElement(1, &mat4::transposed(s_sceneData->projMat));
+		s_sceneData->viewProjBuffer->unbind();
 	}
 
 	void Renderer::endScene()
@@ -17,9 +28,8 @@ namespace Engine
 
 	void Renderer::sub(std::shared_ptr<GLvertexArray> va, std::shared_ptr<shader> shader, const mat4& transform)
 	{
-		shader->bind();//bind the shader(!!!important befor uploading uniforms!!!)
-		shader->setUniformMat4("u_viewProjMat", s_sceneData->viewProjMat);//set the viewProjMat as a uniform //probably gonna do that once per scene later and not for every submit
-		shader->setUniformMat4("u_transformMat", transform);
+		shader->bind();//bind the shader(!!!important to do before uploading uniforms!!!)
+		shader->setUniformMat4("u_modelMat", transform);
 
 		va->bind();//bind the vertexArray
 		renderCommand::drawIndexed(va);//draw it

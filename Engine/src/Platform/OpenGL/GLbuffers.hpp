@@ -37,4 +37,70 @@ namespace Engine
 		virtual inline void unbind() const override;
 
 	};
+	//uniformBufferElement
+	struct uniformBufferElement
+	{
+		unsigned int type;
+		uint8_t count;
+		uint16_t offset;//warning, allows for a maximum offset of 65,535!!!
+
+		uniformBufferElement(const unsigned int inType, const uint8_t inCount, const uint16_t inOffset)
+			: type(inType), count(inCount), offset(inOffset)
+		{
+		}
+		~uniformBufferElement()
+		{
+		}
+
+		static unsigned int getTypeSize(unsigned int type)//return the typesize in the uniformBuffer when using std140 memory layout
+		{
+			switch (type)
+			{
+			case(GL_FLOAT):
+				return 4;
+			case(GL_INT):
+				return 4;
+			case(GL_BOOL):
+				return 4;//bools also take 4bytes in uniform buffers when using std140 memory layout
+			case(GL_FLOAT_VEC2):
+				return 8;
+			case(GL_FLOAT_VEC3):
+				return 16;//also vec3s take 16 bytes when using std140 memory layout instead of 12bytes
+			case(GL_FLOAT_VEC4):
+				return 16;
+			case(GL_FLOAT_MAT4):
+				return 64;
+			}
+			ENG_CORE_ASSERT(false, "Type was unknown(uniformBufferElement).");//this shouldn't happen
+			return 0;
+		}
+	};
+	//::::::::::UNIFORM::BUFFER:::::::(GLOBAL_BUFFER):::::
+	class GLglobalBuffer : public globalBuffer
+	{
+	public:
+		GLglobalBuffer(const uint16_t size, const uint32_t usage);//create and bind the buffer
+		~GLglobalBuffer();
+
+		inline virtual void bind() const override;
+		inline virtual void unbind() const override;
+
+		inline virtual void bindToPoint(const uint32_t bindingPoint) override;
+
+		inline virtual void lAddBool(const uint8_t count = 1) override;
+		inline virtual void lAddInt(const uint8_t count = 1) override;
+		inline virtual void lAddFloat(const uint8_t count = 1) override;
+		inline virtual void lAddVec3(const uint8_t count = 1) override;
+		inline virtual void lAddVec4(const uint8_t count = 1) override;
+		inline virtual void lAddMat4(const uint8_t count = 1) override;
+
+		inline virtual void updateElement(const uint8_t index, const void* val) override;
+
+		inline virtual uint16_t getSize() const override { return m_size; }//return the buffer's size in bytes(on the CPU)
+	private:
+		unsigned int m_renderer_id;
+		uint16_t m_size = 0;//maximum size of 65,535
+		uint16_t m_stack = 0;//points to the offset, at which the next element will be inserted into the layout
+		std::vector<uniformBufferElement> m_elements;
+	};
 }

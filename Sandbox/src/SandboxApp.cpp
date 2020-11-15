@@ -7,8 +7,12 @@ public:
 	renderLayer(const float hFov, const float zNear, const float zFar)
 		: layer("RenderLayer"), m_hFov(hFov), m_zNear(zNear), m_zFar(zFar)
 	{
-		temporarySetup();
+		Engine::Renderer::init();//setup some stuff in the renderer, for which a current graphics context is needed
 		fovRecalc(Engine::Application::Get().getWindow().getHeight(), Engine::Application::Get().getWindow().getWidth());//calculate the vertical fov and set the camera
+		temporarySetup();
+	}
+	~renderLayer()
+	{
 	}
 
 	void onUpdate(Engine::timestep ts) override
@@ -44,6 +48,10 @@ public:
 
 		Engine::Renderer::beginScene(m_cam);
 		{
+			vec4 color_red(0.8f, 0.1f, 0.1f, 1.0f);
+			m_shader->bind();
+			m_shader->setUniform4f("u_color", color_red);
+			m_shader->unbind();
 			Engine::Renderer::sub(m_vertexArray, m_shader);
 		}
 		Engine::Renderer::endScene();
@@ -102,6 +110,10 @@ public:
 		m_vertexArray->addBuffer(std::dynamic_pointer_cast<Engine::GLindexBuffer, Engine::indexBuffer>(m_indexBuffer));//tie the indexBuffer to the vertexArray
 
 		m_shader.reset(Engine::shader::create("basic.shader"));
+		//experimental
+		unsigned int bindingPoint = 0;
+		m_shader->bindUniformBlock("ViewProjection", bindingPoint);//bind the UniformBlock "ViewProjection" to a bindingPoint //do this for each shader, that uses the view and the projection matrix -> then update this once per frame
+		//end experimental
 
 		//unbind everything
 		m_vertexArray->unbind();
@@ -115,6 +127,7 @@ private:
 	std::shared_ptr<Engine::indexBuffer> m_indexBuffer;
 	std::shared_ptr<Engine::vertexBuffer> m_vertexBuffer;
 	std::shared_ptr<Engine::GLvertexArray> m_vertexArray;
+	std::shared_ptr<Engine::globalBuffer> m_globalBuffer;
 	//end temporary stuff
 
 	Engine::perspectiveCamera m_cam;
