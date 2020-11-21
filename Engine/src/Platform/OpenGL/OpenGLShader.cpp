@@ -4,12 +4,27 @@
 
 namespace Engine
 {
+    static GLenum shaderTypeFromString(const std::string& type)
+    {
+        if (type == "vertex")                   return GL_VERTEX_SHADER;
+        if (type == "fragment")                 return GL_FRAGMENT_SHADER;
+        if (type == "pixel")                    return GL_FRAGMENT_SHADER;
+        if (type == "tesselation-control")      return GL_TESS_CONTROL_SHADER;
+        if (type == "tesselation-evaluation")   return GL_TESS_EVALUATION_SHADER;
+        if (type == "geometry")                 return GL_GEOMETRY_SHADER;
+        if (type == "compute")                  return GL_COMPUTE_SHADER;
+
+        ENG_CORE_ASSERT(false, "Unknown shader type!");
+        return 0;
+    }
+
+
     GLshader::GLshader(const char* name)
         : m_filepath("res/OpenGLshaders/"), m_renderer_id(0)
     {
         m_filepath.append(name);
-        ShaderProgramSource source = parseShader(m_filepath);
-        m_renderer_id = createShader(source.VertexSource, source.FragmentSource);
+        std::unordered_map<GLenum, std::string> sources = parseShader(m_filepath);//first is shaderType, second is source
+        m_renderer_id = createShader(sources);
     }
 
         /*Cshader::Cshader(std::string_view name, vec3_vt<bool, GLint, GLenum> params)
@@ -24,43 +39,67 @@ namespace Engine
         GLCALL(glDeleteProgram(m_renderer_id));
     }
 
-    ShaderProgramSource GLshader::parseShader(const std::string& filepath)
+    std::unordered_map<GLenum, std::string> GLshader::parseShader(const std::string& filepath)
     {
-        std::ifstream stream(filepath);
+        std::ifstream stream(filepath, std::ios::in, std::ios::binary);//read in binary data, because the shader is already in the format we want it to be
+        ENG_CORE_ASSERT(stream.is_open(), "Ifstream wasn't open when trying to parse shader '{0}'.", filepath);
+        //if no errors occurr proceed to load the shader into a string
+        std::string source;
+        stream.seekg(0, std::ios::end);
+        source.resize(stream.tellg());
+        stream.seekg(0, std::ios::beg);
+        stream.read(&source[0], source.size());
+        stream.close();
 
-        ENG_CORE_ASSERT(stream.is_open(), "Ifstream wasn't open when trying to parse shader.");
+        std::unordered_map<GLenum, std::string> shaderSources;//shader sources get parsed in this map with their type as a key
 
-        enum class ShaderType
+        const char* typeToken = "#type";
+        size_t typeTokenLength = strlen(typeToken);
+        size_t pos = source.find(typeToken, 0);
+        ENG_CORE_ASSERT(pos != std::string::npos, "Synthax error when trying to parse shader.");
+        while (pos != std::string::npos)//parses all shaders into the map
         {
-            NONE = -1, VERTEX = 0, FRAGMENT = 1
-        };
-
-        std::string line;
-        std::stringstream ss[2];
-        ShaderType type = ShaderType::NONE;
-        while (getline(stream, line))//if getline() is true there are still more lines to read in the file
-        {
-            if (line.find("#shader") != std::string::npos)
-            {
-                if (line.find("vertex") != std::string::npos)
-                {
-                    type = ShaderType::VERTEX;
-                }
-                else if (line.find("fragment") != std::string::npos)
-                {
-                    type = ShaderType::FRAGMENT;
-                }
-            }
-            else
-            {
-                ss[(int)type] << line << "\n";//we use "type" as our index
-            }
+            size_t temp = source.find_first_of("\r\n", pos);//look for a newline or a carrigage return -> this will be the end of the type-string
+            ENG_CORE_ASSERT(temp != std::string::npos, "Synthax error when trying to parse shader.");
+            size_t begin = pos + typeTokenLength + 1;
+            std::string sType = source.substr(begin, temp - begin);//read the type from the end of the type-token to the next newline(so there needs to be a newline after the "#type <shader>"-statement
+            GLenum type = shaderTypeFromString(sType);
+            //reset the whole thing and safe the current shader into the map
+            size_t beginShaderCode = source.find_first_not_of("\r\n", temp);//find the position where our shader code starts(the first thing that isn't a newline after our type-statement)
+            pos = source.find(typeToken, beginShaderCode);//find the end of the shader by searching for the next type-statement
+            shaderSources[type] = source.substr(beginShaderCode, pos - (beginShaderCode == std::string::npos ? source.size() : beginShaderCode));
         }
 
-        return { ss[0].str(), ss[1].str() }; //we return our struct
+        return shaderSources;
     }
 
-    uint32_t GLshader::compileShader(unsigned int type, const std::string& source) //don't want to always use the OpenGl types, so we write unsigned int insted of
+    uint32_t GLshader::createShader(const std::unordered_map<GLenum, std::string>& shaderSource)
+    {
+        GLCALL(unsigned int program = glCreateProgram());
+        unsigned int shaderIDs[6];//there should never be more than 6 shaders in one program
+        ENG_CORE_ASSERT(shaderSource.size() <= 6U, "There were more than 6 shaders defined, which should not be possible(glsl only defines 6 shaderTypes).");
+        uint8_t count = 0;//how many times has the loop been executed?
+        for (const std::pair<GLenum, std::string>& element : shaderSource)//iterate over all shaders
+        {
+            shaderIDs[count] = compileShader(element.first, element.second);
+            GLCALL(glAttachShader(program, shaderIDs[count]));
+            count++;
+        }
+        //link and validate the shader-program
+        GLCALL(glLinkProgram(program));
+        GLCALL(glValidateProgram(program));
+
+        //allways detach shaders after successful linking and also delete them:
+        for (count = 0; count < shaderSource.size(); count++)
+        {
+            glDetachShader(program, shaderIDs[count]);
+            GLCALL(glDeleteShader(shaderIDs[count]));
+        }
+        
+        return program;
+    }
+
+    uint32_t GLshader::compileShader(const GLenum type, const std::string& source)
     {
         GLCALL(unsigned int id = glCreateShader(type));
         const char* src = source.c_str();
@@ -86,6 +125,22 @@ namespace Engine
             {
                 std::cout << "fragment";
             }break;
+            case GL_TESS_CONTROL_SHADER:
+            {
+                std::cout << "tesselation-control";
+            }break;
+            case GL_TESS_EVALUATION_SHADER:
+            {
+                std::cout << "tesselation-evaluation";
+            }break;
+            case GL_GEOMETRY_SHADER:
+            {
+                std::cout << "geometry";
+            }break;
+            case GL_COMPUTE_SHADER:
+            {
+                std::cout << "compute";
+            }
             default:
             {
                 std::cout << "\"TypeERROR\"";
@@ -100,26 +155,6 @@ namespace Engine
         }
 
         return id;
-    }
-
-    uint32_t GLshader::createShader(const std::string vertexShader, const std::string fragmentShader)
-    {
-        GLCALL(unsigned int program = glCreateProgram());
-        unsigned int vs = compileShader(GL_VERTEX_SHADER, vertexShader);
-        unsigned int fs = compileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-        GLCALL(glAttachShader(program, vs));
-        GLCALL(glAttachShader(program, fs));
-        GLCALL(glLinkProgram(program));
-        GLCALL(glValidateProgram(program));
-        //allways detach shaders after successful linking
-        glDetachShader(program, vs);
-        glDetachShader(program, fs);
-        //then delete them
-        GLCALL(glDeleteShader(vs));
-        GLCALL(glDeleteShader(fs));
-
-        return program;
     }
 
     void GLshader::bind() const
@@ -199,28 +234,11 @@ namespace Engine
             }
         }*/
 
-        /*void Cshader::setprojData(float zFar, float zNear, vec2<float> fov)
-        {
-            setUniform2f("u_tanfov", tanf(fov.v0 * 0.5f * (3.14159f / 180.0f)), tanf(fov.v1 * 0.5f * (3.14159f / 180.0f)));
-            setUniform1f("u_near", zNear);
-            setUniform1f("u_far", zFar);
-        }*/
-        /*void Cshader::setprojMat(mat44f& projMat)
-        {
-            setUniformMat4f("u_mat", projMat);
-        }*/
-
-        /*void Cshader::setOffset(vec3<float> model, vec3<float> cam)
-        {
-            setUniform3f("u_offset", model.v0 - cam.v0, model.v1 - cam.v1, model.v2 - cam.v2);
-            setUniform3f("u_modelPos", model);
-        }*/
-        /*void Cshader::setRot(vec2<float> camRot)
-        {
-            setUniform2f("u_rot", camRot.v0, camRot.v1);
-        }*/
-
-        //setuniforms:
+    //setuniforms:
+    void GLshader::setUniform1b(const std::string& name, bool bValue)//just for comfort, gets converted to int anyways
+    {
+        GLCALL(glUniform1i(getUniformLocation(name), (int)bValue));
+    }
     void GLshader::setUniform1f(const std::string& name, float fValue)
     {
         GLCALL(glUniform1f(getUniformLocation(name), fValue));
@@ -237,10 +255,6 @@ namespace Engine
     {
         GLCALL(glUniform3f(getUniformLocation(name), vec.x, vec.y, vec.z));
     }
-    /*void Cshader::setUniform3f(const std::string& name, vec3<float> values)
-    {
-        GLCALL(glUniform3f(getUniformLocation(name), values.v0, values.v1, values.v2));
-    }*/
     void GLshader::setUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
     {
         GLCALL(glUniform4f(getUniformLocation(name), v0, v1, v2, v3));
@@ -266,7 +280,7 @@ namespace Engine
         GLCALL(glUniformBlockBinding(m_renderer_id, index, bindingPoint));
     }
 
-    int GLshader::getUniformLocation(const std::string& name)//returns an int or an unsigned int?
+    int GLshader::getUniformLocation(const std::string& name)
     {
         if (m_uniformLocation_cache.find(name) != m_uniformLocation_cache.end())//if uniform is already in cache we don't need to search for its location again
             return m_uniformLocation_cache[name];

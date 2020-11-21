@@ -19,7 +19,7 @@ namespace Engine
 
 		virtual void push(const ShaderDataType type) = 0;
 
-		static vertexBufferLayout* create();
+		static Ref_ptr<vertexBufferLayout> create();
 	private:
 	};
 }

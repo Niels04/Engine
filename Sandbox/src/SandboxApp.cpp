@@ -7,7 +7,6 @@ public:
 	renderLayer(const float hFov, const float zNear, const float zFar)
 		: layer("RenderLayer"), m_hFov(hFov), m_zNear(zNear), m_zFar(zFar)
 	{
-		Engine::Renderer::init();//setup some stuff in the renderer, for which a current graphics context is needed
 		fovRecalc(Engine::Application::Get().getWindow().getHeight(), Engine::Application::Get().getWindow().getWidth());//calculate the vertical fov and set the camera
 		temporarySetup();
 	}
@@ -48,11 +47,11 @@ public:
 
 		Engine::Renderer::beginScene(m_cam);
 		{
-			vec4 color_red(0.8f, 0.1f, 0.1f, 1.0f);
-			m_shader->bind();
-			m_shader->setUniform4f("u_color", color_red);
-			m_shader->unbind();
-			Engine::Renderer::sub(m_vertexArray, m_shader);
+			m_flatColorShader->bind();
+			m_flatColorShader->setUniform4f("u_color", m_quad_color);
+			m_flatColorShader->unbind();
+			Engine::Renderer::sub(m_vertexArray, m_flatColorShader, mat4::transMat(0.0f, 150.0f, 0.0f));
+			Engine::Renderer::sub(m_vertexArray, m_textureShader);
 		}
 		Engine::Renderer::endScene();
 
@@ -62,6 +61,7 @@ public:
 	void onImGuiRender() override
 	{
 		ImGui::Begin("RenderLayer");
+		ImGui::ColorEdit4("QuadColor", &m_quad_color.x);
 		ImGui::End();
 	}
 
@@ -89,45 +89,53 @@ public:
 	{
 		m_vertexArray.reset(new Engine::GLvertexArray);//we don't use a generalized implementation here because vertexArrays only exist in openGL
 
-		float pVertexBuffer[7 * 3] = {
-			-50.0f, -50.0f, -100.0f, 0.8f, 0.8f, 0.2f, 1.0f,
-			50.0f, -50.0f, -100.0f, 0.8f, 0.2f, 0.8f, 1.0f,
-			0.0f, 50.0f, -100.0f, 0.2f, 0.8f, 0.2f, 1.0f
+		float pVertexBuffer[5 * 4] = {
+			-50.0f, -50.0f, -100.0f, 0.0f, 0.0f,
+			50.0f, -50.0f, -100.0f, 1.0f, 0.0f,
+			-50.0f, 50.0f, -100.0f, 0.0f, 1.0f,
+			50.0f, 50.0f, -100.0f, 1.0f, 1.0f
 		};
-		m_vertexBuffer.reset(Engine::vertexBuffer::create(sizeof(pVertexBuffer), pVertexBuffer, STATIC_DRAW));
-		unsigned int pIndexBuffer[3] = {
-			0, 1, 2
+		m_vertexBuffer = Engine::vertexBuffer::create(sizeof(pVertexBuffer), pVertexBuffer, STATIC_DRAW);
+		unsigned int pIndexBuffer[6] = {
+			0, 1, 2, 1, 3, 2
 		};
-		m_indexBuffer.reset(Engine::indexBuffer::create(3, pIndexBuffer, STATIC_DRAW));
+		m_indexBuffer = Engine::indexBuffer::create(6, pIndexBuffer, STATIC_DRAW);
 
-		std::shared_ptr<Engine::vertexBufferLayout> vertexBufferLayout;
-		vertexBufferLayout.reset(Engine::vertexBufferLayout::create());
-		vertexBufferLayout->push(Engine::ShaderDataType::vec3);//could also use "vertexBufferLayout.pushFloat(3);" to achieve the same thing
-		vertexBufferLayout->push(Engine::ShaderDataType::vec4);//for color
-		m_vertexBuffer->setLayout(vertexBufferLayout);//maybe make this accept a shared_ptr, so that we don't dealocate the memory we set the layout to
+		Engine::Ref_ptr<Engine::vertexBufferLayout> VertexBufferLayout = Engine::vertexBufferLayout::create();
+		VertexBufferLayout->push(Engine::ShaderDataType::vec3);//could also use "vertexBufferLayout.pushFloat(3);" to achieve the same thing
+		VertexBufferLayout->push(Engine::ShaderDataType::vec2);//for tex-coords
+		m_vertexBuffer->setLayout(VertexBufferLayout);//maybe make this accept a shared_ptr, so that we don't dealocate the memory we set the layout to
 		//sadly we have to do an ugly conversion here because vertexArrays don't have a generalized implementation(cuz theire openGL only)
 		m_vertexArray->addBuffer(std::dynamic_pointer_cast<Engine::GLvertexBuffer, Engine::vertexBuffer>(m_vertexBuffer));//tie the buffer and it's layout to the vertexArray
 		m_vertexArray->addBuffer(std::dynamic_pointer_cast<Engine::GLindexBuffer, Engine::indexBuffer>(m_indexBuffer));//tie the indexBuffer to the vertexArray
 
-		m_shader.reset(Engine::shader::create("basic.shader"));
-		//experimental
-		unsigned int bindingPoint = 0;
-		m_shader->bindUniformBlock("ViewProjection", bindingPoint);//bind the UniformBlock "ViewProjection" to a bindingPoint //do this for each shader, that uses the view and the projection matrix -> then update this once per frame
-		//end experimental
+		m_flatColorShader = Engine::shader::create("flatColor.shader");
+		m_flatColorShader->bindUniformBlock("ViewProjection", 0);//bind the UniformBlock "ViewProjection" to the default bindingPoint for viewProjectionMatrices, which is 0 //do this for each shader, that uses the view and the projection matrix
+		m_textureShader = Engine::shader::create("textureShader.shader");
+		m_textureShader->bindUniformBlock("ViewProjection", 0);
+
+		m_texture = Engine::texture2d::create("crimson_fungus.png");
+		m_texture->bind(0);
+		m_textureShader->bind();
+		m_textureShader->setUniform1i("u_texture", 0);
+		m_textureShader->unbind();
 
 		//unbind everything
 		m_vertexArray->unbind();
 		m_vertexBuffer->unbind();
 		m_indexBuffer->unbind();
-		m_shader->unbind();
+		m_flatColorShader->unbind();
+		m_textureShader->unbind();
 	}
 private:
 	//temporary stuff
-	std::shared_ptr<Engine::shader> m_shader;
-	std::shared_ptr<Engine::indexBuffer> m_indexBuffer;
-	std::shared_ptr<Engine::vertexBuffer> m_vertexBuffer;
-	std::shared_ptr<Engine::GLvertexArray> m_vertexArray;
-	std::shared_ptr<Engine::globalBuffer> m_globalBuffer;
+	Engine::Ref_ptr<Engine::shader> m_flatColorShader, m_textureShader;
+	Engine::Ref_ptr<Engine::indexBuffer> m_indexBuffer;
+	Engine::Ref_ptr<Engine::vertexBuffer> m_vertexBuffer;
+	Engine::Ref_ptr<Engine::GLvertexArray> m_vertexArray;
+	Engine::Ref_ptr<Engine::globalBuffer> m_globalBuffer;
+	Engine::Ref_ptr<Engine::texture2d> m_texture;
+	vec4 m_quad_color = { 0.1f, 0.5f, 0.8f, 1.0f };
 	//end temporary stuff
 
 	Engine::perspectiveCamera m_cam;

@@ -6,13 +6,13 @@
 
 namespace Engine
 {
-	shader* shader::create(const char* name)
+	Ref_ptr<shader> shader::create(const char* name)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return new GLshader(name);
+			return std::make_shared<GLshader>(name);
 		}break;
 		case RendererAPI::API::NONE:
 		{

@@ -17,9 +17,9 @@ namespace Engine
         GLCALL(glDeleteBuffers(1, &m_renderer_id));
     }
 
-    void GLvertexBuffer::setLayout(std::weak_ptr<vertexBufferLayout> layout)
+    void GLvertexBuffer::setLayout(Ref_ptr<vertexBufferLayout> layout)
     {
-        m_layout = std::dynamic_pointer_cast<GLvertexBufferLayout, vertexBufferLayout>(layout.lock());
+        m_layout = std::dynamic_pointer_cast<GLvertexBufferLayout, vertexBufferLayout>(layout);
     }
 
     void GLvertexBuffer::bind() const

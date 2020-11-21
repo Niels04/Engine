@@ -17,6 +17,7 @@ includeDir["GLFW"] = "Engine/vendor/GLFW/include"
 includeDir["Glad"] = "Engine/vendor/Glad/include"
 includeDir["ImGui"] = "Engine/vendor/imgui"
 includeDir["glm"] = "Engine/vendor/glm"
+includeDir["stb_image"] = "Engine/vendor/stb_image"
 includeDir["vendor"] = "Engine/vendor"
 --we include the GLFW folder, which basically means the lua-premake-file in this directory gets included
 include "Engine/vendor/GLFW"
@@ -40,7 +41,9 @@ project "Engine"
 	{
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.hpp",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/vendor/stb_image/**.hpp",
+		"%{prj.name}/vendor/stb_image/**.cpp"
 	}
 
 	defines
@@ -55,7 +58,8 @@ project "Engine"
 		"%{includeDir.GLFW}",
 		"%{includeDir.Glad}",
 		"%{includeDir.ImGui}",
-		"%{includeDir.glm}"
+		"%{includeDir.glm}",
+		"%{includeDir.stb_image}"
 	}
 	
 	links

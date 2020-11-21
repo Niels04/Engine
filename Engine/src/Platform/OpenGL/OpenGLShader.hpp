@@ -20,9 +20,9 @@ namespace Engine
 
 			int getUniformLocation(const std::string& name);
 
-			static ShaderProgramSource parseShader(const std::string& filepath);
-			static uint32_t compileShader(unsigned int type, const std::string& source);
-			static uint32_t createShader(const std::string vertexShader, const std::string fragmentShader);
+			static std::unordered_map<GLenum, std::string> parseShader(const std::string& filepath);//parses the shaders in the file //returns a map, with shaderType as a key and source as the second
+			static uint32_t compileShader(const GLenum type, const std::string& source);
+			static uint32_t createShader(const std::unordered_map<GLenum, std::string>& shaderSources);
 			//void loadBinary(std::string_view name, GLint size, GLenum format);//commented that out for now, gonna implement that later
 		public:
 			GLshader(const char* name);//normal constructor for loading and compiling from a source-file
@@ -33,21 +33,20 @@ namespace Engine
 			void unbind() const override;
 			//vec3_vt<bool, GLint, GLenum> saveBinary(std::string_view name) const;//commented that out for now, gonna implement that later
 
-			//void setprojMat(mat44f& projMat);
-			//void setOffset(vec3<float> model, vec3<float> cam);
-			//void setRot(vec2<float> camRot);
-
 			//setuniforms
-			virtual void setUniform1f(const std::string& name, float fValue) override;
-			virtual void setUniform2f(const std::string& name, float v0, float v1) override;
-			virtual void setUniform3f(const std::string& name, float v0, float v1, float v2) override;
+			virtual void setUniform1b(const std::string& name, const bool bValue) override;
+
+			virtual void setUniform1i(const std::string& name, const int value) override;
+
+			virtual void setUniform1f(const std::string& name, const float fValue) override;
+			virtual void setUniform2f(const std::string& name, const float v0, const float v1) override;
+			virtual void setUniform3f(const std::string& name, const float v0, const float v1, const float v2) override;
 			virtual void setUniform3f(const std::string& name, const vec3& vec) override;
-			virtual void setUniform4f(const std::string& name, float v0, float v1, float v2, float v3) override;
+			virtual void setUniform4f(const std::string& name, const float v0, const float v1, const float v2, const float v3) override;
 			virtual void setUniform4f(const std::string& name, const vec4& vec) override;
 
-			virtual void setUniform1i(const std::string& name, int value) override;
+			virtual void setUniformMat4(const std::string& name, const mat4& mat) override;
 
-			virtual void setUniformMat4(const std::string& name, const mat4& mat) override;//maybe gonna implement that later, but with a glm-mat
 
 			virtual void bindUniformBlock(const std::string& name, const uint32_t bindingPoint) override;
 		};

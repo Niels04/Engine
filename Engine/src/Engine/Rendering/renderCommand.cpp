@@ -7,9 +7,14 @@ namespace Engine
 {
 	RendererAPI* renderCommand::s_RendererAPI = new OpenGLRendererAPI;
 
-	void renderCommand::drawIndexed(const std::weak_ptr<GLvertexArray> va)
+	void renderCommand::init()
 	{
-		s_RendererAPI->drawIndexed(va.lock());
+		s_RendererAPI->init();
+	}
+
+	void renderCommand::drawIndexed(const Ref_ptr<GLvertexArray> va)
+	{
+		s_RendererAPI->drawIndexed(va);
 	}
 
 	void renderCommand::clear()

@@ -12,14 +12,14 @@ namespace Engine
 		GLvertexBuffer(const uint32_t size, const void* data, const uint32_t usage);
 		~GLvertexBuffer();
 
-		virtual inline void setLayout(std::weak_ptr<vertexBufferLayout> layout) override;
+		virtual inline void setLayout(Ref_ptr<vertexBufferLayout> layout) override;
 		virtual inline void bindLayout() const override;//not gonna use this often in gl cuz we have vertexArrays
 
 		virtual inline void bind() const override;
 		virtual inline void unbind() const override;
 	private:
 		unsigned int m_renderer_id;
-		std::shared_ptr<GLvertexBufferLayout> m_layout;
+		Ref_ptr<GLvertexBufferLayout> m_layout;
 	};
 	//::::::::::INDEX::BUFFER:::::::::::::
 	class GLindexBuffer : public indexBuffer
@@ -37,7 +37,7 @@ namespace Engine
 		virtual inline void unbind() const override;
 
 	};
-	//uniformBufferElement
+	//::::::::::uniformBufferElement::::::::::::::::::::
 	struct uniformBufferElement
 	{
 		unsigned int type;
@@ -96,7 +96,7 @@ namespace Engine
 
 		inline virtual void updateElement(const uint8_t index, const void* val) override;
 
-		inline virtual uint16_t getSize() const override { return m_size; }//return the buffer's size in bytes(on the CPU)
+		inline virtual uint16_t getSize() const override { return m_size; }//return the buffer's size in bytes
 	private:
 		unsigned int m_renderer_id;
 		uint16_t m_size = 0;//maximum size of 65,535

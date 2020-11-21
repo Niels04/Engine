@@ -30,17 +30,17 @@ namespace Engine
 		}
 	}
 
-	void GLvertexArray::addBuffer(std::weak_ptr<GLvertexBuffer> buffer)
+	void GLvertexArray::addBuffer(Ref_ptr<GLvertexBuffer> buffer)
 	{
-		p_vertexBuffer = buffer.lock();
+		p_vertexBuffer = buffer;
 		bind();
 		p_vertexBuffer->bind();
 		p_vertexBuffer->bindLayout();
 	}
 
-	void GLvertexArray::addBuffer(std::weak_ptr<GLindexBuffer> buffer)
+	void GLvertexArray::addBuffer(Ref_ptr<GLindexBuffer> buffer)
 	{
-		p_indexBuffer = buffer.lock();
+		p_indexBuffer = buffer;
 		bind();
 		p_indexBuffer->bind();
 	}

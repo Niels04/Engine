@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 
 #ifdef ENG_PLATFORM_WINDOWS
 #ifdef ENG_DYNAMIC_LINK
@@ -30,3 +31,12 @@
 #define BIT(x) (1 << x)
 
 #define ENG_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
+
+namespace Engine
+{
+	//dypedefing shared&unique pointers here -> stuff that specifically belongs to the engine, like assets will use these
+	template<typename T>
+	using Scope_ptr = std::unique_ptr<T>;//use "using" here instead of "typedef" because it let's us declare this as a template
+	template<typename T>				 //could also do something like usgint shaderRef_ptr = std::shared_ptr<Engine::shader>;
+	using Ref_ptr = std::shared_ptr<T>;
+}

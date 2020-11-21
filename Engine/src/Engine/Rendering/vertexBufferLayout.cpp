@@ -6,13 +6,13 @@
 
 namespace Engine
 {
-	vertexBufferLayout* vertexBufferLayout::create()
+	Ref_ptr<vertexBufferLayout> vertexBufferLayout::create()
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return new GLvertexBufferLayout;
+			return std::make_shared<GLvertexBufferLayout>();
 		}break;
 		case RendererAPI::API::NONE:
 		{

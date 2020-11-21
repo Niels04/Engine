@@ -14,7 +14,7 @@ namespace Engine
 		static void beginScene(perspectiveCamera& cam);//takes in a camera (viewprojMat)
 		static void endScene();
 		static void Flush();
-		static void sub(const std::shared_ptr<GLvertexArray> va, const std::shared_ptr<shader> shader, const mat4& transform = mat4::identity());//stands for submit, gonna overload this, so that we can submit different things //submit a vertexArray and a shader
+		static void sub(const Ref_ptr<GLvertexArray> va, const Ref_ptr<shader> shader, const mat4& transform = mat4::identity());//stands for submit, gonna overload this, so that we can submit different things //submit a vertexArray and a shader
 
 		inline static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
 	private:
@@ -25,13 +25,12 @@ namespace Engine
 				viewProjBuffer = globalBuffer::create(2 * sizeof(mat4), STATIC_DRAW);
 				viewProjBuffer->lAddMat4();
 				viewProjBuffer->lAddMat4();
-				unsigned int bindingPoint = 0;
-				viewProjBuffer->bindToPoint(bindingPoint);
+				viewProjBuffer->bindToPoint(0);//binding point for viewProjectionBuffer always is 0
 				viewProjBuffer->unbind();
 			}
 			mat4 viewMat;
 			mat4 projMat;
-			globalBuffer* viewProjBuffer;
+			Ref_ptr<globalBuffer> viewProjBuffer;
 		};
 		static sceneData* s_sceneData;
 	};

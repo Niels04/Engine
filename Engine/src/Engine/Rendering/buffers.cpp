@@ -6,13 +6,13 @@
 
 namespace Engine
 {
-	vertexBuffer* vertexBuffer::create(const uint32_t size, const void* data, const uint32_t usage)
+	Ref_ptr<vertexBuffer> vertexBuffer::create(const uint32_t size, const void* data, const uint32_t usage)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return new GLvertexBuffer(size, data, usage);
+			return std::make_shared<GLvertexBuffer>(size, data, usage);
 		}break;
 		case RendererAPI::API::NONE:
 		{
@@ -26,13 +26,13 @@ namespace Engine
 		}
 	}
 
-	indexBuffer* indexBuffer::create(const uint32_t count, const uint32_t* data, uint32_t usage)
+	Ref_ptr<indexBuffer> indexBuffer::create(const uint32_t count, const uint32_t* data, uint32_t usage)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return new GLindexBuffer(count, data, usage);
+			return std::make_shared<GLindexBuffer>(count, data, usage);
 		}break;
 		case RendererAPI::API::NONE:
 		{
@@ -46,13 +46,13 @@ namespace Engine
 		}
 	}
 
-	globalBuffer* globalBuffer::create(const uint16_t size, const uint32_t usage)
+	Ref_ptr<globalBuffer> globalBuffer::create(const uint16_t size, const uint32_t usage)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return new GLglobalBuffer(size, usage);
+			return std::make_shared<GLglobalBuffer>(size, usage);
 		}break;
 		case RendererAPI::API::NONE:
 		{

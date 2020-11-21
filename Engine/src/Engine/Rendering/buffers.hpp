@@ -20,10 +20,10 @@ namespace Engine
 	{
 	public:
 		//usage could for example be STATIC_DRAW(not going to stream data to this buffer)
-		static vertexBuffer* create(const uint32_t size, const void* data, const uint32_t usage = STATIC_DRAW);//usage is STATIC_DRAW by default
+		static Ref_ptr<vertexBuffer> create(const uint32_t size, const void* data, const uint32_t usage = STATIC_DRAW);//usage is STATIC_DRAW by default
 		virtual ~vertexBuffer() {  }
 
-		virtual inline void setLayout(std::weak_ptr<vertexBufferLayout> layout) = 0;
+		virtual inline void setLayout(Ref_ptr<vertexBufferLayout> layout) = 0;
 		virtual inline void bindLayout() const = 0;
 
 		virtual inline void bind() const = 0;
@@ -34,7 +34,7 @@ namespace Engine
 	class indexBuffer
 	{
 	public:
-		static indexBuffer* create(const uint32_t count, const uint32_t* indices, const uint32_t usage = STATIC_DRAW);//usage is STATIC_DRAW by default
+		static Ref_ptr<indexBuffer> create(const uint32_t count, const uint32_t* indices, const uint32_t usage = STATIC_DRAW);//usage is STATIC_DRAW by default
 		virtual ~indexBuffer() {  }
 
 		inline virtual uint32_t getCount() const = 0;
@@ -50,7 +50,7 @@ namespace Engine
 		//first only create the buffer without even specifying anything other than usage
 		//then use add-functions to add different elements to the buffer(get stored on cpu-side as a vector of uniformBufferElements, which contain type, count and a void*)
 		//make a submit-fuction that calculates memory layout and stuff like that and actually calls glBufferData
-		static globalBuffer* create(const uint16_t size, const uint32_t usage);//create and bind the buffer
+		static Ref_ptr<globalBuffer> create(const uint16_t size, const uint32_t usage);//create and bind the buffer
 		virtual ~globalBuffer() {  }
 
 		virtual void bind() const = 0;//bind the globalBuffer

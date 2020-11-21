@@ -21,6 +21,8 @@ namespace Engine
 		m_window = std::unique_ptr<window>(window::create({ "Engine", 720U, 1080U, }));
 		m_window->setEventCallbackFn(BIND_EVENT_FN(onEvent));
 
+		Engine::Renderer::init();//setup some stuff in the renderer, for which a current graphics context is needed
+
 		m_ImGuiLayer = new imGuiLayer;//we create the imGuiLayer by default and push it as an overlay onto the layerstack
 		pushOverlay(m_ImGuiLayer);
 	}
@@ -48,7 +50,8 @@ namespace Engine
 		while (m_running)
 		{
 			//calculate delta-time
-			float time = (float)glfwGetTime();//::::::::::SHOULD::BE::PLATFORM::SPECIFIC:::: //e.g. Platform::getTime()
+			float time = (float)
+				glfwGetTime();//::::::::::SHOULD::BE::PLATFORM::SPECIFIC:::: //e.g. Platform::getTime()
 			timestep Timestep(time - m_lastFrameTime);
 			m_lastFrameTime = time;
 
