@@ -22,6 +22,9 @@
     <Filter Include="src\Engine\datatypes">
       <UniqueIdentifier>{F05CD232-DCEB-5BFC-850A-70F771786CA2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Engine\objects">
+      <UniqueIdentifier>{EBC9EA40-D7AD-AB96-400E-A6E92C119618}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Platform">
       <UniqueIdentifier>{21CA02E5-0D2D-9289-B6B2-CA3FA2F45D0C}</UniqueIdentifier>
     </Filter>
@@ -72,6 +75,9 @@
     <ClInclude Include="src\Engine\Rendering\buffers.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\material.hpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\Rendering\perspCam.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
@@ -88,6 +94,9 @@
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\Rendering\texture.hpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\vertexArray.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\Rendering\vertexBufferLayout.hpp">
@@ -129,6 +138,9 @@
     <ClInclude Include="src\Engine\mouseButtonCodes.hpp">
       <Filter>src\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\objects\mesh.hpp">
+      <Filter>src\Engine\objects</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\window.hpp">
       <Filter>src\Engine</Filter>
     </ClInclude>
@@ -139,6 +151,9 @@
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\OpenGLContext.hpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\OpenGLShader.hpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\OpenGLTexture.hpp">
@@ -165,10 +180,6 @@
     <ClInclude Include="vendor\stb_image\stb_image.hpp">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\Platform\OpenGL\OpenGLShader.hpp" />
-    <ClInclude Include="src\Engine\Rendering\vertexArray.hpp" />
-    <ClInclude Include="src\Engine\Rendering\material.hpp" />
-    <ClInclude Include="src\Engine\objects\mesh.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -189,6 +200,9 @@
     <ClCompile Include="src\Engine\Rendering\buffers.cpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\material.cpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Engine\Rendering\perspCam.cpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClCompile>
@@ -207,6 +221,9 @@
     <ClCompile Include="src\Engine\Rendering\texture.cpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\vertexArray.cpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\Engine\Rendering\vertexBufferLayout.cpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClCompile>
@@ -216,10 +233,16 @@
     <ClCompile Include="src\Engine\layerStack.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\objects\mesh.cpp">
+      <Filter>src\Engine\objects</Filter>
+    </ClCompile>
     <ClCompile Include="src\Engpch.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\OpenGLContext.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\OpenGLShader.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\OpenGLTexture.cpp">
@@ -249,9 +272,5 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\Platform\OpenGL\OpenGLShader.cpp" />
-    <ClCompile Include="src\Engine\Rendering\vertexArray.cpp" />
-    <ClCompile Include="src\Engine\Rendering\material.cpp" />
-    <ClCompile Include="src\Engine\objects\mesh.cpp" />
   </ItemGroup>
 </Project>

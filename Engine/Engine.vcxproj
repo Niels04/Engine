@@ -149,7 +149,6 @@
     <ClInclude Include="src\Engine\Events\MouseEvent.hpp" />
     <ClInclude Include="src\Engine\ImGui\ImGuiLayer.hpp" />
     <ClInclude Include="src\Engine\Log.hpp" />
-    <ClInclude Include="src\Engine\objects\mesh.hpp" />
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp" />
     <ClInclude Include="src\Engine\Rendering\buffers.hpp" />
     <ClInclude Include="src\Engine\Rendering\material.hpp" />
@@ -173,6 +172,7 @@
     <ClInclude Include="src\Engine\layer.hpp" />
     <ClInclude Include="src\Engine\layerStack.hpp" />
     <ClInclude Include="src\Engine\mouseButtonCodes.hpp" />
+    <ClInclude Include="src\Engine\objects\mesh.hpp" />
     <ClInclude Include="src\Engine\window.hpp" />
     <ClInclude Include="src\Engpch.hpp" />
     <ClInclude Include="src\Platform\OpenGL\GLbuffers.hpp" />
@@ -192,7 +192,6 @@
     <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp" />
     <ClCompile Include="src\Engine\Log.cpp" />
-    <ClCompile Include="src\Engine\objects\mesh.cpp" />
     <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp" />
     <ClCompile Include="src\Engine\Rendering\buffers.cpp" />
     <ClCompile Include="src\Engine\Rendering\material.cpp" />
@@ -206,6 +205,7 @@
     <ClCompile Include="src\Engine\Rendering\vertexBufferLayout.cpp" />
     <ClCompile Include="src\Engine\layer.cpp" />
     <ClCompile Include="src\Engine\layerStack.cpp" />
+    <ClCompile Include="src\Engine\objects\mesh.cpp" />
     <ClCompile Include="src\Engpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
