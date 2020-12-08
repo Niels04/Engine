@@ -1,3 +1,12 @@
+#matUniformBlock
+#size 0
+#endMatUniformBlock
+
+#textures
+#count 1
+#tex 'u_texture'
+#endTextures
+
 #type vertex
 #version 460 core
 
@@ -25,9 +34,9 @@ void main()
 
 layout (location = 0) out vec4 color;
 
-uniform sampler2D u_texture;
-
 in vec2 v_texCoord;
+
+uniform sampler2D u_texture;
 
 void main()
 {

@@ -39,4 +39,6 @@ namespace Engine
 	using Scope_ptr = std::unique_ptr<T>;//use "using" here instead of "typedef" because it let's us declare this as a template
 	template<typename T>				 //could also do something like usgint shaderRef_ptr = std::shared_ptr<Engine::shader>;
 	using Ref_ptr = std::shared_ptr<T>;
+	template<typename T>
+	using WeakRef_ptr = std::shared_ptr<T>;
 }

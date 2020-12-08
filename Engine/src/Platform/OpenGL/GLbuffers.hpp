@@ -87,14 +87,24 @@ namespace Engine
 
 		inline virtual void bindToPoint(const uint32_t bindingPoint) override;
 
-		inline virtual void lAddBool(const uint8_t count = 1) override;
-		inline virtual void lAddInt(const uint8_t count = 1) override;
-		inline virtual void lAddFloat(const uint8_t count = 1) override;
-		inline virtual void lAddVec3(const uint8_t count = 1) override;
-		inline virtual void lAddVec4(const uint8_t count = 1) override;
-		inline virtual void lAddMat4(const uint8_t count = 1) override;
+		inline virtual void laddB(const uint32_t type, const uint8_t count = 1) override;
+		inline virtual void lAddBoolB(const uint8_t count = 1) override;
+		inline virtual void lAddIntB(const uint8_t count = 1) override;
+		inline virtual void lAddFloatB(const uint8_t count = 1) override;
+		inline virtual void lAddVec3B(const uint8_t count = 1) override;
+		inline virtual void lAddVec4B(const uint8_t count = 1) override;
+		inline virtual void lAddMat4B(const uint8_t count = 1) override;
 
-		inline virtual void updateElement(const uint8_t index, const void* val) override;
+		inline virtual void lAdd(const uint32_t type, const uint16_t offset, const uint8_t count = 1) override;
+		inline virtual void lAddBool(const uint16_t offset, const uint8_t count = 1) override;
+		inline virtual void lAddInt(const uint16_t offset, const uint8_t count = 1) override;
+		inline virtual void lAddFloat(const uint16_t offset, const uint8_t count = 1) override;
+		inline virtual void lAddVec3(const uint16_t offset, const uint8_t count = 1) override;
+		inline virtual void lAddVec4(const uint16_t offset, const uint8_t count = 1) override;
+		inline virtual void lAddMat4(const uint16_t offset, const uint8_t count = 1) override;
+
+		inline virtual void updateElement(const uint8_t index, const void* val) const override;
+		inline virtual void updateAll(const void* val) const override;
 
 		inline virtual uint16_t getSize() const override { return m_size; }//return the buffer's size in bytes
 	private:

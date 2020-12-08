@@ -19,6 +19,8 @@
 #include "Engine/Rendering/vertexBufferLayout.hpp"
 #include "Engine/Rendering/shader.hpp"
 #include "Engine/Rendering/texture.hpp"
+#include "Engine/Rendering/material.hpp"
+#include "Engine/objects/mesh.hpp"
 
 #include "Engine/Rendering/perspCam.hpp"
 //_____________________________

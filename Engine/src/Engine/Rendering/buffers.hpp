@@ -51,6 +51,7 @@ namespace Engine
 		//then use add-functions to add different elements to the buffer(get stored on cpu-side as a vector of uniformBufferElements, which contain type, count and a void*)
 		//make a submit-fuction that calculates memory layout and stuff like that and actually calls glBufferData
 		static Ref_ptr<globalBuffer> create(const uint16_t size, const uint32_t usage);//create and bind the buffer
+		static Scope_ptr<globalBuffer> createUnique(const uint16_t size, const uint32_t usage);//same
 		virtual ~globalBuffer() {  }
 
 		virtual void bind() const = 0;//bind the globalBuffer
@@ -58,14 +59,24 @@ namespace Engine
 
 		virtual void bindToPoint(const uint32_t bindingPoint) = 0;//bind the globalBuffer to a bindingPoint with index "bindingPoint"
 
-		virtual void lAddBool(const uint8_t count = 1) = 0;//add a bool to the layout's back
-		virtual void lAddInt(const uint8_t count = 1) = 0;//add an int to the layout's back
-		virtual void lAddFloat(const uint8_t count = 1) = 0;//add a float to the layout's back
-		virtual void lAddVec3(const uint8_t count = 1) = 0;//add a vec3 to the layout's back
-		virtual void lAddVec4(const uint8_t count = 1) = 0;//add a vec4 to the layout's back
-		virtual void lAddMat4(const uint8_t count = 1) = 0;//add a mat4 to the layout's back
+		virtual void laddB(const uint32_t type, const uint8_t count = 1) = 0;//add type "type" at the layout's back
+		virtual void lAddBoolB(const uint8_t count = 1) = 0;//add a bool to the layout's back
+		virtual void lAddIntB(const uint8_t count = 1) = 0;//add an int to the layout's back
+		virtual void lAddFloatB(const uint8_t count = 1) = 0;//add a float to the layout's back
+		virtual void lAddVec3B(const uint8_t count = 1) = 0;//add a vec3 to the layout's back
+		virtual void lAddVec4B(const uint8_t count = 1) = 0;//add a vec4 to the layout's back
+		virtual void lAddMat4B(const uint8_t count = 1) = 0;//add a mat4 to the layout's back
 
-		virtual void updateElement(const uint8_t index, const void* val) = 0;//update one of the buffer's element's //index corresponds to the order in which they got added to the layout
+		virtual void lAdd(const uint32_t type, const uint16_t offset, const uint8_t count = 1) = 0;
+		virtual void lAddBool(const uint16_t offset, const uint8_t count = 1) = 0;//add a bool to the layout at position "offset"
+		virtual void lAddInt(const uint16_t offset, const uint8_t count = 1) = 0;//add an int to the layout at position "offset"
+		virtual void lAddFloat(const uint16_t offset, const uint8_t count = 1) = 0;//add a float to the layout at position "offset"
+		virtual void lAddVec3(const uint16_t offset, const uint8_t count = 1) = 0;//add a vec3 to the layout at position "offset"
+		virtual void lAddVec4(const uint16_t offset, const uint8_t count = 1) = 0;//add a vec4 to the layout at position "offset"
+		virtual void lAddMat4(const uint16_t offset, const uint8_t count = 1) = 0;//add a mat4 to the layout at position "offset"
+
+		virtual void updateElement(const uint8_t index, const void* val) const = 0;//update one of the buffer's element's //index corresponds to the order in which they got added to the layout
+		virtual void updateAll(const void* val) const = 0;
 
 		inline virtual uint16_t getSize() const = 0;
 	};

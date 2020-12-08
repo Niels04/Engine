@@ -22,8 +22,22 @@ namespace Engine
 		GLCALL(glClearColor(color.r, color.g, color.b, color.a));
 	}
 
-	void OpenGLRendererAPI::drawIndexed(const Ref_ptr<GLvertexArray> va)
+	void OpenGLRendererAPI::drawIndexed(const Ref_ptr<vertexArray> va)
 	{
-		GLCALL(glDrawElements(GL_TRIANGLES, va->p_indexBuffer->getCount(), GL_UNSIGNED_INT, nullptr));
+		GLCALL(glDrawElements(GL_TRIANGLES, va->getIb()->getCount(), GL_UNSIGNED_INT, nullptr));
+	}
+
+	const uint32_t OpenGLRendererAPI::getMaxGlobalBuffers() const
+	{
+		GLint val;
+		GLCALL(glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &val));
+		return val;
+	}
+
+	const uint8_t OpenGLRendererAPI::getMaxTextureBinds() const
+	{
+		GLint val;
+		GLCALL(glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &val));
+		return val;
 	}
 }

@@ -99,9 +99,6 @@
     <ClInclude Include="src\Engine\core\timeStep.hpp">
       <Filter>src\Engine\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\datatypes.hpp">
-      <Filter>src\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="src\Engine\datatypes\include.hpp">
       <Filter>src\Engine\datatypes</Filter>
     </ClInclude>
@@ -144,9 +141,6 @@
     <ClInclude Include="src\Platform\OpenGL\OpenGLContext.hpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="src\Platform\OpenGL\OpenGLShader.hpp">
-      <Filter>src\Platform\OpenGL</Filter>
-    </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\OpenGLTexture.hpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
@@ -171,6 +165,10 @@
     <ClInclude Include="vendor\stb_image\stb_image.hpp">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\OpenGLShader.hpp" />
+    <ClInclude Include="src\Engine\Rendering\vertexArray.hpp" />
+    <ClInclude Include="src\Engine\Rendering\material.hpp" />
+    <ClInclude Include="src\Engine\objects\mesh.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -224,9 +222,6 @@
     <ClCompile Include="src\Platform\OpenGL\OpenGLContext.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="src\Platform\OpenGL\OpenGLShader.cpp">
-      <Filter>src\Platform\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\OpenGLTexture.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
@@ -254,5 +249,9 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\OpenGLShader.cpp" />
+    <ClCompile Include="src\Engine\Rendering\vertexArray.cpp" />
+    <ClCompile Include="src\Engine\Rendering\material.cpp" />
+    <ClCompile Include="src\Engine\objects\mesh.cpp" />
   </ItemGroup>
 </Project>

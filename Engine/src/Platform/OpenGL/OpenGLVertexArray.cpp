@@ -14,35 +14,19 @@ namespace Engine
 		GLCALL(glDeleteVertexArrays(1, &m_renderer_id));
 	}
 
-	void GLvertexArray::addBuffer(GLvertexBuffer* buffer, GLvertexBufferLayout* Clayout)//warning, deprecated
+	void GLvertexArray::addBuffer(Ref_ptr<vertexBuffer> buffer)
 	{
+		m_vertexBuffer = std::static_pointer_cast<GLvertexBuffer, vertexBuffer>(buffer);
 		bind();
-		buffer->bind();
-		const auto& layouts = Clayout->getLayouts();
-		ENG_CORE_ASSERT(layouts.size(), "Tried to tie vertexBuffer to vertexArray, but layout wasn't specified.");
-		unsigned int offset = 0;
-		for (unsigned int i = 0; i < layouts.size(); i++)
-		{
-			const auto& layout = layouts[i];
-			GLCALL(glEnableVertexAttribArray(i));
-			GLCALL(glVertexAttribPointer(i, layout.count, layout.type, layout.normalized, Clayout->getStride(), (const void*)offset));
-			offset += layout.count * vertexBufferElement::getTypeSize(layout.type);
-		}
+		m_vertexBuffer->bind();
+		m_vertexBuffer->bindLayout();
 	}
 
-	void GLvertexArray::addBuffer(Ref_ptr<GLvertexBuffer> buffer)
+	void GLvertexArray::addBuffer(Ref_ptr<indexBuffer> buffer)
 	{
-		p_vertexBuffer = buffer;
+		m_indexBuffer = std::static_pointer_cast<GLindexBuffer, indexBuffer>(buffer);
 		bind();
-		p_vertexBuffer->bind();
-		p_vertexBuffer->bindLayout();
-	}
-
-	void GLvertexArray::addBuffer(Ref_ptr<GLindexBuffer> buffer)
-	{
-		p_indexBuffer = buffer;
-		bind();
-		p_indexBuffer->bind();
+		m_indexBuffer->bind();
 	}
 
 	void GLvertexArray::bind() const

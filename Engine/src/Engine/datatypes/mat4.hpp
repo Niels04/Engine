@@ -153,6 +153,34 @@ struct mat4
 		mat[2][2] = factorAll;
 		mat[3][3] = 1.0;
 	}
+	static mat4 Scale(const vec3& factor)
+	{
+		mat4 out;
+		out.mat[0][0] = factor.x;
+		out.mat[1][1] = factor.y;
+		out.mat[2][2] = factor.z;
+		out.mat[3][3] = 1.0;
+
+		return out;
+	}
+	static mat4 Scale(const real factorX, const real factorY, const real factorZ)
+	{
+		mat4 out;
+		out.mat[0][0] = factorX;
+		out.mat[1][1] = factorY;
+		out.mat[2][2] = factorZ;
+		out.mat[3][3] = 1.0;
+		return out;
+	}
+	static mat4 Scale(const real factorAll)
+	{
+		mat4 out;
+		out.mat[0][0] = factorAll;
+		out.mat[1][1] = factorAll;
+		out.mat[2][2] = factorAll;
+		out.mat[3][3] = 1.0;
+		return out;
+	}
 	enum class reflectType : uint8_t
 	{
 		yz = 0, xz = 1, xy = 2, x = 3, y = 4, z = 5, o = 6

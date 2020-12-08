@@ -1,3 +1,8 @@
+#matUniformBlock
+#size 16
+#var vec4f 'u_color'
+#endMatUniformBlock
+
 #type vertex
 #version 460 core
 
@@ -21,8 +26,10 @@ void main()
 
 layout (location = 0) out vec4 color;
 
-uniform vec4 u_color;
-
+layout(std140) uniform material
+{
+	vec4 u_color;
+};
 void main()
 {
 	color = u_color;

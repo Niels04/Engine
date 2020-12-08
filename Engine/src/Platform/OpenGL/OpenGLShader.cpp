@@ -4,6 +4,8 @@
 
 namespace Engine
 {
+    unsigned int GetTypeSize(unsigned int type);//return the typesize in bytes
+
     static GLenum shaderTypeFromString(const std::string& type)
     {
         if (type == "vertex")                   return GL_VERTEX_SHADER;
@@ -18,11 +20,20 @@ namespace Engine
         return 0;
     }
 
-
-    GLshader::GLshader(const char* name)
+    GLshader::GLshader(const std::string& fileName)
         : m_filepath("res/OpenGLshaders/"), m_renderer_id(0)
     {
-        m_filepath.append(name);
+        m_filepath.append(fileName);
+        m_name = fileName.substr(0, fileName.rfind(".") == std::string::npos ? fileName.size() - 1 : fileName.rfind("."));
+        std::unordered_map<GLenum, std::string> sources = parseShader(m_filepath);//first is shaderType, second is source
+        m_renderer_id = createShader(sources);
+    }
+
+    GLshader::GLshader(const std::string& fileName, const std::string& name)
+        : m_filepath("res/OpenGLshaders/"), m_renderer_id(0)
+    {
+        m_filepath.append(fileName);
+        m_name = name;
         std::unordered_map<GLenum, std::string> sources = parseShader(m_filepath);//first is shaderType, second is source
         m_renderer_id = createShader(sources);
     }
@@ -39,9 +50,20 @@ namespace Engine
         GLCALL(glDeleteProgram(m_renderer_id));
     }
 
+    unsigned int strTypeToUint(const std::string& type)
+    {
+        //add lots more cases here
+        if (type == "mat4f") { return  GL_FLOAT_MAT4; }
+        if (type == "sampler2d") { return GL_INT; }
+        if (type == "vec4f") { return GL_FLOAT_VEC4; }
+
+        ENG_CORE_ERROR("Error when trying to convert string \"{0}\" to type.", type);
+        _ASSERT(false);
+    }
+
     std::unordered_map<GLenum, std::string> GLshader::parseShader(const std::string& filepath)
     {
-        std::ifstream stream(filepath, std::ios::in, std::ios::binary);//read in binary data, because the shader is already in the format we want it to be
+        std::ifstream stream(filepath, std::ios::in | std::ios::binary);//read in binary data, because the shader is already in the format we want it to be
         ENG_CORE_ASSERT(stream.is_open(), "Ifstream wasn't open when trying to parse shader '{0}'.", filepath);
         //if no errors occurr proceed to load the shader into a string
         std::string source;
@@ -53,9 +75,72 @@ namespace Engine
 
         std::unordered_map<GLenum, std::string> shaderSources;//shader sources get parsed in this map with their type as a key
 
+        //retrieve information about the MaterialUniforms(in the uniformBlock) the shader takes:
+        const char* uniformToken = "#matUniformBlock";
+        const char* uniformEndToken = "#endMatUniformBlock";
+        const char* varToken = "#var";
+        size_t varTokenLength = strlen(varToken);
+        size_t pos = source.find(uniformToken);
+        if (pos == std::string::npos)
+            ENG_CORE_WARN("Eighter the shader(fragment) {0} doesn't habe a uniformBlock for materials, or they weren't properly listed in the shader's materialUniformBlock list.", m_name);
+        else
+        {
+            //find out the size:
+            pos = source.find("#size", 0) + 6;
+            size_t end = source.find_first_of("\r\n", pos);
+            m_materialUniformsSize = std::stoi(source.substr(pos, end - pos));//get the size
+            //then loop and retrieve all the variables the pixelShader accepts
+            unsigned int stack = 0;//the offset at which to input the next element
+            pos = source.find(varToken, 0);
+            uint8_t index = 0;
+            while (pos != std::string::npos)
+            {
+                pos += varTokenLength + 1;
+                end = source.find("'", pos) - 1;
+                unsigned int  type = strTypeToUint(source.substr(pos, end - pos));
+                end = source.find("'", end + 3);
+                pos = source.find("'", pos) + 1;
+                std::string name = source.substr(pos, end - pos);
+                m_materialUniforms[name] = {index, (uint16_t)stack, type};//push back the elements
+                stack += GetTypeSize(type);
+                ENG_CORE_ASSERT(stack <= m_materialUniformsSize, "The combined size of previously inserted objects exeeds the size.");
+                pos = source.find(varToken, pos);//find next var
+                index++;
+            }
+        }
+
+        //retrieve all textures the shader accepts:
+        m_textured = false;
+        const char* textureToken = "#textures";
+        const char* textureEndToken = "#textures";
+        const char* texToken = "#tex ";
+        size_t texTokenLength = strlen(varToken);
+        pos = source.find(textureToken);
+        if (pos != std::string::npos)
+        {
+            m_textured = true;
+            //get the texture count
+            pos = source.find("#count", 0) + 7;
+            size_t end = source.find_first_of("\r\n", pos);
+            m_textures.reserve(std::stoi(source.substr(pos, end - pos)));//get the count
+            //then loop and retrieve all the textures the shader accepts
+            pos = source.find(texToken, 0);
+            uint8_t index = 0;
+            while (pos != std::string::npos)
+            {
+                pos += texTokenLength + 1;
+                pos = source.find("'", pos) + 1;
+                end = source.find("'", pos + 1);
+                m_textures.push_back(source.substr(pos, end - pos));//save the name
+                pos = source.find(texToken, pos);//find next tex
+                index ++;
+            }
+        }
+
+        //extract code for all shaders:
         const char* typeToken = "#type";
         size_t typeTokenLength = strlen(typeToken);
-        size_t pos = source.find(typeToken, 0);
+        pos = source.find(typeToken, 0);
         ENG_CORE_ASSERT(pos != std::string::npos, "Synthax error when trying to parse shader.");
         while (pos != std::string::npos)//parses all shaders into the map
         {
@@ -275,9 +360,7 @@ namespace Engine
     //setuniforms end
     void GLshader::bindUniformBlock(const std::string& name, uint32_t bindingPoint)
     {
-        GLCALL(uint32_t index = glGetUniformBlockIndex(m_renderer_id, name.c_str()));
-        ENG_CORE_ASSERT(index != GL_INVALID_INDEX, "Error when trying to retrieve uniform block location \"{0}\". Could not find the block in the shader.", name.c_str());
-        GLCALL(glUniformBlockBinding(m_renderer_id, index, bindingPoint));
+        GLCALL(glUniformBlockBinding(m_renderer_id, getUniformBlockLocation(name), bindingPoint));
     }
 
     int GLshader::getUniformLocation(const std::string& name)
@@ -294,4 +377,40 @@ namespace Engine
 
         return location;
     }
+
+    int GLshader::getUniformBlockLocation(const std::string& name)
+    {
+        if (m_uniformBlockLocation_cache.find(name) != m_uniformBlockLocation_cache.end())
+            return m_uniformBlockLocation_cache[name];
+
+        GLCALL(int location = glGetUniformBlockIndex(m_renderer_id, name.c_str()));
+        ENG_CORE_ASSERT(location != GL_INVALID_INDEX, "UniformBlock not found.");
+
+        m_uniformBlockLocation_cache[name] = location;
+
+        return location;
+    }
+
+    unsigned int GetTypeSize(unsigned int type)//return the typesize in bytes
+    {
+        switch (type)
+        {
+        case(GL_FLOAT):
+            return 4;
+        case(GL_INT):
+            return 4;
+        case(GL_BOOL):
+            return 4;//bools take 4bytes and are treated as integers(therefore there isn't a gl-function for setting a bool-uniform
+        case(GL_FLOAT_VEC2):
+            return 8;
+        case(GL_FLOAT_VEC3):
+            return 12;
+        case(GL_FLOAT_VEC4):
+            return 16;
+        case(GL_FLOAT_MAT4):
+            return 64;
+        }
+        ENG_CORE_ASSERT(false, "Type was unknown(glGetTypeSize).");//this shouldn't happen
+        return 0;
+    };
 }

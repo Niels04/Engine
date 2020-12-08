@@ -12,7 +12,7 @@ namespace Engine
 		s_RendererAPI->init();
 	}
 
-	void renderCommand::drawIndexed(const Ref_ptr<GLvertexArray> va)
+	void renderCommand::drawIndexed(const Ref_ptr<vertexArray> va)
 	{
 		s_RendererAPI->drawIndexed(va);
 	}

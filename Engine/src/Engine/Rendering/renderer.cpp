@@ -1,13 +1,17 @@
 #include "Engpch.hpp"
 #include "renderer.hpp"
 
+#include "material.hpp"
+
 namespace Engine
 {
 	Renderer::sceneData* Renderer::s_sceneData = new Renderer::sceneData;
+	shaderLib* Renderer::s_shaderLib = new shaderLib;
 
 	void Renderer::init()
 	{
 		renderCommand::init();
+		materialLib::init();
 		s_sceneData->init();//setup stuff like the globalBuffer for the view- and projection matrices
 	}
 
@@ -27,7 +31,7 @@ namespace Engine
 		
 	}
 
-	void Renderer::sub(Ref_ptr<GLvertexArray> va, Ref_ptr<shader> shader, const mat4& transform)
+	void Renderer::sub(const Ref_ptr<vertexArray> va, const Ref_ptr<shader> shader, const mat4& transform)
 	{
 		//there will be some kind of sorting algorythm, but for now just draw everything, that gets submited
 		shader->bind();//bind the shader(!!!important to do before uploading uniforms!!!)
@@ -35,6 +39,17 @@ namespace Engine
 
 		va->bind();//bind the vertexArray
 		renderCommand::drawIndexed(va);//draw it
+	}
+	
+	void Renderer::sub(const Ref_ptr<mesh> Mesh)
+	{
+		//there will be some kind of sorting algorythm, but for now just draw everything, that gets submited
+		Ref_ptr<material> mat = Mesh->getMaterial();
+		mat->bind(1);//always bind materials to slot 1 for now because slot 0 is always used for viewProjMats
+		mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat());//set the modelMatrix in the shader(get it from the mesh)
+		Ref_ptr<vertexArray> geometry = Mesh->getVa();
+		geometry->bind();
+		renderCommand::drawIndexed(geometry);
 	}
 
 	void Renderer::Flush()

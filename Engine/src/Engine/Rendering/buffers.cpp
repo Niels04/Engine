@@ -65,4 +65,24 @@ namespace Engine
 		}break;
 		}
 	}
+
+	Scope_ptr<globalBuffer> globalBuffer::createUnique(const uint16_t size, const uint32_t usage)
+	{
+		switch (Renderer::getAPI())
+		{
+		case RendererAPI::API::OpenGL:
+		{
+			return std::make_unique<GLglobalBuffer>(size, usage);
+		}break;
+		case RendererAPI::API::NONE:
+		{
+			ENG_CORE_WARN("Tried to create globalBuffe while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			return nullptr;
+		}break;
+		default:
+		{
+			ENG_CORE_ASSERT(false, "RenderingAPI was an unknown value.");
+		}break;
+		}
+	}
 }

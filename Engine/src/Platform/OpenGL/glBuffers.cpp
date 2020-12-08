@@ -97,44 +97,89 @@ namespace Engine
     {
         glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, m_renderer_id);
     }
-    void GLglobalBuffer::lAddBool(const uint8_t count)
+    void GLglobalBuffer::laddB(const uint32_t type, const uint8_t count)
+    {
+        m_elements.push_back({ type, count, m_stack });
+        m_stack += uniformBufferElement::getTypeSize(type) * count;
+        _ASSERT(m_stack <= m_size);
+    }
+    void GLglobalBuffer::lAddBoolB(const uint8_t count)
     {
         m_elements.push_back({ GL_BOOL, count, m_stack });
         m_stack += uniformBufferElement::getTypeSize(GL_BOOL) * count;
         _ASSERT(m_stack <= m_size);
     }
-    void GLglobalBuffer::lAddInt(const uint8_t count)
+    void GLglobalBuffer::lAddIntB(const uint8_t count)
     {
         m_elements.push_back({ GL_INT, count, m_stack });
         m_stack += uniformBufferElement::getTypeSize(GL_INT) * count;
         _ASSERT(m_stack <= m_size);
     }
-    void GLglobalBuffer::lAddFloat(const uint8_t count)
+    void GLglobalBuffer::lAddFloatB(const uint8_t count)
     {
         m_elements.push_back({GL_FLOAT, count, m_stack});
         m_stack += uniformBufferElement::getTypeSize(GL_FLOAT) * count;
         _ASSERT(m_stack <= m_size);
     }
-    void GLglobalBuffer::lAddVec3(const uint8_t count)
+    void GLglobalBuffer::lAddVec3B(const uint8_t count)
     {
         m_elements.push_back({ GL_FLOAT_VEC3, count, m_stack });
         m_stack += uniformBufferElement::getTypeSize(GL_FLOAT_VEC3) * count;
         _ASSERT(m_stack <= m_size);
     }
-    void GLglobalBuffer::lAddVec4(const uint8_t count)
+    void GLglobalBuffer::lAddVec4B(const uint8_t count)
     {
         m_elements.push_back({ GL_FLOAT_VEC4, count, m_stack });
         m_stack += uniformBufferElement::getTypeSize(GL_FLOAT_VEC4) * count;
         _ASSERT(m_stack <= m_size);
     }
-    void GLglobalBuffer::lAddMat4(const uint8_t count)
+    void GLglobalBuffer::lAddMat4B(const uint8_t count)
     {
         m_elements.push_back({ GL_FLOAT_MAT4, count, m_stack });
         m_stack += uniformBufferElement::getTypeSize(GL_FLOAT_MAT4) * count;
         _ASSERT(m_stack <= m_size);
     }
-    void GLglobalBuffer::updateElement(const uint8_t index, const void* val)
+    void GLglobalBuffer::lAdd(const uint32_t type, const uint16_t offset, const uint8_t count)
+    {
+        m_elements.push_back({ type, count, offset });
+        _ASSERT(offset + uniformBufferElement::getTypeSize(type) <= m_size);
+    }
+    void GLglobalBuffer::lAddBool(const uint16_t offset, const uint8_t count)
+    {
+        m_elements.push_back({ GL_BOOL, count, offset });
+        _ASSERT(offset + uniformBufferElement::getTypeSize(GL_BOOL) <= m_size);
+    }
+    void GLglobalBuffer::lAddInt(const uint16_t offset, const uint8_t count)
+    {
+        m_elements.push_back({ GL_INT, count, offset });
+        _ASSERT(offset + uniformBufferElement::getTypeSize(GL_INT) <= m_size);
+    }
+    void GLglobalBuffer::lAddFloat(const uint16_t offset, const uint8_t count)
+    {
+        m_elements.push_back({ GL_FLOAT, count, offset });
+        _ASSERT(offset + uniformBufferElement::getTypeSize(GL_FLOAT) <= m_size);
+    }
+    void GLglobalBuffer::lAddVec3(const uint16_t offset, const uint8_t count)
+    {
+        m_elements.push_back({ GL_FLOAT_VEC3, count, offset });
+        _ASSERT(offset + uniformBufferElement::getTypeSize(GL_FLOAT_VEC3) <= m_size);
+    }
+    void GLglobalBuffer::lAddVec4(const uint16_t offset, const uint8_t count)
+    {
+        m_elements.push_back({ GL_FLOAT_VEC4, count, offset });
+        _ASSERT(offset + uniformBufferElement::getTypeSize(GL_FLOAT_VEC4) <= m_size);
+    }
+    void GLglobalBuffer::lAddMat4(const uint16_t offset, const uint8_t count)
+    {
+        m_elements.push_back({ GL_FLOAT_MAT4, count, offset });
+        _ASSERT(offset + uniformBufferElement::getTypeSize(GL_FLOAT_MAT4) <= m_size);
+    }
+    void GLglobalBuffer::updateElement(const uint8_t index, const void* val) const
     {
         GLCALL(glBufferSubData(GL_UNIFORM_BUFFER, m_elements[index].offset, uniformBufferElement::getTypeSize(m_elements[index].type) * m_elements[index].count, val));
+    }
+    void GLglobalBuffer::updateAll(const void* val) const
+    {
+        GLCALL(glBufferSubData(GL_UNIFORM_BUFFER, 0, m_size, val));//update all values by specifying 0 as offset and m_size as the size
     }
 }

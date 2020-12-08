@@ -1,26 +1,29 @@
 #pragma once
 
+#include "Engine/Rendering/vertexArray.hpp"
+
 #include "GLbuffers.hpp"
-#include "OpenGLVertexBufferLayout.hpp"
 
 namespace Engine
 {
-	class GLvertexArray
+	class GLvertexArray : public vertexArray
 	{
 	public:
 		GLvertexArray();
 		~GLvertexArray();
 
-		void addBuffer(GLvertexBuffer* buffer, GLvertexBufferLayout* Clayout);//deprecated
-		void addBuffer(Ref_ptr<GLvertexBuffer> buffer);//add a vertexBuffer and it's layout
-		void addBuffer(Ref_ptr<GLindexBuffer> buffer);//add an indexBuffer to the vertexArray
-		void bind() const;
-		void unbind() const;
+		virtual void addBuffer(Ref_ptr<vertexBuffer> buffer) override;//add a vertexBuffer and it's layout
+		virtual void addBuffer(Ref_ptr<indexBuffer> buffer) override;//add an indexBuffer to the vertexArray
 
-		//these can be public, because we will want to access their member funcs
-		Ref_ptr<GLvertexBuffer> p_vertexBuffer;//use p to indicate that these are public members
-		Ref_ptr<GLindexBuffer> p_indexBuffer;//use p to indicate that these are public members
+		virtual inline vertexBuffer* getVb() const override { return m_vertexBuffer.get(); }
+		virtual inline indexBuffer* getIb() const override { return m_indexBuffer.get(); }
+
+		inline virtual void bind() const override;
+		inline virtual void unbind() const override;
+
 	private:
 		unsigned int m_renderer_id;
+		Ref_ptr<GLvertexBuffer> m_vertexBuffer;
+		Ref_ptr<GLindexBuffer> m_indexBuffer;
 	};
 }
