@@ -26,7 +26,7 @@ namespace Engine
 		else if (channels == 3)
 		{
 			internalFormat = GL_RGB8;
-			dataFormat = GL_RGBA;
+			dataFormat = GL_RGB;
 		}
 		ENG_CORE_ASSERT(internalFormat && dataFormat, "Eighter \"internalFormat\" or \"dataFormat\" (or both)was 0 when loading a texture.");
 

@@ -51,7 +51,7 @@ public:
 			quadMat->bind(1);//always bind materials to slot 1 for now because slot 0 is used for projectionMat and viewMat
 			quadMat->setUniform4fF("u_color", m_quad_color);//when only updating a single uniform use setUniform<type>F() to instantly flush it-> real materials will probably not use this often because they won't be dynamic
 			Engine::Renderer::sub(m_vertexArray, Engine::Renderer::getShaderLib()->get("flatColor"), mat4::transMat(0.0f, 150.0f, 0.0f));*/
-			Engine::Renderer::sub(m_quad);
+			Engine::Renderer::sub(m_mesh);
 			//Engine::Renderer::sub(m_fungus);
 		}
 		Engine::Renderer::endScene();
@@ -108,29 +108,30 @@ public:
 		m_vertexArray->addBuffer(indexBuffer);//tie the indexBuffer to the vertexArray
 		*/
 		m_vertexArray = Engine::vertexArray::create();
-		m_vertexArray->load("cube.model");
+		m_vertexArray->load("skull.model");
 
 		Engine::Ref_ptr<Engine::shader> flatColorShader = Engine::Renderer::getShaderLib()->load("flatColor.shader");
 		flatColorShader->bindUniformBlock("ViewProjection", 0);//bind the UniformBlock "ViewProjection" to the default bindingPoint for viewProjectionMatrices, which is 0 //do this for each shader, that uses the view and the projection matrix
 		Engine::Ref_ptr<Engine::shader> textureShader = Engine::Renderer::getShaderLib()->load("texture.shader");
 		textureShader->bindUniformBlock("ViewProjection", 0);
 
-		m_texture = Engine::texture2d::create("nether_quartz_ore.png");
+		m_texture = Engine::texture2d::create("Skull.png");
 
-		Engine::Ref_ptr<Engine::material> redMat = Engine::material::create(flatColorShader, "Red_flat");
-		redMat->setUniform4f("u_color", 0.8f, 0.1f, 0.1f, 1.0f );//if a material is non-dynamic(which a material is probably gonna be in most cases) we just set it's uniforms when loading it
-		redMat->flushAll();//set all the uniforms on CPU-side first and then flush them over in one gl-call when creating a material
-		m_matLib.add(redMat);
-		Engine::Ref_ptr<Engine::material> quartzMat = Engine::material::create(textureShader, "Netherquartz");
-		quartzMat->setTexture("u_texture", m_texture);
-		m_matLib.add(quartzMat);
-		//Engine::Ref_ptr<Engine::material> texMat = Engine::material::create(textureShader, "textured");
-		//texMat->setTexture("u_texture", m_texture);
-		//m_matLib.add(texMat);
+		{
+			Engine::Ref_ptr<Engine::material> redMat = Engine::material::create(flatColorShader, "Red_flat");
+			redMat->setUniform4f("u_color", 0.8f, 0.1f, 0.1f, 1.0f);//if a material is non-dynamic(which a material is probably gonna be in most cases) we just set it's uniforms when loading it
+			redMat->flushAll();//set all the uniforms on CPU-side first and then flush them over in one gl-call when creating a material
+			m_matLib.add(redMat);
+		}
+		{
+			Engine::Ref_ptr<Engine::material> skullMat = Engine::material::create(textureShader, "SkullMat");
+			skullMat->setTexture("u_texture", m_texture);
+			m_matLib.add(skullMat);
+		}
 
-		m_quad = std::make_shared<Engine::mesh>(m_vertexArray, quartzMat);
-		m_quad->setPos({ 0.0f, 0.0f, -150.0f });
-		//m_fungus = std::make_shared<Engine::mesh>(m_vertexArray, texMat);
+		m_mesh = std::make_shared<Engine::mesh>(m_vertexArray, m_matLib.get("SkullMat"));
+		m_mesh->setPos({ 0.0f, 0.0f, -150.0f });
+		m_mesh->setRot({ 0.0f, 3.1415926f, 0.0f });//rotate 180 degrees(pi in radians)
 
 		//unbind everything
 		m_vertexArray->unbind();
@@ -143,7 +144,7 @@ private:
 	//temporary stuff
 	Engine::materialLib m_matLib;
 	//Engine::Ref_ptr<Engine::mesh> m_fungus;
-	Engine::Ref_ptr<Engine::mesh> m_quad;
+	Engine::Ref_ptr<Engine::mesh> m_mesh;
 	Engine::Ref_ptr<Engine::vertexArray> m_vertexArray;
 	Engine::Ref_ptr<Engine::texture2d> m_texture;
 	vec4 m_quad_color = { 0.1f, 0.5f, 0.8f, 1.0f };
