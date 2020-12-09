@@ -10,7 +10,7 @@ namespace Engine
 	{
 		unsigned int type;
 		unsigned int count;
-		unsigned char normalized;
+		unsigned char normalized;//whether the value is to be normalized(for example if we had an unsigned byte(0-255) it would be normalized to a value(float) between 0 and 1
 
 		static unsigned int getTypeSize(unsigned int type)
 		{
@@ -46,6 +46,7 @@ namespace Engine
 		virtual void pushUchar(const uint32_t count) override;
 
 		virtual void push(const ShaderDataType type) override;
+		virtual void push(const vertexBufferElement& element);
 
 		inline const std::vector<vertexBufferElement>& getLayouts() const { return m_layouts; }
 		inline unsigned int getStride() const { return m_stride; }

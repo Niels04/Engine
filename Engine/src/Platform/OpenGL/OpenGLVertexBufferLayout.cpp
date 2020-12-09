@@ -67,4 +67,11 @@ namespace Engine
 		}
 		}
 	}
+
+	void GLvertexBufferLayout::push(const vertexBufferElement& element)
+	{
+		m_layouts.push_back(element);
+		m_stride += vertexBufferElement::getTypeSize(element.type) * element.count;
+		return;
+	}
 }

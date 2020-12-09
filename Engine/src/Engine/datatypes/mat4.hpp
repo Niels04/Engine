@@ -384,7 +384,7 @@ struct mat4
 		mat[2][0] = (r + l) / (r - l);
 		mat[1][1] = (2.0f * Znear) / (t - b);
 		mat[2][1] = (t + b) / (t - b);
-		mat[2][2] = (Zfar + Znear) / (Zfar - Znear);
+		mat[2][2] = -(Zfar + Znear) / (Zfar - Znear);
 		mat[3][2] = ((-2.0f) * Zfar * Znear) / (Zfar - Znear);
 		mat[2][3] = -1.0f;
 	}

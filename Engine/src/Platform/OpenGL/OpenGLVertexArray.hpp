@@ -21,6 +21,8 @@ namespace Engine
 		inline virtual void bind() const override;
 		inline virtual void unbind() const override;
 
+		virtual void load(const std::string& name) override;
+
 	private:
 		unsigned int m_renderer_id;
 		Ref_ptr<GLvertexBuffer> m_vertexBuffer;

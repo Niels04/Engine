@@ -18,5 +18,7 @@ namespace Engine
 
 		virtual void bind() const = 0;
 		virtual void unbind() const = 0;
+
+		virtual void load(const std::string& name) = 0;
 	};
 }

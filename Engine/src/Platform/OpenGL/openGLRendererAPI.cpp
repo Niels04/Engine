@@ -10,6 +10,9 @@ namespace Engine
 		//setup blending
 		GLCALL(glEnable(GL_BLEND));
 		GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+		//setup depth-testing
+		GLCALL(glEnable(GL_DEPTH_TEST));
+		GLCALL(glDepthFunc(GL_LESS));//maybe because I scale between -1 and 1 but the depthbuffer accepts values between 0 and 1
 	}
 
 	void OpenGLRendererAPI::clear()

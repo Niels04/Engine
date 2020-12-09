@@ -52,7 +52,7 @@ public:
 			quadMat->setUniform4fF("u_color", m_quad_color);//when only updating a single uniform use setUniform<type>F() to instantly flush it-> real materials will probably not use this often because they won't be dynamic
 			Engine::Renderer::sub(m_vertexArray, Engine::Renderer::getShaderLib()->get("flatColor"), mat4::transMat(0.0f, 150.0f, 0.0f));*/
 			Engine::Renderer::sub(m_quad);
-			Engine::Renderer::sub(m_fungus);
+			//Engine::Renderer::sub(m_fungus);
 		}
 		Engine::Renderer::endScene();
 
@@ -61,9 +61,7 @@ public:
 
 	void onImGuiRender() override
 	{
-		/*ImGui::Begin("RenderLayer");
-		ImGui::ColorEdit4("QuadColor", &m_quad_color.x);
-		ImGui::End();*/
+
 	}
 
 	void onEvent(Engine::Event& e) override
@@ -88,7 +86,7 @@ public:
 
 	void temporarySetup()
 	{
-		m_vertexArray = Engine::GLvertexArray::create();//we don't use a generalized implementation here because vertexArrays only exist in openGL
+		/*m_vertexArray = Engine::GLvertexArray::create();
 
 		float pVertexBuffer[5 * 4] = {
 			-50.0f, -50.0f, -100.0f, 0.0f, 0.0f,
@@ -108,37 +106,43 @@ public:
 		vertexBuffer->setLayout(VertexBufferLayout);
 		m_vertexArray->addBuffer(vertexBuffer);//tie the buffer and it's layout to the vertexArray
 		m_vertexArray->addBuffer(indexBuffer);//tie the indexBuffer to the vertexArray
+		*/
+		m_vertexArray = Engine::vertexArray::create();
+		m_vertexArray->load("cube.model");
 
 		Engine::Ref_ptr<Engine::shader> flatColorShader = Engine::Renderer::getShaderLib()->load("flatColor.shader");
 		flatColorShader->bindUniformBlock("ViewProjection", 0);//bind the UniformBlock "ViewProjection" to the default bindingPoint for viewProjectionMatrices, which is 0 //do this for each shader, that uses the view and the projection matrix
 		Engine::Ref_ptr<Engine::shader> textureShader = Engine::Renderer::getShaderLib()->load("texture.shader");
 		textureShader->bindUniformBlock("ViewProjection", 0);
 
-		m_texture = Engine::texture2d::create("crimson_fungus.png");
+		m_texture = Engine::texture2d::create("nether_quartz_ore.png");
 
-		Engine::Ref_ptr<Engine::material> quadMat = Engine::material::create(flatColorShader, "Red_flat");
-		quadMat->setUniform4f("u_color", 0.8f, 0.1f, 0.1f, 1.0f );//if a material is non-dynamic(which a material is probably gonna be in most cases) we just set it's uniforms when loading it
-		quadMat->flushAll();//set all the uniforms on CPU-side first and then flush them over in one gl-call when creating a material
-		m_matLib.add(quadMat);
-		Engine::Ref_ptr<Engine::material> texMat = Engine::material::create(textureShader, "textured");
-		texMat->setTexture("u_texture", m_texture);
-		m_matLib.add(texMat);
+		Engine::Ref_ptr<Engine::material> redMat = Engine::material::create(flatColorShader, "Red_flat");
+		redMat->setUniform4f("u_color", 0.8f, 0.1f, 0.1f, 1.0f );//if a material is non-dynamic(which a material is probably gonna be in most cases) we just set it's uniforms when loading it
+		redMat->flushAll();//set all the uniforms on CPU-side first and then flush them over in one gl-call when creating a material
+		m_matLib.add(redMat);
+		Engine::Ref_ptr<Engine::material> quartzMat = Engine::material::create(textureShader, "Netherquartz");
+		quartzMat->setTexture("u_texture", m_texture);
+		m_matLib.add(quartzMat);
+		//Engine::Ref_ptr<Engine::material> texMat = Engine::material::create(textureShader, "textured");
+		//texMat->setTexture("u_texture", m_texture);
+		//m_matLib.add(texMat);
 
-		m_quad = std::make_shared<Engine::mesh>(m_vertexArray, quadMat);
-		m_quad->setPos({ 0.0f, 100.0f, 0.0f });
-		m_fungus = std::make_shared<Engine::mesh>(m_vertexArray, texMat);
+		m_quad = std::make_shared<Engine::mesh>(m_vertexArray, quartzMat);
+		m_quad->setPos({ 0.0f, 0.0f, -150.0f });
+		//m_fungus = std::make_shared<Engine::mesh>(m_vertexArray, texMat);
 
 		//unbind everything
 		m_vertexArray->unbind();
-		indexBuffer->unbind();
-		vertexBuffer->unbind();
+		//indexBuffer->unbind();
+		//vertexBuffer->unbind();
 		flatColorShader->unbind();
 		textureShader->unbind();
 	}
 private:
 	//temporary stuff
 	Engine::materialLib m_matLib;
-	Engine::Ref_ptr<Engine::mesh> m_fungus;
+	//Engine::Ref_ptr<Engine::mesh> m_fungus;
 	Engine::Ref_ptr<Engine::mesh> m_quad;
 	Engine::Ref_ptr<Engine::vertexArray> m_vertexArray;
 	Engine::Ref_ptr<Engine::texture2d> m_texture;
