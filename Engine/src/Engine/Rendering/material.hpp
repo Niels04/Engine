@@ -13,7 +13,7 @@ namespace Engine
 
 		static Ref_ptr<material> create(Ref_ptr<shader>& shader, const std::string& name);
 
-		void bind(uint16_t slot = 1);
+		void bind(uint16_t slot = 10);//reserve the first 10 slots for stuff like matrices and lights
 
 		inline const std::string& getName() const { return m_name; }
 		inline const WeakRef_ptr<shader> getShader() const { return m_shaderRef; }
@@ -29,7 +29,7 @@ namespace Engine
 		void setUniform4fF(const std::string& name, const vec4& vec);
 		void setUniformMat4F(const std::string& name, const mat4& mat);
 
-		//for setting a single uniform but only updating on CPU-side->usefull when loading a material because one can just flush everything over with flushAll()
+		//for setting a single uniform but only updating on CPU-side->usefull when loading a material because one can just flush everything over with flushAll() -> only one glCall
 		void setUniform1b(const std::string& name, const bool bValue);
 		void setUniform1i(const std::string& name, const int bValue);
 		void setUniform1f(const std::string& name, const float bValue);
@@ -66,7 +66,7 @@ namespace Engine
 		void name(const std::string& nameOld, const std::string& nameNew);//save the material that is currently stored with keyVal "nameOld" with the new keyval "nameNew"
 		bool exists(const std::string& name);
 		
-		static const uint8_t getMaxTexSlots() { return s_maxTexSlots; }
+		inline static const uint8_t getMaxTexSlots() { return s_maxTexSlots; }
 	private:
 		std::unordered_map<std::string, Ref_ptr<material>> m_materials;//first is name, second is corresponding material
 		//static members for "materialBindingPoint" management

@@ -21,6 +21,7 @@
 #include "Engine/Rendering/texture.hpp"
 #include "Engine/Rendering/material.hpp"
 #include "Engine/objects/mesh.hpp"
+#include "Engine/Rendering/lights.hpp"
 
 #include "Engine/Rendering/perspCam.hpp"
 //_____________________________

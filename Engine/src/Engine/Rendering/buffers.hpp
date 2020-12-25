@@ -59,6 +59,8 @@ namespace Engine
 
 		virtual void bindToPoint(const uint32_t bindingPoint) = 0;//bind the globalBuffer to a bindingPoint with index "bindingPoint"
 
+		virtual void getData(void* target) = 0;
+
 		virtual void laddB(const uint32_t type, const uint8_t count = 1) = 0;//add type "type" at the layout's back
 		virtual void lAddBoolB(const uint8_t count = 1) = 0;//add a bool to the layout's back
 		virtual void lAddIntB(const uint8_t count = 1) = 0;//add an int to the layout's back

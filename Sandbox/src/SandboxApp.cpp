@@ -1,6 +1,8 @@
 #include <Engine.hpp>
 #include "imgui/imgui.h"
 
+#define PI 3.1415926f
+
 class renderLayer : public Engine::layer
 {
 public:
@@ -22,10 +24,14 @@ public:
 			m_camPos.x -= (m_camSpeed * ts);//multiply by delta time, in order to not tie movement-speeds to framerate
 		else if (Engine::input::isKeyDown(ENG_KEY_RIGHT))
 			m_camPos.x += (m_camSpeed * ts);
-		if (Engine::input::isKeyDown(ENG_KEY_UP))
+		if (Engine::input::isKeyDown(ENG_KEY_SPACE))
 			m_camPos.y += (m_camSpeed * ts);
-		else if (Engine::input::isKeyDown(ENG_KEY_DOWN))
+		else if (Engine::input::isKeyDown(ENG_KEY_CAPS_LOCK))
 			m_camPos.y -= (m_camSpeed * ts);
+		if (Engine::input::isKeyDown(ENG_KEY_UP))
+			m_camPos.z -= (m_camSpeed * ts);
+		else if (Engine::input::isKeyDown(ENG_KEY_DOWN))
+			m_camPos.z += (m_camSpeed * ts);
 		m_cam.setPos({m_camPos.x, m_camPos.y, m_camPos.z});
 		//update rot
 		if (Engine::input::isKeyDown(ENG_KEY_Q))
@@ -47,12 +53,8 @@ public:
 
 		Engine::Renderer::beginScene(m_cam);
 		{
-			/*auto& /*don't copy to avoid unnessecary refcount incrementing*//*quadMat = m_matLib.get("Red_flat");
-			quadMat->bind(1);//always bind materials to slot 1 for now because slot 0 is used for projectionMat and viewMat
-			quadMat->setUniform4fF("u_color", m_quad_color);//when only updating a single uniform use setUniform<type>F() to instantly flush it-> real materials will probably not use this often because they won't be dynamic
-			Engine::Renderer::sub(m_vertexArray, Engine::Renderer::getShaderLib()->get("flatColor"), mat4::transMat(0.0f, 150.0f, 0.0f));*/
 			Engine::Renderer::sub(m_mesh);
-			//Engine::Renderer::sub(m_fungus);
+			Engine::Renderer::sub(m_cube);
 		}
 		Engine::Renderer::endScene();
 
@@ -61,7 +63,17 @@ public:
 
 	void onImGuiRender() override
 	{
-
+		ImGui::Begin("Camera");
+		ImGui::Text("position:");
+		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", m_camPos.x, m_camPos.y, m_camPos.z);
+		ImGui::Text("rotation:");
+		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", m_camRot.x, m_camRot.y, m_camRot.z);
+		ImGui::End();
+		ImGui::Begin("PointLight");
+		ImGui::ColorEdit3("ambient", (float*)&m_lamp->ambient);
+		ImGui::ColorEdit3("diffuse", (float*)&m_lamp->diffuse);
+		ImGui::ColorEdit3("specular", (float*)&m_lamp->specular);
+		ImGui::End();
 	}
 
 	void onEvent(Engine::Event& e) override
@@ -80,7 +92,7 @@ public:
 	{
 		//calculate the verticalFov and initialize the camera
 		float aspectRatioInverse = static_cast<float>(height) / static_cast<float>(width);
-		float vFov = std::atanf(aspectRatioInverse * std::tanf(0.5f * m_hFov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / 3.14159265f);
+		float vFov = std::atanf(aspectRatioInverse * std::tanf(0.5f * m_hFov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / PI);
 		m_cam.set(m_zNear, m_zFar, m_hFov, vFov);
 	}
 
@@ -108,51 +120,76 @@ public:
 		m_vertexArray->addBuffer(indexBuffer);//tie the indexBuffer to the vertexArray
 		*/
 		m_vertexArray = Engine::vertexArray::create();
-		m_vertexArray->load("skull.model");
+		m_vertexArray->load("gun.model");
+		m_vertexArray->unbind();//make sure to unbind the vertexArray before loading the next one, otherwise we would get interfearences with layout & indexBuffer
+		m_cubeGeometry = Engine::vertexArray::create();
+		m_cubeGeometry->load("cube.model");
+		m_cubeGeometry->unbind();
 
-		Engine::Ref_ptr<Engine::shader> flatColorShader = Engine::Renderer::getShaderLib()->load("flatColor.shader");
-		flatColorShader->bindUniformBlock("ViewProjection", 0);//bind the UniformBlock "ViewProjection" to the default bindingPoint for viewProjectionMatrices, which is 0 //do this for each shader, that uses the view and the projection matrix
-		Engine::Ref_ptr<Engine::shader> textureShader = Engine::Renderer::getShaderLib()->load("texture.shader");
-		textureShader->bindUniformBlock("ViewProjection", 0);
+		Engine::Ref_ptr<Engine::shader> lightTexShader = Engine::Renderer::getShaderLib()->load("basicPhong_one_texture.shader");
+		lightTexShader->bindUniformBlock("ViewProjection", 0);
+		lightTexShader->bindUniformBlock("directionalLights", 1);
+		lightTexShader->bindUniformBlock("pointLights", 2);
+		lightTexShader->bindUniformBlock("spotLights", 3);
 
-		m_texture = Engine::texture2d::create("Skull.png");
+		Engine::Ref_ptr<Engine::shader> lightShader = Engine::Renderer::getShaderLib()->load("basicPhong_color.shader");
+		lightShader->bindUniformBlock("ViewProjection", 0);
+		lightShader->bindUniformBlock("directionalLights", 1);
+		lightShader->bindUniformBlock("pointLights", 2);
+		lightShader->bindUniformBlock("spotLights", 3);
+
+		m_texture = Engine::texture2d::create("Cerberus_A.tga");
 
 		{
-			Engine::Ref_ptr<Engine::material> redMat = Engine::material::create(flatColorShader, "Red_flat");
-			redMat->setUniform4f("u_color", 0.8f, 0.1f, 0.1f, 1.0f);//if a material is non-dynamic(which a material is probably gonna be in most cases) we just set it's uniforms when loading it
-			redMat->flushAll();//set all the uniforms on CPU-side first and then flush them over in one gl-call when creating a material
-			m_matLib.add(redMat);
+			Engine::Ref_ptr<Engine::material> lightMat = Engine::material::create(lightShader, "light");
+			lightMat->setUniform4f("amb", 0.2f, 0.025f, 0.025f, 1.0f);
+			lightMat->setUniform4f("diff", 0.7f, 0.0875f, 0.0875f, 1.0f);
+			lightMat->setUniform4f("spec", 0.8f, 0.1f, 0.1f, 1.0f);
+			lightMat->setUniform1f("shininess", 100.0f);
+			lightMat->flushAll();
+			m_matLib.add(lightMat);
 		}
 		{
-			Engine::Ref_ptr<Engine::material> skullMat = Engine::material::create(textureShader, "SkullMat");
-			skullMat->setTexture("u_texture", m_texture);
-			m_matLib.add(skullMat);
+			Engine::Ref_ptr<Engine::material> texLightMat = Engine::material::create(lightTexShader, "texturedLight");
+			texLightMat->setTexture("u_texture", m_texture);
+			m_matLib.add(texLightMat);
 		}
 
-		m_mesh = std::make_shared<Engine::mesh>(m_vertexArray, m_matLib.get("SkullMat"));
-		m_mesh->setPos({ 0.0f, 0.0f, -150.0f });
-		m_mesh->setRot({ 0.0f, 3.1415926f, 0.0f });//rotate 180 degrees(pi in radians)
+		m_mesh = std::make_shared<Engine::mesh>(m_vertexArray, m_matLib.get("texturedLight"));
+		m_mesh->setPos({ 0.0f, 0.0f, -10.0f });
+		m_mesh->setRot({0.0f, 3.1415926f, 0.0f });//rotate 180 degrees(pi in radians)
 
-		//unbind everything
-		m_vertexArray->unbind();
-		//indexBuffer->unbind();
-		//vertexBuffer->unbind();
-		flatColorShader->unbind();
-		textureShader->unbind();
+		m_cube = std::make_shared<Engine::mesh>(m_cubeGeometry, m_matLib.get("light"));
+		m_cube->setScale(0.1f);
+		m_cube->setPos({ -5.0f, 0.0f, -10.0f });
+
+		m_sun = std::make_shared<Engine::directionalLight>(vec3(0.0f, -0.7071067f, 0.7071067f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f));
+		m_sun_uid = Engine::Renderer::addStaticDirLight(m_sun);
+		m_lamp = std::make_shared<Engine::pointLight>(vec3(-2.5f, 5.0f, -10.0f), vec3(0.2f, 0.8f, 0.2f), vec3(0.2f, 0.8f, 0.2f), vec3(0.1f, 0.9f, 0.1f), 1.0f, 0.1f, 0.1f);
+		m_lamp_uid = Engine::Renderer::addDynamicPointLight(m_lamp);
+		m_spotLight = std::make_shared<Engine::spotLight>(vec3(-2.5f, 0.0f, -10.0f), vec3(-1.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), cosf(15.0f * (PI / 180.0f)));
+		m_spotLight_uid = Engine::Renderer::addDynamicSpotLight(m_spotLight);
+
 	}
 private:
 	//temporary stuff
 	Engine::materialLib m_matLib;
-	//Engine::Ref_ptr<Engine::mesh> m_fungus;
 	Engine::Ref_ptr<Engine::mesh> m_mesh;
+	Engine::Ref_ptr<Engine::mesh> m_cube;
 	Engine::Ref_ptr<Engine::vertexArray> m_vertexArray;
+	Engine::Ref_ptr<Engine::vertexArray> m_cubeGeometry;
 	Engine::Ref_ptr<Engine::texture2d> m_texture;
-	vec4 m_quad_color = { 0.1f, 0.5f, 0.8f, 1.0f };
+	Engine::Ref_ptr<Engine::directionalLight> m_sun;
+	uint32_t m_sun_uid;
+	Engine::Ref_ptr<Engine::pointLight> m_lamp;
+	uint32_t m_lamp_uid;
+	Engine::Ref_ptr<Engine::spotLight> m_spotLight;
+	uint32_t m_spotLight_uid;
 	//end temporary stuff
 
 	Engine::perspectiveCamera m_cam;
 	vec3 m_camPos;
-	float m_camSpeed = 120.0f;
+	float m_camSpeed = 12.0f;
 	vec3 m_camRot;
 	float m_camRotSpeed = 60 * 0.0174533f;//1 degree in radians
 	float m_zNear, m_zFar;

@@ -151,6 +151,7 @@
     <ClInclude Include="src\Engine\Log.hpp" />
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp" />
     <ClInclude Include="src\Engine\Rendering\buffers.hpp" />
+    <ClInclude Include="src\Engine\Rendering\lights.hpp" />
     <ClInclude Include="src\Engine\Rendering\material.hpp" />
     <ClInclude Include="src\Engine\Rendering\perspCam.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
@@ -194,6 +195,7 @@
     <ClCompile Include="src\Engine\Log.cpp" />
     <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp" />
     <ClCompile Include="src\Engine\Rendering\buffers.cpp" />
+    <ClCompile Include="src\Engine\Rendering\lights.cpp" />
     <ClCompile Include="src\Engine\Rendering\material.cpp" />
     <ClCompile Include="src\Engine\Rendering\perspCam.cpp" />
     <ClCompile Include="src\Engine\Rendering\renderCommand.cpp" />

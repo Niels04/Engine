@@ -87,6 +87,8 @@ namespace Engine
 
 		inline virtual void bindToPoint(const uint32_t bindingPoint) override;
 
+		virtual void getData(void *target) override;
+
 		inline virtual void laddB(const uint32_t type, const uint8_t count = 1) override;
 		inline virtual void lAddBoolB(const uint8_t count = 1) override;
 		inline virtual void lAddIntB(const uint8_t count = 1) override;

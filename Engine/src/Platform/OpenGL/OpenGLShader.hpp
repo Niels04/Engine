@@ -23,13 +23,13 @@ namespace Engine
 			void bind() const override;
 			void unbind() const override;
 
-			virtual const std::string& getName() const override { return m_name; }
-			virtual void setName(const std::string& nameNew) override { m_name = nameNew; }
+			inline virtual const std::string& getName() const override { return m_name; }
+			inline virtual void setName(const std::string& nameNew) override { m_name = nameNew; }
 
-			virtual const std::unordered_map<std::string, uniformProps>& getMaterialUniforms() const override { return m_materialUniforms; }//for each materialUniform that can get set, this get's an entry with first being the uniformName and second being its offset on the cpu-buffer
-			virtual const uint16_t getMaterialUniformsSize() const override { return m_materialUniformsSize; }
-			virtual const std::vector<std::string>& getTextures() const override { return m_textures; }
-			virtual const bool hasTextures() const override { return m_textured; }
+			inline virtual const std::unordered_map<std::string, uniformProps>& getMaterialUniforms() const override { return m_materialUniforms; }//for each materialUniform that can get set, this get's an entry with first being the uniformName and second being its offset on the cpu-buffer
+			inline virtual const uint16_t getMaterialUniformsSize() const override { return m_materialUniformsSize; }
+			inline virtual const std::vector<std::string>& getTextures() const override { return m_textures; }
+			inline virtual const bool hasTextures() const override { return m_textured; }
 
 			//vec3_vt<bool, GLint, GLenum> saveBinary(std::string_view name) const;//commented that out for now, gonna implement that later
 

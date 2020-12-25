@@ -54,6 +54,7 @@ namespace Engine
     {
         //add lots more cases here
         if (type == "mat4f") { return  GL_FLOAT_MAT4; }
+        if (type == "float") { return GL_FLOAT; }
         if (type == "sampler2d") { return GL_INT; }
         if (type == "vec4f") { return GL_FLOAT_VEC4; }
 

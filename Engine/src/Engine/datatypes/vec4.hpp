@@ -9,6 +9,7 @@ struct vec4
 	real x, y, z, w;
 	vec4() { x = 0.0; y = 0.0; z = 0.0; w = 0.0; }
 	vec4(const real inX, const real inY, const real inZ, const real inW) { x = inX; y = inY; z = inZ; w = inW; }//should almost never be used
+	vec4(const vec3& vec, const real inW) { x = vec.x; y = vec.y; z = vec.z; w = inW; }
 	vec4(const dir& dir) { x = dir.m_data.x; y = dir.m_data.y; z = dir.m_data.z; w = 0.0; }//initialize with vector(direction) -> set w to 0
 	vec4(const point& point) { x = point.m_data.x; y = point.m_data.y; z = point.m_data.z; w = 1.0; }
 	//operators

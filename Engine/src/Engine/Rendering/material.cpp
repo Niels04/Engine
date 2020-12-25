@@ -23,7 +23,7 @@ namespace Engine
 				m_globalBuffer->lAdd(it.second.type, it.second.offset);
 			}
 		}
-		if (m_shaderRef->getTextures().size())//if the shader has any textures
+		if (m_shaderRef->hasTextures())//if the shader has any textures
 		{
 			const std::vector<std::string>& textures = m_shaderRef->getTextures();
 			ENG_CORE_ASSERT(textures.size() <= materialLib::getMaxTexSlots(), "The shader expects more textures than this graphics card supports slots.");
@@ -44,7 +44,7 @@ namespace Engine
 	{
 		//materialUniforms in the "material"-block
 		m_shaderRef->bind();
-		if (m_shaderRef->getMaterialUniformsSize())
+		if (m_shaderRef->getMaterialUniformsSize())//if there even are uniforms to bind(there may be a material, which is just composed of textures)
 		{
 			m_shaderRef->bindUniformBlock("material", slot);
 			m_globalBuffer->bindToPoint(slot);
@@ -52,15 +52,11 @@ namespace Engine
 		}
 		//textures
 		uint8_t texSlot = 0;
-		if (m_shaderRef->hasTextures())
+		for (const auto& it : m_shaderRef->getTextures())//range-based for-loop should work with function that returns reference to vector(tested it)
 		{
-			const std::vector<std::string>& temp = m_shaderRef->getTextures();
-			for (const std::string& it : temp)
-			{
-				m_textures[it]->bind(texSlot);
-				m_shaderRef->setUniform1i(it, texSlot);
-				texSlot++;
-			}
+			m_textures[it]->bind(texSlot);
+			m_shaderRef->setUniform1i(it, texSlot);
+			texSlot++;
 		}
 	}
 
@@ -71,7 +67,7 @@ namespace Engine
 		m_globalBuffer->bind();
 		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, (int*)(&bValue));//this may not work because we cast a *bool to an *int
 		m_globalBuffer->unbind();
-		*((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = (int)bValue;
+		*(int*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = (int)bValue;
 	}
 	void material::setUniform1iF(const std::string& name, const int iValue)
 	{
@@ -80,7 +76,7 @@ namespace Engine
 		m_globalBuffer->bind();
 		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, &iValue);
 		m_globalBuffer->unbind();
-		*((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = iValue;
+		*(int*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = iValue;
 	}
 	void material::setUniform1fF(const std::string& name, const float fValue)
 	{
@@ -89,7 +85,7 @@ namespace Engine
 		m_globalBuffer->bind();
 		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, &fValue);
 		m_globalBuffer->unbind();
-		*((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = fValue;
+		*(float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = fValue;
 	}
 	void material::setUniform2fF(const std::string& name, const float v0, const float v1)
 	{
@@ -158,19 +154,19 @@ namespace Engine
 	{
 		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		*((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = (int)bValue;
+		*(int*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = (int)bValue;
 	}
 	void material::setUniform1i(const std::string& name, const int iValue)
 	{
 		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		*((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = iValue;
+		*(int*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = iValue;
 	}
 	void material::setUniform1f(const std::string& name, const float fValue)
 	{
 		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		*((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = fValue;
+		*(float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = fValue;
 	}
 	void material::setUniform2f(const std::string& name, const float v0, const float v1)
 	{

@@ -12,6 +12,7 @@
 
 layout(location = 0) in vec3 a_pos;
 layout(location = 1) in vec2 a_texCoord;
+layout(location = 2) in vec3 a_normal;
 
 layout(std140) uniform ViewProjection
 {

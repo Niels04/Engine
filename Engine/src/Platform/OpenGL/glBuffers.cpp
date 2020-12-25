@@ -74,6 +74,16 @@ namespace Engine
     }
 
     //:::::::GLOBAL::BUFFER::::(Uniform_Buffer)::::
+    void GLglobalBuffer::getData(void* target)
+    {
+        bind();
+        void* temp = malloc(m_size);
+        GLCALL(glGetBufferSubData(GL_UNIFORM_BUFFER, 0, m_size, temp));
+        unbind();
+        memcpy(target, temp, m_size);
+        free(temp);
+    }
+
     GLglobalBuffer::GLglobalBuffer(const uint16_t size, const uint32_t usage)
         : m_size(size)
     {
@@ -109,10 +119,10 @@ namespace Engine
         m_stack += uniformBufferElement::getTypeSize(GL_BOOL) * count;
         _ASSERT(m_stack <= m_size);
     }
-    void GLglobalBuffer::lAddIntB(const uint8_t count)
+    void GLglobalBuffer::lAddIntB(const uint8_t count)//temporary!!!
     {
         m_elements.push_back({ GL_INT, count, m_stack });
-        m_stack += uniformBufferElement::getTypeSize(GL_INT) * count;
+        m_stack += uniformBufferElement::getTypeSize(GL_INT) * 4 * count;
         _ASSERT(m_stack <= m_size);
     }
     void GLglobalBuffer::lAddFloatB(const uint8_t count)
@@ -139,6 +149,7 @@ namespace Engine
         m_stack += uniformBufferElement::getTypeSize(GL_FLOAT_MAT4) * count;
         _ASSERT(m_stack <= m_size);
     }
+    ////////////////////////////////////////////////////////////////////////
     void GLglobalBuffer::lAdd(const uint32_t type, const uint16_t offset, const uint8_t count)
     {
         m_elements.push_back({ type, count, offset });

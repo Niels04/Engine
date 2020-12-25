@@ -6,13 +6,13 @@
 
 namespace Engine
 {
-	Ref_ptr<texture2d> texture2d::create(const std::string& path)
+	Ref_ptr<texture2d> texture2d::create(const std::string& path, const uint32_t filterMin, const uint32_t filterMag)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return std::make_shared<GLtexture2d>(path);
+			return std::make_shared<GLtexture2d>(path, filterMin, filterMag);
 		}break;
 		case RendererAPI::API::NONE:
 		{

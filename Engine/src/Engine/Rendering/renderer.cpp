@@ -15,7 +15,7 @@ namespace Engine
 		s_sceneData->init();//setup stuff like the globalBuffer for the view- and projection matrices
 	}
 
-	void Renderer::beginScene(perspectiveCamera& cam)//submit camera when beginning scene
+	void Renderer::beginScene(const perspectiveCamera& cam)
 	{
 		s_sceneData->viewMat = cam.getViewMat();
 		s_sceneData->projMat = cam.getProjMat();
@@ -24,6 +24,8 @@ namespace Engine
 		s_sceneData->viewProjBuffer->updateElement(0, &mat4::transposed(s_sceneData->viewMat));//viewMat is at index 0
 		s_sceneData->viewProjBuffer->updateElement(1, &mat4::transposed(s_sceneData->projMat));//projMat is at index 1
 		s_sceneData->viewProjBuffer->unbind();
+		//update dynamic lights
+		s_sceneData->lightManager.updateLights();
 	}
 
 	void Renderer::endScene()
@@ -45,7 +47,7 @@ namespace Engine
 	{
 		//there will be some kind of sorting algorythm, but for now just draw everything, that gets submited
 		Ref_ptr<material> mat = Mesh->getMaterial();
-		mat->bind(1);//always bind materials to slot 1 for now because slot 0 is always used for viewProjMats
+		mat->bind(10);//start binding materials at slot 10 and reserve all slots below that for matrices and lights
 		mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat());//set the modelMatrix in the shader(get it from the mesh)
 		Ref_ptr<vertexArray> geometry = Mesh->getVa();
 		geometry->bind();
@@ -55,5 +57,17 @@ namespace Engine
 	void Renderer::Flush()
 	{
 
+	}
+
+	void Renderer::sceneData::init()
+	{
+		//initialize buffer for viewProjection
+		viewProjBuffer = globalBuffer::create(2 * sizeof(mat4), DYNAMIC_DRAW);
+		viewProjBuffer->lAddMat4B();
+		viewProjBuffer->lAddMat4B();
+		viewProjBuffer->bindToPoint(0);//binding point for viewProjectionBuffer always is 0
+		viewProjBuffer->unbind();
+		//initialize lights
+		lightManager.init();
 	}
 }

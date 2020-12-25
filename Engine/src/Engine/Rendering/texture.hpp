@@ -4,6 +4,10 @@
 
 #include <string>
 
+//forked from OpenGL
+#define FILTER_NEAREST 0x2600
+#define FILTER_LINEAR 0x2601
+
 namespace Engine
 {
 	class texture//purely virtual, represents any kind of texture
@@ -22,6 +26,6 @@ namespace Engine
 	{
 	public:
 		virtual ~texture2d() = default;
-		static Ref_ptr<texture2d> create(const std::string& path);
+		static Ref_ptr<texture2d> create(const std::string& path, const uint32_t filterMin = FILTER_LINEAR, const uint32_t filterMag = FILTER_LINEAR);
 	};
 }
