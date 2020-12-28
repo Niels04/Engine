@@ -1,5 +1,5 @@
 #matUniformBlock
-#size 52
+#size 64
 #var vec4f 'amb'
 #var vec4f 'diff'
 #var vec4f 'spec'

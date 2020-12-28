@@ -75,6 +75,9 @@
     <ClInclude Include="src\Engine\Rendering\buffers.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\lights.hpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\Rendering\material.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
@@ -180,7 +183,6 @@
     <ClInclude Include="vendor\stb_image\stb_image.hpp">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\lights.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -199,6 +201,9 @@
       <Filter>src\Engine\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\buffers.cpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\lights.cpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\material.cpp">
@@ -273,6 +278,5 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\lights.cpp" />
   </ItemGroup>
 </Project>

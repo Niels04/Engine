@@ -46,10 +46,6 @@ namespace Engine
 	class globalBuffer//corresponds to uniformBuffers in OpenGL
 	{
 	public:
-		//how this works:
-		//first only create the buffer without even specifying anything other than usage
-		//then use add-functions to add different elements to the buffer(get stored on cpu-side as a vector of uniformBufferElements, which contain type, count and a void*)
-		//make a submit-fuction that calculates memory layout and stuff like that and actually calls glBufferData
 		static Ref_ptr<globalBuffer> create(const uint16_t size, const uint32_t usage);//create and bind the buffer
 		static Scope_ptr<globalBuffer> createUnique(const uint16_t size, const uint32_t usage);//same
 		virtual ~globalBuffer() {  }
@@ -79,6 +75,7 @@ namespace Engine
 
 		virtual void updateElement(const uint8_t index, const void* val) const = 0;//update one of the buffer's element's //index corresponds to the order in which they got added to the layout
 		virtual void updateAll(const void* val) const = 0;
+		virtual void updateFromTo(const uint8_t indexBegin, const uint8_t indexEnd, const void* val) const = 0;
 
 		inline virtual uint16_t getSize() const = 0;
 	};

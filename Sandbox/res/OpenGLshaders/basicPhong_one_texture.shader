@@ -48,28 +48,28 @@ void main()
 
 struct directionalLight
 {
-	vec4 direction;
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
+	vec3 direction;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
 };
 
 struct pointLight
 {
-	vec4 position;
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
+	vec3 position;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
 	vec3 attenuationFactors;
 };
 
 struct spotLight
 {
-	vec4 position;
-	vec4 spotDirection;
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
+	vec3 position;
+	vec3 spotDirection;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
 	float cutOff;//cosine of the cutOffAngle
 };
 
@@ -104,43 +104,43 @@ vec3 calcDirLight(directionalLight light, vec3 normal, vec3 viewDir, vec3 texCol
 {
 	//light.direction must be normalized!!!
 	//ambient
-	vec3 ambient = light.ambient.xyz * (texColor * AMB_coefficient);
+	vec3 ambient = light.ambient * (texColor * AMB_coefficient);
 	//diffuse
-	vec3 diffuse = light.diffuse.xyz * texColor * max(0.0f, dot(-vec3(0.0f, -0.7071067f, 0.7071067f), normal));
+	vec3 diffuse = light.diffuse * texColor * max(0.0f, dot(-light.direction, normal));
 	//specular
-	vec3 specular = vec3(1.0f, 1.0f, 1.0f) * texColor * pow(max(0.0f, dot(reflect(vec3(0.0f, -0.7071067f, 0.7071067f), normal), viewDir)), shininess) * SPEC_coefficient;//when using"reflect()" put in the vector from the lightSource towards the fragment
+	vec3 specular = light.specular * texColor * pow(max(0.0f, dot(reflect(light.direction, normal), viewDir)), shininess) * SPEC_coefficient;//when using"reflect()" put in the vector from the lightSource towards the fragment
 	return (ambient + diffuse + specular);
 }
 
 vec3 calcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 texColor)
 {
-	float distance = length(fragPos - light.position.xyz);
+	float distance = length(fragPos - light.position);
 	float attenuation = 1.0f / (light.attenuationFactors.x + light.attenuationFactors.y * distance + light.attenuationFactors.z * (distance * distance));//Dämpfung bei weiterer Entfernung
-	vec3 lightDir = normalize(light.position.xyz - fragPos);//direction from the fragment to the light
+	vec3 lightDir = normalize(light.position - fragPos);//direction from the fragment to the light
 	//ambient
-	vec3 ambient = light.ambient.xyz * texColor * attenuation * AMB_coefficient;
+	vec3 ambient = light.ambient * texColor * attenuation * AMB_coefficient;
 	//diffuse
-	vec3 diffuse = light.diffuse.xyz * texColor * max(0.0f, dot(lightDir, normal)) * attenuation;
+	vec3 diffuse = light.diffuse * texColor * max(0.0f, dot(lightDir, normal)) * attenuation;
 	//specular
-	vec3 specular = light.specular.xyz * texColor * pow(max(0.0f, dot(reflect(-lightDir, normal), viewDir)), shininess) * attenuation * SPEC_coefficient;
+	vec3 specular = light.specular * texColor * pow(max(0.0f, dot(reflect(-lightDir, normal), viewDir)), shininess) * attenuation * SPEC_coefficient;
 	return (ambient + diffuse + specular);
 }
 
 vec3 calcSpotLight(spotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 texColor)//maybe also add attenuation calculation to spotlights in order to have flashLights that fade over distance
 {
-	vec3 lightDir = normalize(light.position.xyz - fragPos);//normalized vector from the fragment's position towards the light
-	float angle = dot(-light.spotDirection.xyz , lightDir);//cosine of the angle betwenn the vector from fragment to light and the lights spotDirection vector
+	vec3 lightDir = normalize(light.position - fragPos);//normalized vector from the fragment's position towards the light
+	float angle = dot(-light.spotDirection , lightDir);//cosine of the angle betwenn the vector from fragment to light and the lights spotDirection vector
 	vec3 diffuse = vec3(0.0f);
 	vec3 specular = vec3(0.0f);
 	if (angle > light.cutOff)//cuz the cosine get's bigger when the angle get's smaller(so we actually test if the angle is smaller)
 	{
 		//diffuse
-		diffuse = light.diffuse.xyz * texColor * max(0.0f, dot(lightDir, normal));
+		diffuse = light.diffuse * texColor * max(0.0f, dot(lightDir, normal));
 		//specular
-		specular = light.specular.xyz * texColor * pow(max(0.0f, dot(reflect(-lightDir, normal), viewDir)), shininess) * SPEC_coefficient;
+		specular = light.specular * texColor * pow(max(0.0f, dot(reflect(-lightDir, normal), viewDir)), shininess) * SPEC_coefficient;
 	}
 	//ambient-> always add the ambient component
-	vec3 ambient = light.ambient.xyz * texColor * AMB_coefficient;
+	vec3 ambient = light.ambient * texColor * AMB_coefficient;
 	return (ambient + diffuse + specular);
 }
 

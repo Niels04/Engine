@@ -2,14 +2,25 @@
 
 #include "lights.hpp"
 
+#define DirLightIndexToElementIndex(x) x * 4//with 4 being the number of elements that make up a directional light
+#define PointLightIndexToElementIndex(x) x * 5
+#define SpotLightIndexToElementIndex(x) x * 6
+
+#define staticDirLightElementCount DirLightIndexToElementIndex(m_staticDirLights.size())
+#define dynamicDirLightElementCount DirLightIndexToElementIndex(m_dynamicDirLights.size())
+#define staticPointLightElementCount PointLightIndexToElementIndex(m_staticPointLights.size())
+#define dynamicPointLightElementCount PointLightIndexToElementIndex(m_dynamicPointLights.size())
+#define staticSpotLightElementCount SpotLightIndexToElementIndex(m_staticSpotLights.size())
+#define dynamicSpotLightElementCount SpotLightIndexToElementIndex(m_dynamicSpotLights.size())
+
 namespace Engine
 {
 	void LightManager::init()
 	{
 		const int32_t initialLightCount = 0;//by default there is no light source
-		directionalLightBuffer = globalBuffer::create(sizeof(int)  * 4/*x4 because of padding*/ + (MAX_LIGHTS_PER_TYPE * sizeof(directionalLight)), STATIC_DRAW);//add an int at the beginning for the count
+		directionalLightBuffer = globalBuffer::create(sizeof(int)  * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(directionalLight), STATIC_DRAW);//add an int at the beginning for the count
 		directionalLightBuffer->lAddIntB();//integer for count
-		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)//a rather laborious way of specifying a layout -> maybe add some function to add a user-defined datatype to the layout
+		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
 		{
 			directionalLightBuffer->lAddVec4B();
 			directionalLightBuffer->lAddVec4B();
@@ -19,7 +30,7 @@ namespace Engine
 		directionalLightBuffer->bindToPoint(1);
 		directionalLightBuffer->updateElement(0, &initialLightCount);
 		directionalLightBuffer->unbind();
-		pointLightBuffer = globalBuffer::create(sizeof(int) * 4/*x4 because of padding*/ + (MAX_LIGHTS_PER_TYPE * (sizeof(pointLight) + 4)), DYNAMIC_DRAW);
+		pointLightBuffer = globalBuffer::create(sizeof(int) * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(pointLight), DYNAMIC_DRAW);
 		pointLightBuffer->lAddIntB();//integer for count
 		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
 		{
@@ -48,12 +59,12 @@ namespace Engine
 		spotLightBuffer->unbind();
 	}
 
-	void LightManager::rmStaticDirLight(const uint32_t uid)
+	void LightManager::rmStaticDirLight(directionalLight* toRemove)
 	{
 		auto it = m_staticDirLights.begin();
 		for (; it != m_staticDirLights.end(); it++)
 		{
-			if (it->uid == uid)
+			if (it->uid == toRemove->uid)
 			{
 				it = m_staticDirLights.erase(it);
 				goto ELEMENT_FOUND;
@@ -62,22 +73,18 @@ namespace Engine
 		//output some error
 		return;
 	ELEMENT_FOUND:
-		for (auto i = it; i != m_staticDirLights.end(); i++)
-		{
-			i->index--;
-		}
-		//::::::UPDATE ALL STATIC & DYNAMIC ELEMENTS
 		updateStaticDirLights(it);
 		updateDynamicDirLights();
+		toRemove = NULL;
 		return;
 	}
 
-	void LightManager::rmStaticPointLight(const uint32_t uid)
+	void LightManager::rmStaticPointLight(pointLight* toRemove)
 	{
 		auto it = m_staticPointLights.begin();
 		for (; it != m_staticPointLights.end(); it++)
 		{
-			if (it->uid == uid)
+			if (it->uid == toRemove->uid)
 			{
 				it = m_staticPointLights.erase(it);
 				goto ELEMENT_FOUND;
@@ -86,20 +93,19 @@ namespace Engine
 		//output some error
 		return;
 	ELEMENT_FOUND:
-		for (; it != m_staticPointLights.end(); it++)
-		{
-			it->index--;
-		}
 		//::::::UPDATE ALL STATIC & DYNAMIC ELEMENTS
+		updateStaticPointLights(it);
+		updateDynamicPointLights();
+		toRemove = NULL;
 		return;
 	}
 
-	void LightManager::rmStaticSpotLight(const uint32_t uid)
+	void LightManager::rmStaticSpotLight(spotLight* toRemove)
 	{
 		auto it = m_staticSpotLights.begin();
 		for (; it != m_staticSpotLights.end(); it++)
 		{
-			if (it->uid == uid)
+			if (it->uid == toRemove->uid)
 			{
 				it = m_staticSpotLights.erase(it);
 				goto ELEMENT_FOUND;
@@ -108,20 +114,19 @@ namespace Engine
 		//output some error
 		return;
 	ELEMENT_FOUND:
-		for (; it != m_staticSpotLights.end(); it++)
-		{
-			it->index--;
-		}
 		//::::::UPDATE ALL STATIC & DYNAMIC ELEMENTS
+		updateStaticSpotLights(it);
+		updateDynamicSpotLights();
+		toRemove = NULL;
 		return;
 	}
 
-	void LightManager::rmDynamicDirLight(const uint32_t uid)
+	void LightManager::rmDynamicDirLight(directionalLight* toRemove)
 	{
 		auto it = m_dynamicDirLights.begin();
 		for (; it != m_dynamicDirLights.end(); it++)
 		{
-			if (it->uid == uid)
+			if (it->uid == toRemove->uid)
 			{
 				it = m_dynamicDirLights.erase(it);
 				goto ELEMENT_FOUND;
@@ -130,21 +135,18 @@ namespace Engine
 		//output some error
 		return;
 	ELEMENT_FOUND:
-		for (auto i = it; i != m_dynamicDirLights.end(); i++)
-		{
-			i->index--;
-		}
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
 		updateDynamicDirLights(it);
+		toRemove = NULL;
 		return;
 	}
 
-	void LightManager::rmDynamicPointLight(const uint32_t uid)
+	void LightManager::rmDynamicPointLight(pointLight* toRemove)
 	{
 		auto it = m_dynamicPointLights.begin();
 		for (; it != m_dynamicPointLights.end(); it++)
 		{
-			if (it->uid == uid)
+			if (it->uid == toRemove->uid)
 			{
 				it = m_dynamicPointLights.erase(it);
 				goto ELEMENT_FOUND;
@@ -153,20 +155,18 @@ namespace Engine
 		//output some error
 		return;
 	ELEMENT_FOUND:
-		for (; it != m_dynamicPointLights.end(); it++)
-		{
-			it->index--;
-		}
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
+		updateDynamicPointLights(it);
+		toRemove = NULL;
 		return;
 	}
 
-	void LightManager::rmDynamicSpotLight(const uint32_t uid)
+	void LightManager::rmDynamicSpotLight(spotLight* toRemove)
 	{
 		auto it = m_dynamicSpotLights.begin();
 		for (; it != m_dynamicSpotLights.end(); it++)
 		{
-			if (it->uid == uid)
+			if (it->uid == toRemove->uid)
 			{
 				it = m_dynamicSpotLights.erase(it);
 				goto ELEMENT_FOUND;
@@ -175,11 +175,9 @@ namespace Engine
 		//output some error
 		return;
 	ELEMENT_FOUND:
-		for (; it != m_dynamicSpotLights.end(); it++)
-		{
-			it->index--;
-		}
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
+		updateDynamicSpotLights(it);
+		toRemove = NULL;
 		return;
 	}
 
@@ -188,56 +186,40 @@ namespace Engine
 		directionalLightBuffer->bind();
 		if (Static)
 		{
-			directionalLightBuffer->updateElement(1 + m_staticDirLights.back().index * 4 + 0, &m_staticDirLights.back().light->direction);//1+ because the first index always is the number of lights per type
-			directionalLightBuffer->updateElement(1 + m_staticDirLights.back().index * 4 + 1, &m_staticDirLights.back().light->ambient);
-			directionalLightBuffer->updateElement(1 + m_staticDirLights.back().index * 4 + 2, &m_staticDirLights.back().light->diffuse);
-			directionalLightBuffer->updateElement(1 + m_staticDirLights.back().index * 4 + 3, &m_staticDirLights.back().light->specular);
+			directionalLightBuffer->updateFromTo((1 + staticDirLightElementCount) - DirLightIndexToElementIndex(1)/*first element of the last static dirLight*/,
+				staticDirLightElementCount/*last element of the last static dirLight <- don't add 1 because one would also have to subract 1 when getting last index from elementCount*/,
+				&m_staticDirLights.back());//1+ because the first index always is the number of lights per type
 			directionalLightBuffer->unbind();
 			return;
 		}
-		directionalLightBuffer->updateElement(1 + m_dynamicDirLights.back().index * 4 + m_staticDirLights.size() * 4 + 0, &m_dynamicDirLights.back().light->direction);//1+ because the first index always is the number of lights per type
-		directionalLightBuffer->updateElement(1 + m_dynamicDirLights.back().index * 4 + m_staticDirLights.size() * 4 + 1, &m_dynamicDirLights.back().light->ambient);
-		directionalLightBuffer->updateElement(1 + m_dynamicDirLights.back().index * 4 + m_staticDirLights.size() * 4 + 2, &m_dynamicDirLights.back().light->diffuse);
-		directionalLightBuffer->updateElement(1 + m_dynamicDirLights.back().index * 4 + m_staticDirLights.size() * 4 + 3, &m_dynamicDirLights.back().light->specular);
+		directionalLightBuffer->updateFromTo((1 + staticDirLightElementCount + dynamicDirLightElementCount) - DirLightIndexToElementIndex(1),
+			staticDirLightElementCount + dynamicDirLightElementCount, &m_dynamicDirLights.back());
 		directionalLightBuffer->unbind();
 	}
 
 	void LightManager::updateDynamicDirLights()
 	{
+		if (m_dynamicDirLights.size() == 0)
+			return;
 		directionalLightBuffer->bind();
-		for (auto it = m_dynamicDirLights.begin(); it != m_dynamicDirLights.end(); it++)
-		{
-			directionalLightBuffer->updateElement(1 + it->index * 4 + m_staticDirLights.size() * 4 + 0, &it->light->direction);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + m_staticDirLights.size() * 4 + 1, &it->light->ambient);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + m_staticDirLights.size() * 4 + 2, &it->light->diffuse);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + m_staticDirLights.size() * 4 + 3, &it->light->specular);
-		}
+		directionalLightBuffer->updateFromTo(1 + staticDirLightElementCount, staticDirLightElementCount + dynamicDirLightElementCount, &m_dynamicDirLights.front());
 		directionalLightBuffer->unbind();
 	}
 
-	void LightManager::updateStaticDirLights(std::list<DirLightElement>::iterator it)
+	void LightManager::updateStaticDirLights(std::vector<directionalLight>::iterator it)
 	{
+		uint8_t index = it - m_staticDirLights.begin();
 		directionalLightBuffer->bind();
-		for (; it != m_staticDirLights.end(); it++)
-		{
-			directionalLightBuffer->updateElement(1 + it->index * 4 + 0, &it->light->direction);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + 1, &it->light->ambient);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + 2, &it->light->diffuse);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + 3, &it->light->diffuse);
-		}
+		directionalLightBuffer->updateFromTo(1 + DirLightIndexToElementIndex(index), staticDirLightElementCount, &m_staticDirLights[index]);
 		directionalLightBuffer->unbind();
 	}
 
-	void LightManager::updateDynamicDirLights(std::list<DirLightElement>::iterator it)
+	void LightManager::updateDynamicDirLights(std::vector<directionalLight>::iterator it)
 	{
+		uint8_t index = it - m_dynamicDirLights.begin();
 		directionalLightBuffer->bind();
-		for (; it != m_dynamicDirLights.end(); it++)
-		{
-			directionalLightBuffer->updateElement(1 + it->index * 4 + m_staticDirLights.size() * 4 + 0, &it->light->direction);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + m_staticDirLights.size() * 4 + 1, &it->light->ambient);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + m_staticDirLights.size() * 4 + 2, &it->light->diffuse);
-			directionalLightBuffer->updateElement(1 + it->index * 4 + m_staticDirLights.size() * 4 + 3, &it->light->diffuse);
-		}
+		directionalLightBuffer->updateFromTo(1 + staticDirLightElementCount + DirLightIndexToElementIndex(index), staticDirLightElementCount + dynamicDirLightElementCount,
+			&m_dynamicDirLights[index]);
 		directionalLightBuffer->unbind();
 	}
 	//pointLight
@@ -246,61 +228,39 @@ namespace Engine
 		pointLightBuffer->bind();
 		if (Static)
 		{
-			pointLightBuffer->updateElement(1 + m_staticPointLights.back().index + 0, &m_staticPointLights.back().light->position);//1+ because the first index always is the number of lights per type
-			pointLightBuffer->updateElement(1 + m_staticPointLights.back().index + 1, &m_staticPointLights.back().light->ambient);
-			pointLightBuffer->updateElement(1 + m_staticPointLights.back().index + 2, &m_staticPointLights.back().light->diffuse);
-			pointLightBuffer->updateElement(1 + m_staticPointLights.back().index + 3, &m_staticPointLights.back().light->specular);
-			pointLightBuffer->updateElement(1 + m_staticPointLights.back().index + 4, &m_staticPointLights.back().light->attenuation);
+			pointLightBuffer->updateFromTo((1 + staticPointLightElementCount) - PointLightIndexToElementIndex(1),
+				staticPointLightElementCount, &m_staticPointLights.back());
 			pointLightBuffer->unbind();
 			return;
 		}
-		pointLightBuffer->updateElement(1 + m_dynamicPointLights.back().index + 0, &m_dynamicPointLights.back().light->position);//1+ because the first index always is the number of lights per type
-		pointLightBuffer->updateElement(1 + m_dynamicPointLights.back().index + 1, &m_dynamicPointLights.back().light->ambient);
-		pointLightBuffer->updateElement(1 + m_dynamicPointLights.back().index + 2, &m_dynamicPointLights.back().light->diffuse);
-		pointLightBuffer->updateElement(1 + m_dynamicPointLights.back().index + 3, &m_dynamicPointLights.back().light->specular);
-		pointLightBuffer->updateElement(1 + m_dynamicPointLights.back().index + 4, &m_dynamicPointLights.back().light->attenuation);
+		pointLightBuffer->updateFromTo((1 + staticPointLightElementCount + dynamicPointLightElementCount) - PointLightIndexToElementIndex(1),
+			staticPointLightElementCount + dynamicPointLightElementCount, &m_dynamicPointLights.back());
 		pointLightBuffer->unbind();
 	}
 
 	void LightManager::updateDynamicPointLights()
 	{
+		if (m_dynamicPointLights.size() == 0)
+			return;
 		pointLightBuffer->bind();
-		for (auto it = m_dynamicPointLights.begin(); it != m_dynamicPointLights.end(); it++)
-		{
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 0, &it->light->position);
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 1, &it->light->ambient);
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 2, &it->light->diffuse);
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 3, &it->light->specular);
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 4, &it->light->attenuation);
-		}
+		pointLightBuffer->updateFromTo(1 + staticPointLightElementCount, staticPointLightElementCount + dynamicPointLightElementCount, &m_dynamicPointLights.front());
 		pointLightBuffer->unbind();
 	}
 
-	void LightManager::updateStaticPointLights(std::list<PointLightElement>::iterator it)
+	void LightManager::updateStaticPointLights(std::vector<pointLight>::iterator it)
 	{
+		uint8_t index = it - m_staticPointLights.begin();
 		pointLightBuffer->bind();
-		for (; it != m_staticPointLights.end(); it++)
-		{
-			pointLightBuffer->updateElement(1 + it->index + 0, &it->light->position);
-			pointLightBuffer->updateElement(1 + it->index + 1, &it->light->ambient);
-			pointLightBuffer->updateElement(1 + it->index + 2, &it->light->diffuse);
-			pointLightBuffer->updateElement(1 + it->index + 3, &it->light->specular);
-			pointLightBuffer->updateElement(1 + it->index + 4, &it->light->attenuation);
-		}
+		pointLightBuffer->updateFromTo(1 + PointLightIndexToElementIndex(index), staticPointLightElementCount, &m_staticPointLights[index]);
 		pointLightBuffer->unbind();
 	}
 
-	void LightManager::updateDynamicPointLights(std::list<PointLightElement>::iterator it)
+	void LightManager::updateDynamicPointLights(std::vector<pointLight>::iterator it)
 	{
+		uint8_t index = it - m_dynamicPointLights.begin();
 		pointLightBuffer->bind();
-		for (; it != m_dynamicPointLights.end(); it++)
-		{
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 0, &it->light->position);
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 1, &it->light->ambient);
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 2, &it->light->diffuse);
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 3, &it->light->specular);
-			pointLightBuffer->updateElement(1 + it->index + m_staticPointLights.size() + 4, &it->light->attenuation);
-		}
+		pointLightBuffer->updateFromTo(1 + staticPointLightElementCount + PointLightIndexToElementIndex(index), staticPointLightElementCount + dynamicPointLightElementCount,
+			&m_dynamicPointLights[index]);
 		pointLightBuffer->unbind();
 	}
 	//spotLight
@@ -309,66 +269,39 @@ namespace Engine
 		spotLightBuffer->bind();
 		if (Static)
 		{
-			spotLightBuffer->updateElement(1 + m_staticSpotLights.back().index + 0, &m_staticSpotLights.back().light->position);//1+ because the first index always is the number of lights per type
-			spotLightBuffer->updateElement(1 + m_staticSpotLights.back().index + 1, &m_staticSpotLights.back().light->direction);
-			spotLightBuffer->updateElement(1 + m_staticSpotLights.back().index + 2, &m_staticSpotLights.back().light->ambient);
-			spotLightBuffer->updateElement(1 + m_staticSpotLights.back().index + 3, &m_staticSpotLights.back().light->diffuse);
-			spotLightBuffer->updateElement(1 + m_staticSpotLights.back().index + 4, &m_staticSpotLights.back().light->specular);
-			spotLightBuffer->updateElement(1 + m_staticSpotLights.back().index + 5, &m_staticSpotLights.back().light->cutOff);
+			spotLightBuffer->updateFromTo((1 + staticSpotLightElementCount) - SpotLightIndexToElementIndex(1),
+				staticSpotLightElementCount, &m_staticSpotLights.back());
 			spotLightBuffer->unbind();
 			return;
 		}
-		spotLightBuffer->updateElement(1 + m_dynamicSpotLights.back().index + 0, &m_dynamicSpotLights.back().light->position);//1+ because the first index always is the number of lights per type
-		spotLightBuffer->updateElement(1 + m_dynamicSpotLights.back().index + 1, &m_dynamicSpotLights.back().light->direction);
-		spotLightBuffer->updateElement(1 + m_dynamicSpotLights.back().index + 2, &m_dynamicSpotLights.back().light->ambient);
-		spotLightBuffer->updateElement(1 + m_dynamicSpotLights.back().index + 3, &m_dynamicSpotLights.back().light->diffuse);
-		spotLightBuffer->updateElement(1 + m_dynamicSpotLights.back().index + 4, &m_dynamicSpotLights.back().light->specular);
-		spotLightBuffer->updateElement(1 + m_dynamicSpotLights.back().index + 5, &m_dynamicSpotLights.back().light->cutOff);
+		spotLightBuffer->updateFromTo((1 + staticSpotLightElementCount + dynamicSpotLightElementCount) - SpotLightIndexToElementIndex(1),
+			staticSpotLightElementCount + dynamicSpotLightElementCount, &m_dynamicSpotLights.back());
 		spotLightBuffer->unbind();
 	}
 
 	void LightManager::updateDynamicSpotLights()
 	{
+		if (m_dynamicSpotLights.size() == 0)
+			return;
 		spotLightBuffer->bind();
-		for (auto it = m_dynamicSpotLights.begin(); it != m_dynamicSpotLights.end(); it++)
-		{
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 0, &it->light->position);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 1, &it->light->direction);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 2, &it->light->ambient);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 3, &it->light->diffuse);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 4, &it->light->specular);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 5, &it->light->cutOff);
-		}
+		spotLightBuffer->updateFromTo(1 + staticSpotLightElementCount, staticSpotLightElementCount + dynamicSpotLightElementCount, &m_dynamicSpotLights.front());
 		spotLightBuffer->unbind();
 	}
 
-	void LightManager::updateStaticSpotLights(std::list<SpotLightElement>::iterator it)
+	void LightManager::updateStaticSpotLights(std::vector<spotLight>::iterator it)
 	{
+		uint8_t index = it - m_staticSpotLights.begin();
 		spotLightBuffer->bind();
-		for (; it != m_staticSpotLights.end(); it++)
-		{
-			spotLightBuffer->updateElement(1 + it->index + 0, &it->light->position);
-			spotLightBuffer->updateElement(1 + it->index + 1, &it->light->direction);
-			spotLightBuffer->updateElement(1 + it->index + 2, &it->light->ambient);
-			spotLightBuffer->updateElement(1 + it->index + 3, &it->light->diffuse);
-			spotLightBuffer->updateElement(1 + it->index + 4, &it->light->specular);
-			spotLightBuffer->updateElement(1 + it->index + 5, &it->light->cutOff);
-		}
+		spotLightBuffer->updateFromTo(1 + SpotLightIndexToElementIndex(index), staticSpotLightElementCount, &m_staticSpotLights[index]);
 		spotLightBuffer->unbind();
 	}
 
-	void LightManager::updateDynamicSpotLights(std::list<SpotLightElement>::iterator it)
+	void LightManager::updateDynamicSpotLights(std::vector<spotLight>::iterator it)
 	{
+		uint8_t index = it - m_dynamicSpotLights.begin();
 		spotLightBuffer->bind();
-		for (; it != m_dynamicSpotLights.end(); it++)
-		{
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 0, &it->light->position);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 1, &it->light->direction);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 2, &it->light->ambient);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 3, &it->light->diffuse);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 4, &it->light->specular);
-			spotLightBuffer->updateElement(1 + it->index + m_staticSpotLights.size() + 5, &it->light->cutOff);
-		}
+		spotLightBuffer->updateFromTo(1 + staticSpotLightElementCount + SpotLightIndexToElementIndex(index), staticSpotLightElementCount + dynamicSpotLightElementCount,
+			&m_dynamicSpotLights[index]);
 		spotLightBuffer->unbind();
 	}
 }

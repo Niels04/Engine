@@ -22,12 +22,12 @@ namespace Engine
 		inline static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
 		inline static shaderLib* getShaderLib() { return s_shaderLib; }
 
-		static uint32_t addStaticDirLight(Ref_ptr<directionalLight>& light) { return s_sceneData->lightManager.addStaticDirLight(light); }
-		static uint32_t addStaticPointLight(Ref_ptr<pointLight>& light) { return s_sceneData->lightManager.addStaticPointLight(light); }
-		static uint32_t addStaticSpotLight(Ref_ptr<spotLight>& light) { return s_sceneData->lightManager.addStaticSpotLight(light); }
-		static uint32_t addDynamicDirLight(Ref_ptr<directionalLight>& light) { return s_sceneData->lightManager.addDynamicDirLight(light); }
-		static uint32_t addDynamicPointLight(Ref_ptr<pointLight>& light) { return s_sceneData->lightManager.addDynamicPointLight(light); }
-		static uint32_t addDynamicSpotLight(Ref_ptr<spotLight>& light) { return s_sceneData->lightManager.addDynamicSpotLight(light); }
+		static directionalLight* addStaticDirLight(const directionalLight& light) { return s_sceneData->lightManager.addStaticDirLight(light); }
+		static pointLight* addStaticPointLight(const pointLight& light) { return s_sceneData->lightManager.addStaticPointLight(light); }
+		static spotLight* addStaticSpotLight(const spotLight& light) { return s_sceneData->lightManager.addStaticSpotLight(light); }
+		static directionalLight* addDynamicDirLight(const directionalLight& light) { return s_sceneData->lightManager.addDynamicDirLight(light); }
+		static pointLight* addDynamicPointLight(const pointLight& light) { return s_sceneData->lightManager.addDynamicPointLight(light); }
+		static spotLight* addDynamicSpotLight(const spotLight& light) { return s_sceneData->lightManager.addDynamicSpotLight(light); }
 	private:
 		struct sceneData
 		{

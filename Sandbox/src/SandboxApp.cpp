@@ -69,11 +69,11 @@ public:
 		ImGui::Text("rotation:");
 		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", m_camRot.x, m_camRot.y, m_camRot.z);
 		ImGui::End();
-		ImGui::Begin("PointLight");
+		/*ImGui::Begin("PointLight");
 		ImGui::ColorEdit3("ambient", (float*)&m_lamp->ambient);
 		ImGui::ColorEdit3("diffuse", (float*)&m_lamp->diffuse);
 		ImGui::ColorEdit3("specular", (float*)&m_lamp->specular);
-		ImGui::End();
+		ImGui::End();*/
 	}
 
 	void onEvent(Engine::Event& e) override
@@ -119,6 +119,7 @@ public:
 		m_vertexArray->addBuffer(vertexBuffer);//tie the buffer and it's layout to the vertexArray
 		m_vertexArray->addBuffer(indexBuffer);//tie the indexBuffer to the vertexArray
 		*/
+
 		m_vertexArray = Engine::vertexArray::create();
 		m_vertexArray->load("gun.model");
 		m_vertexArray->unbind();//make sure to unbind the vertexArray before loading the next one, otherwise we would get interfearences with layout & indexBuffer
@@ -163,12 +164,9 @@ public:
 		m_cube->setScale(0.1f);
 		m_cube->setPos({ -5.0f, 0.0f, -10.0f });
 
-		m_sun = std::make_shared<Engine::directionalLight>(vec3(0.0f, -0.7071067f, 0.7071067f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f));
-		m_sun_uid = Engine::Renderer::addStaticDirLight(m_sun);
-		m_lamp = std::make_shared<Engine::pointLight>(vec3(-2.5f, 5.0f, -10.0f), vec3(0.2f, 0.8f, 0.2f), vec3(0.2f, 0.8f, 0.2f), vec3(0.1f, 0.9f, 0.1f), 1.0f, 0.1f, 0.1f);
-		m_lamp_uid = Engine::Renderer::addDynamicPointLight(m_lamp);
-		m_spotLight = std::make_shared<Engine::spotLight>(vec3(-2.5f, 0.0f, -10.0f), vec3(-1.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), cosf(15.0f * (PI / 180.0f)));
-		m_spotLight_uid = Engine::Renderer::addDynamicSpotLight(m_spotLight);
+		m_sun = Engine::Renderer::addStaticDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f) });
+		m_lamp = Engine::Renderer::addDynamicPointLight({ vec3(-2.5f, 5.0f, -10.0f), vec3(0.2f, 0.8f, 0.2f), vec3(0.2f, 0.8f, 0.2f), vec3(0.1f, 0.9f, 0.1f), 1.0f, 0.1f, 0.1f });
+		m_spotLight = Engine::Renderer::addDynamicSpotLight({ vec3(-2.5f, 0.0f, -10.0f), vec3(-1.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), cosf(15.0f * (PI / 180.0f)) });
 
 	}
 private:
@@ -179,12 +177,10 @@ private:
 	Engine::Ref_ptr<Engine::vertexArray> m_vertexArray;
 	Engine::Ref_ptr<Engine::vertexArray> m_cubeGeometry;
 	Engine::Ref_ptr<Engine::texture2d> m_texture;
-	Engine::Ref_ptr<Engine::directionalLight> m_sun;
-	uint32_t m_sun_uid;
-	Engine::Ref_ptr<Engine::pointLight> m_lamp;
-	uint32_t m_lamp_uid;
-	Engine::Ref_ptr<Engine::spotLight> m_spotLight;
-	uint32_t m_spotLight_uid;
+	Engine::directionalLight* m_sun;
+	Engine::pointLight* m_lamp;
+	Engine::spotLight* m_spotLight;
+	Engine::Ref_ptr<Engine::globalBuffer> m_testBuffer;
 	//end temporary stuff
 
 	Engine::perspectiveCamera m_cam;

@@ -52,7 +52,29 @@ namespace Engine
 		{
 		}
 
-		static unsigned int getTypeSize(unsigned int type)//return the typesize in the uniformBuffer when using std140 memory layout
+		static uint32_t getTypeSize(uint32_t type)//return the typesize in the uniformBuffer when using std140 memory layout
+		{
+			switch (type)
+			{
+			case(GL_FLOAT):
+				return 16;
+			case(GL_INT):
+				return 16;
+			case(GL_BOOL):
+				return 16;//bools also take 4bytes in uniform buffers when using std140 memory layout
+			case(GL_FLOAT_VEC2):
+				return 8;
+			case(GL_FLOAT_VEC3):
+				return 16;//also vec3s take 16 bytes when using std140 memory layout instead of 12bytes
+			case(GL_FLOAT_VEC4):
+				return 16;
+			case(GL_FLOAT_MAT4):
+				return 64;
+			}
+			ENG_CORE_ASSERT(false, "Type was unknown(uniformBufferElement).");//this shouldn't happen
+			return 0;
+		}
+		static uint32_t getUpdateSize(uint32_t type)//return the size of bytes that actually need to be read from cpu-side when updating the element
 		{
 			switch (type)
 			{
@@ -61,11 +83,11 @@ namespace Engine
 			case(GL_INT):
 				return 4;
 			case(GL_BOOL):
-				return 4;//bools also take 4bytes in uniform buffers when using std140 memory layout
+				return 4;//bools take 4bytes in uniform buffers when using std140 memory layout
 			case(GL_FLOAT_VEC2):
 				return 8;
 			case(GL_FLOAT_VEC3):
-				return 16;//also vec3s take 16 bytes when using std140 memory layout instead of 12bytes
+				return 12;
 			case(GL_FLOAT_VEC4):
 				return 16;
 			case(GL_FLOAT_MAT4):
@@ -107,6 +129,7 @@ namespace Engine
 
 		inline virtual void updateElement(const uint8_t index, const void* val) const override;
 		inline virtual void updateAll(const void* val) const override;
+		void updateFromTo(const uint8_t indexBegin, const uint8_t indexEnd, const void* val) const override;
 
 		inline virtual uint16_t getSize() const override { return m_size; }//return the buffer's size in bytes
 	private:
