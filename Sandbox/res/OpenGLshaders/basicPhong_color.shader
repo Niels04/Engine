@@ -39,28 +39,28 @@ void main()
 
 struct directionalLight
 {
-	vec4 direction;
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
+	vec3 direction;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
 };
 
 struct pointLight
 {
-	vec4 position;
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
+	vec3 position;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
 	vec3 attenuationFactors;
 };
 
 struct spotLight
 {
-	vec4 position;
-	vec4 spotDirection;
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
+	vec3 position;
+	vec3 spotDirection;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
 	float cutOff;//cosine of the cutOffAngle
 };
 
@@ -100,11 +100,11 @@ vec3 calcDirLight(directionalLight light, vec3 normal, vec3 viewDir)
 {
 	//light.direction must be normalized!!!
 	//ambient
-	vec3 ambient = light.ambient.xyz * amb.xyz;
+	vec3 ambient = light.ambient * amb.xyz;
 	//diffuse
-	vec3 diffuse = light.diffuse.xyz * diff.xyz * max(0.0f, dot(-light.direction.xyz, normal));
+	vec3 diffuse = light.diffuse * diff.xyz * max(0.0f, dot(-light.direction.xyz, normal));
 	//specular
-	vec3 specular = light.specular.xyz * spec.xyz * pow(max(0.0f, dot(reflect(light.direction.xyz, normal), viewDir)), shininess);//when using"reflect()" put in the vector form the lightSource towards the fragment
+	vec3 specular = light.specular * spec.xyz * pow(max(0.0f, dot(reflect(light.direction, normal), viewDir)), shininess);//when using"reflect()" put in the vector form the lightSource towards the fragment
 	return (ambient + diffuse + specular);
 }
 
@@ -112,13 +112,13 @@ vec3 calcPointLight(pointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
 	float distance = length(fragPos - light.position.xyz);
 	float attenuation = 1.0f / (light.attenuationFactors.x + light.attenuationFactors.y * distance + light.attenuationFactors.z * (distance * distance));//Dämpfung bei weiterer Entfernung
-	vec3 lightDir = normalize(light.position.xyz - fragPos);//direction from the fragment to the light
+	vec3 lightDir = normalize(light.position - fragPos);//direction from the fragment to the light
 	//ambient
-	vec3 ambient = light.ambient.xyz * amb.xyz * attenuation;
+	vec3 ambient = light.ambient * amb.xyz * attenuation;
 	//diffuse
-	vec3 diffuse = light.diffuse.xyz * diff.xyz * max(0.0f, dot(lightDir, normal)) * attenuation;
+	vec3 diffuse = light.diffuse * diff.xyz * max(0.0f, dot(lightDir, normal)) * attenuation;
 	//specular
-	vec3 specular = light.specular.xyz * spec.xyz * pow(max(0.0f, dot(reflect(-lightDir, normal), viewDir)), shininess) * attenuation;
+	vec3 specular = light.specular * spec.xyz * pow(max(0.0f, dot(reflect(-lightDir, normal), viewDir)), shininess) * attenuation;
 	return (ambient + diffuse + specular);
 }
 

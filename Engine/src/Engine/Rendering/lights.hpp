@@ -23,6 +23,17 @@ namespace Engine
 		vec3 specular;
 	private:
 		uint32_t uid;
+
+		directionalLight(const vec4& lightDirection, const vec4& ambientColor, const vec4& diffuseColor, const vec3& specularColor)
+			: direction(lightDirection), ambient(ambientColor), diffuse(diffuseColor), specular(specularColor)
+		{
+
+		}
+
+		static directionalLight* create(const directionalLight& light)
+		{
+			return new directionalLight(light.direction, light.ambient, light.diffuse, light.specular);
+		}
 	};
 
 	class pointLight
@@ -47,6 +58,17 @@ namespace Engine
 		vec3 attenuation;//first is constant, second is linear, third is quadratic
 	private:
 		uint32_t uid;
+
+		pointLight(const vec4& lightPosition, const vec4& ambientColor, const vec4& diffuseColor, const vec4& specularColor, const vec3& INattenuation)
+			: position(lightPosition), ambient(ambientColor), diffuse(diffuseColor), specular(specularColor), attenuation(INattenuation)
+		{
+
+		}
+
+		static pointLight* create(const pointLight& light)
+		{
+			return new pointLight(light.position, light.ambient, light.diffuse, light.specular, light.attenuation);
+		}
 	};
 
 	class spotLight
@@ -55,7 +77,7 @@ namespace Engine
 	public:
 		spotLight() = default;
 		spotLight(vec3& lightPosition, vec3& spotDirection, vec3& ambientColor, vec3& diffuseColor, vec3& specularColor, float cutOffAngle)
-			: position(lightPosition, 1.0f), direction(spotDirection, 0.0f), cutOff(cutOffAngle), ambient(ambientColor, 1.0f), diffuse(diffuseColor, 1.0f), specular(specularColor, 1.0f)
+			: position(lightPosition, 1.0f), direction(spotDirection, 0.0f), cutOff(cutOffAngle), ambient(ambientColor, 1.0f), diffuse(diffuseColor, 1.0f), specular(specularColor)
 		{
 
 		}
@@ -63,11 +85,22 @@ namespace Engine
 		vec4 direction;
 		vec4 ambient;
 		vec4 diffuse;
-		vec4 specular;
+		vec3 specular;
 		float cutOff;//the cosine of the spotLight's cutOff angle
 	private:
 		uint32_t uid;
-		float padd[2];
+		float padd[3];
+
+		spotLight(const vec4& lightPosition, const vec4& lightDirection, const vec4& ambientColor, const vec4& diffuseColor, const vec3& specularColor, const float cutOffAngle)
+			: position(lightPosition), direction(lightDirection), ambient(ambientColor), diffuse(diffuseColor), specular(specularColor), cutOff(cutOffAngle)
+		{
+
+		}
+
+		static spotLight* create(const spotLight& light)
+		{
+			return new spotLight(light.position, light.direction, light.ambient, light.diffuse, light.specular, light.cutOff);
+		}
 	};
 
 	class LightManager
@@ -75,36 +108,42 @@ namespace Engine
 	public:
 		void init();
 		//get the index of a dynamicLight in the globalBuffer: get the index and add the amount of static lights atm
-		inline directionalLight* addStaticDirLight(const directionalLight& light) {
+		inline directionalLight** addStaticDirLight(const directionalLight& light) {
 			m_staticDirLights.push_back(light); m_staticDirLights.back().uid = uid();
-			updateNewDirLight(true); updateDynamicDirLights(); updateDirLightCount();//in case of a new static light the new light itself needs to be updated and all lights after it(the dynamic ones) as well
-			return &m_staticDirLights.back();
+			m_staticDirLightPtrs.push_back(&m_staticDirLights.back()); updatePtrs();
+			updateNewDirLight(true); updateDynamicDirLights(); updateDirLightCount();//in case of a new static light the new light itself needs to be updated and all lights after it(the dynamic ones as well)
+			return &m_staticDirLightPtrs.back();
 		}
-		inline pointLight* addStaticPointLight(const pointLight& light) {
+		inline pointLight** addStaticPointLight(const pointLight& light) {
 			m_staticPointLights.push_back(light); m_staticPointLights.back().uid = uid();
+			m_staticPointLightPtrs.push_back(&m_staticPointLights.back()); updatePtrs();
 			updateNewPointLight(true); updateDynamicPointLights(); updatePointLightCount();
-			return &m_staticPointLights.back();
+			return &m_staticPointLightPtrs.back();
 		}
-		inline spotLight* addStaticSpotLight(const spotLight& light) {
+		inline spotLight** addStaticSpotLight(const spotLight& light) {
 			m_staticSpotLights.push_back(light); m_staticSpotLights.back().uid = uid();
+			m_staticSpotLightPtrs.push_back(&m_staticSpotLights.back()); updatePtrs();
 			updateNewSpotLight(true); updateDynamicSpotLights(); updateSpotLightCount();
-			return &m_staticSpotLights.back();
+			return &m_staticSpotLightPtrs.back();
 		}
 		
-		inline directionalLight* addDynamicDirLight(const directionalLight& light) {
+		inline directionalLight** addDynamicDirLight(const directionalLight& light) {
 			m_dynamicDirLights.push_back(light); m_dynamicDirLights.back().uid = uid();
+			m_dynamicDirLightPtrs.push_back(&m_dynamicDirLights.back()); updatePtrs();
 			updateNewDirLight(false); updateDirLightCount();//in case of a new dynamic light the light itself needs to be updated and the overall count
-			return &m_dynamicDirLights.back();
+			return &m_dynamicDirLightPtrs.back();
 		}
-		inline pointLight* addDynamicPointLight(const pointLight& light) {
+		inline pointLight** addDynamicPointLight(const pointLight& light) {
 			m_dynamicPointLights.push_back(light); m_dynamicPointLights.back().uid = uid();
+			m_dynamicPointLightPtrs.push_back(&m_dynamicPointLights.back()); updatePtrs();
 			updateNewPointLight(false); updatePointLightCount();
-			return &m_dynamicPointLights.back();
+			return &m_dynamicPointLightPtrs.back();
 		}
-		inline spotLight* addDynamicSpotLight(const spotLight& light) {
+		inline spotLight** addDynamicSpotLight(const spotLight& light) {
 			m_dynamicSpotLights.push_back(light); m_dynamicSpotLights.back().uid = uid();
+			m_dynamicSpotLightPtrs.push_back(&m_dynamicSpotLights.back()); updatePtrs();
 			updateNewSpotLight(false); updateSpotLightCount();
-			return &m_dynamicSpotLights.back();
+			return &m_dynamicSpotLightPtrs.back();
 		}
 
 		void rmStaticDirLight(directionalLight* toRemove);
@@ -124,9 +163,63 @@ namespace Engine
 		std::vector<pointLight> m_dynamicPointLights;
 		std::vector<spotLight> m_dynamicSpotLights;
 
-		Ref_ptr<globalBuffer> directionalLightBuffer;
-		Ref_ptr<globalBuffer> pointLightBuffer;
-		Ref_ptr<globalBuffer> spotLightBuffer;
+		inline void LightManager::updatePtrs()
+		{
+			{
+				auto itP = m_staticDirLightPtrs.begin();
+				for (auto it = m_staticDirLights.begin(); it != m_staticDirLights.end(); it++, itP++)
+				{
+					*itP = &(*it);
+				}
+			}
+			{
+				auto itP = m_staticPointLightPtrs.begin();
+				for (auto it = m_staticPointLights.begin(); it != m_staticPointLights.end(); it++, itP++)
+				{
+					*itP = &(*it);
+				}
+			}
+			{
+				auto itP = m_staticSpotLightPtrs.begin();
+				for (auto it = m_staticSpotLights.begin(); it != m_staticSpotLights.end(); it++, itP++)
+				{
+					*itP = &(*it);
+				}
+			}
+			{
+				auto itP = m_dynamicDirLightPtrs.begin();
+				for (auto it = m_dynamicDirLights.begin(); it != m_dynamicDirLights.end(); it++, itP++)
+				{
+					*itP = &(*it);
+				}
+			}
+			{
+				auto itP = m_dynamicPointLightPtrs.begin();
+				for (auto it = m_dynamicPointLights.begin(); it != m_dynamicPointLights.end(); it++, itP++)
+				{
+					*itP = &(*it);
+				}
+			}
+			{
+				auto itP = m_dynamicSpotLightPtrs.begin();
+				for (auto it = m_dynamicSpotLights.begin(); it != m_dynamicSpotLights.end(); it++, itP++)
+				{
+					*itP = &(*it);
+				}
+			}
+		}
+
+		//these are lists, because we don't want the elements to be reallocated all the time(cuz we wanna give out pointers to the elements(or maybe references?))
+		std::list<directionalLight*> m_staticDirLightPtrs;
+		std::list<pointLight*> m_staticPointLightPtrs;
+		std::list<spotLight*> m_staticSpotLightPtrs;
+		std::list<directionalLight*> m_dynamicDirLightPtrs;
+		std::list<pointLight*> m_dynamicPointLightPtrs;
+		std::list<spotLight*> m_dynamicSpotLightPtrs;
+
+		Scope_ptr<globalBuffer> directionalLightBuffer;
+		Scope_ptr<globalBuffer> pointLightBuffer;
+		Scope_ptr<globalBuffer> spotLightBuffer;
 
 		//in case of adding a new staticLight-> the new staticLight gets updated + all dynamicLights get updated
 		void updateNewDirLight(bool Static);//one new light to update(if its a static one all dynamic ones will have to be updated as well)

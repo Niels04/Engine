@@ -52,6 +52,7 @@ struct directionalLight
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
+	float padd;
 };
 
 struct pointLight
@@ -61,6 +62,7 @@ struct pointLight
 	vec3 diffuse;
 	vec3 specular;
 	vec3 attenuationFactors;
+	float padd;
 };
 
 struct spotLight
@@ -71,6 +73,7 @@ struct spotLight
 	vec3 diffuse;
 	vec3 specular;
 	float cutOff;//cosine of the cutOffAngle
+	vec3 pad;
 };
 
 layout(std140) uniform directionalLights

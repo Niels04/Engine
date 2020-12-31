@@ -18,7 +18,7 @@ namespace Engine
 	void LightManager::init()
 	{
 		const int32_t initialLightCount = 0;//by default there is no light source
-		directionalLightBuffer = globalBuffer::create(sizeof(int)  * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(directionalLight), STATIC_DRAW);//add an int at the beginning for the count
+		directionalLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(directionalLight), STATIC_DRAW);//add an int at the beginning for the count
 		directionalLightBuffer->lAddIntB();//integer for count
 		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
 		{
@@ -30,7 +30,7 @@ namespace Engine
 		directionalLightBuffer->bindToPoint(1);
 		directionalLightBuffer->updateElement(0, &initialLightCount);
 		directionalLightBuffer->unbind();
-		pointLightBuffer = globalBuffer::create(sizeof(int) * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(pointLight), DYNAMIC_DRAW);
+		pointLightBuffer = globalBuffer::createUnique(sizeof(int) * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(pointLight), DYNAMIC_DRAW);
 		pointLightBuffer->lAddIntB();//integer for count
 		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
 		{
@@ -43,7 +43,7 @@ namespace Engine
 		pointLightBuffer->bindToPoint(2);
 		pointLightBuffer->updateElement(0, &initialLightCount);
 		pointLightBuffer->unbind();
-		spotLightBuffer = globalBuffer::create(sizeof(int)  * 4 /*x4 because of padding*/+ (MAX_LIGHTS_PER_TYPE * sizeof(spotLight)), DYNAMIC_DRAW);
+		spotLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4 /*x4 because of padding*/+ (MAX_LIGHTS_PER_TYPE * sizeof(spotLight)), DYNAMIC_DRAW);
 		spotLightBuffer->lAddIntB();
 		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
 		{
@@ -62,11 +62,13 @@ namespace Engine
 	void LightManager::rmStaticDirLight(directionalLight* toRemove)
 	{
 		auto it = m_staticDirLights.begin();
-		for (; it != m_staticDirLights.end(); it++)
+		auto itP = m_staticDirLightPtrs.begin();
+		for (; it != m_staticDirLights.end(); it++, itP++)
 		{
 			if (it->uid == toRemove->uid)
 			{
 				it = m_staticDirLights.erase(it);
+				m_staticDirLightPtrs.erase(itP);
 				goto ELEMENT_FOUND;
 			}
 		}
@@ -82,11 +84,13 @@ namespace Engine
 	void LightManager::rmStaticPointLight(pointLight* toRemove)
 	{
 		auto it = m_staticPointLights.begin();
-		for (; it != m_staticPointLights.end(); it++)
+		auto itP = m_staticPointLightPtrs.begin();
+		for (; it != m_staticPointLights.end(); it++, itP++)
 		{
 			if (it->uid == toRemove->uid)
 			{
 				it = m_staticPointLights.erase(it);
+				m_staticPointLightPtrs.erase(itP);
 				goto ELEMENT_FOUND;
 			}
 		}
@@ -103,11 +107,13 @@ namespace Engine
 	void LightManager::rmStaticSpotLight(spotLight* toRemove)
 	{
 		auto it = m_staticSpotLights.begin();
-		for (; it != m_staticSpotLights.end(); it++)
+		auto itP = m_staticSpotLightPtrs.begin();
+		for (; it != m_staticSpotLights.end(); it++, itP++)
 		{
 			if (it->uid == toRemove->uid)
 			{
 				it = m_staticSpotLights.erase(it);
+				m_staticSpotLightPtrs.erase(itP);
 				goto ELEMENT_FOUND;
 			}
 		}
@@ -124,11 +130,13 @@ namespace Engine
 	void LightManager::rmDynamicDirLight(directionalLight* toRemove)
 	{
 		auto it = m_dynamicDirLights.begin();
-		for (; it != m_dynamicDirLights.end(); it++)
+		auto itP = m_dynamicDirLightPtrs.begin();
+		for (; it != m_dynamicDirLights.end(); it++, itP++)
 		{
 			if (it->uid == toRemove->uid)
 			{
 				it = m_dynamicDirLights.erase(it);
+				m_dynamicDirLightPtrs.erase(itP);
 				goto ELEMENT_FOUND;
 			}
 		}
@@ -144,11 +152,13 @@ namespace Engine
 	void LightManager::rmDynamicPointLight(pointLight* toRemove)
 	{
 		auto it = m_dynamicPointLights.begin();
-		for (; it != m_dynamicPointLights.end(); it++)
+		auto itP = m_dynamicPointLightPtrs.begin();
+		for (; it != m_dynamicPointLights.end(); it++, itP++)
 		{
 			if (it->uid == toRemove->uid)
 			{
 				it = m_dynamicPointLights.erase(it);
+				m_dynamicPointLightPtrs.erase(itP);
 				goto ELEMENT_FOUND;
 			}
 		}
@@ -164,11 +174,13 @@ namespace Engine
 	void LightManager::rmDynamicSpotLight(spotLight* toRemove)
 	{
 		auto it = m_dynamicSpotLights.begin();
-		for (; it != m_dynamicSpotLights.end(); it++)
+		auto itP = m_dynamicSpotLightPtrs.begin();
+		for (; it != m_dynamicSpotLights.end(); it++, itP++)
 		{
 			if (it->uid == toRemove->uid)
 			{
 				it = m_dynamicSpotLights.erase(it);
+				m_dynamicSpotLightPtrs.erase(itP);
 				goto ELEMENT_FOUND;
 			}
 		}
