@@ -1,5 +1,7 @@
 #include "Engpch.hpp"
 
+#include "Engine/Application.hpp"//because when creating renderBuffers we want the window dimensions
+
 #include "buffers.hpp"
 #include "Platform/OpenGL/GLbuffers.hpp"
 #include "renderer.hpp"
@@ -56,7 +58,7 @@ namespace Engine
 		}break;
 		case RendererAPI::API::NONE:
 		{
-			ENG_CORE_WARN("Tried to create globalBuffe while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			ENG_CORE_WARN("Tried to create globalBuffer while RenderingAPI was set to \"NONE\". Returning nullptr.");
 			return nullptr;
 		}break;
 		default:
@@ -76,7 +78,47 @@ namespace Engine
 		}break;
 		case RendererAPI::API::NONE:
 		{
-			ENG_CORE_WARN("Tried to create globalBuffe while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			ENG_CORE_WARN("Tried to create globalBuffer while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			return nullptr;
+		}break;
+		default:
+		{
+			ENG_CORE_ASSERT(false, "RenderingAPI was an unknown value.");
+		}break;
+		}
+	}
+
+	Ref_ptr<FrameBuffer> FrameBuffer::create()
+	{
+		switch (Renderer::getAPI())
+		{
+		case RendererAPI::API::OpenGL:
+		{
+			return std::make_shared<GLFrameBuffer>();
+		}break;
+		case RendererAPI::API::NONE:
+		{
+			ENG_CORE_WARN("Tried to create FrameBuffer while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			return nullptr;
+		}break;
+		default:
+		{
+			ENG_CORE_ASSERT(false, "RenderingAPI was an unknown value.");
+		}break;
+		}
+	}
+
+	Ref_ptr<RenderBuffer> RenderBuffer::create(const RenderBufferUsage usage)
+	{
+		switch (Renderer::getAPI())
+		{
+		case RendererAPI::API::OpenGL:
+		{
+			return std::make_shared<GLRenderBuffer>(usage, Application::Get().getWindow().getWidth(), Application::Get().getWindow().getHeight());
+		}break;
+		case RendererAPI::API::NONE:
+		{
+			ENG_CORE_WARN("Tried to create RenderBuffer while RenderingAPI was set to \"NONE\". Returning nullptr.");
 			return nullptr;
 		}break;
 		default:

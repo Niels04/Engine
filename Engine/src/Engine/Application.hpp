@@ -36,7 +36,7 @@ namespace Engine
 		std::unique_ptr<window> m_window;
 		imGuiLayer* m_ImGuiLayer;
 		bool m_running = true;
-		layerStack m_layerStack;//created on the stack->kinda inherits the lifetime of the ApplicationClass
+		layerStack m_layerStack;//created on the stack-> inherits the lifetime of the ApplicationClass
 		float m_lastFrameTime = 0.0f;
 	private:
 		static Application* s_instance;

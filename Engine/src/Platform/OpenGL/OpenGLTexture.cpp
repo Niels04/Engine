@@ -32,24 +32,76 @@ namespace Engine
 
 		//create the texture in OpenGL:
 		GLCALL(glCreateTextures(GL_TEXTURE_2D, 1, &m_renderer_id));
-		glTextureStorage2D(m_renderer_id, /*if we had mulitple mipmaps then we would put something other than 1 in for levels*/1, /*define how openGL internally
-		stores the texture*/internalFormat, m_width, m_height);
-		glTextureParameteri(m_renderer_id, GL_TEXTURE_MIN_FILTER, filterMin);
-		glTextureParameteri(m_renderer_id, GL_TEXTURE_MAG_FILTER, filterMag);
-		glTextureSubImage2D(m_renderer_id, /*index of the level, we only defined one, so index 0(again, usefull when dealing with mipmaps)*/0, /*offsets are usefull when changing a region of an already uploaded
-		texture but we set them to 0 here*/0, 0, m_width, m_height, /*here we supply the format of our data*/dataFormat, /*form in which our data comes(stb_image gives unsigned bytes)*/GL_UNSIGNED_BYTE, data);
+		GLCALL(glTextureStorage2D(m_renderer_id, /*if we had mulitple mipmaps then we would put something other than 1 in for levels*/1, /*define how openGL internally
+		stores the texture*/internalFormat, m_width, m_height));
+		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_MIN_FILTER, filterMin));
+		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_MAG_FILTER, filterMag));
+		GLCALL(glTextureSubImage2D(m_renderer_id, /*index of the level, we only defined one, so index 0(again, usefull when dealing with mipmaps)*/0, /*offsets are usefull when changing a region of an already uploaded
+		texture but we set them to 0 here*/0, 0, m_width, m_height, /*here we supply the format of our data*/dataFormat, /*form in which our data comes(stb_image gives unsigned bytes)*/GL_UNSIGNED_BYTE, data));
 		
 		stbi_image_free(data);//deallocate the memory returned form stbi_load again
 	}
 
 	GLtexture2d::~GLtexture2d()
 	{
-		glDeleteTextures(1, &m_renderer_id);
+		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
 
 	void GLtexture2d::bind(const uint8_t slot) const
 	{
-		glBindTextureUnit(slot, m_renderer_id);//binding textures at multiple slots is only usefull when rendering objects, that use multiple textures(because all of the object's textures have to be
+		GLCALL(glBindTextureUnit(slot, m_renderer_id));//binding textures at multiple slots is only usefull when rendering objects, that use multiple textures(because all of the object's textures have to be
 		//accessible in the shader at the same time
+	}
+	//::::::::FRAMEBUFFER_TEXTURE:::::::::
+	GLFrameBufferTexture::GLFrameBufferTexture(const FrameBufferTextureUsage INusage, const uint32_t width, const uint32_t height)
+		: FrameBufferTexture(INusage)
+	{
+		GLCALL(glGenTextures(1, &m_renderer_id));
+		GLCALL(glBindTexture(GL_TEXTURE_2D, m_renderer_id));
+		switch (usage)
+		{
+		case(FrameBufferTextureUsage::COLOR):
+		{
+			GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr));//create a texture that stores RGB-colors
+		}break;
+		case(FrameBufferTextureUsage::DEPTH):
+		{
+			GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
+		}break;
+		case(FrameBufferTextureUsage::STENCIL):
+		{
+			GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX8, width, height, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, nullptr));
+		}break;
+		case(FrameBufferTextureUsage::DEPTH_STENCIL):
+		{
+			GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr));
+		}break;
+		default:
+		{
+			ENG_CORE_ASSERT(false, "Error creating GLFrameBufferTexture. \"usage\" was none of the accepted values.");
+		}break;
+		}
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	}
+	GLFrameBufferTexture::GLFrameBufferTexture(const uint32_t width, const uint32_t height)
+		: FrameBufferTexture(FrameBufferTextureUsage::DEPTH)
+	{
+		GLCALL(glGenTextures(1, &m_renderer_id));
+		GLCALL(glBindTexture(GL_TEXTURE_2D, m_renderer_id));
+		GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));//maybe set this to linear in order to get smoother shadows?
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	}
+	GLFrameBufferTexture::~GLFrameBufferTexture()
+	{
+		GLCALL(glDeleteTextures(1, &m_renderer_id));
+	}
+	
+	void GLFrameBufferTexture::bind(const uint8_t slot) const
+	{
+		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
 }

@@ -4,12 +4,12 @@
 
 namespace Engine
 {
-	class perspectiveCamera
+	class OrthographicCamera
 	{
 	public:
-		perspectiveCamera() = default;
-		perspectiveCamera(const float zNear, const float zFar, const float hFov, const float vFov);
-		void set(const float zNear, const float zFar, const float hFov, const float vFov);
+		OrthographicCamera() = default;
+		OrthographicCamera(const float zNear, const float zFar, const float hFov, const float vFov);
+		void set(const float left, const float right, const float bottom, const float top, const float Znear, const float Zfar);
 		inline void setPos(const point& pos) { m_pos = pos; recalcViewMatrix(); }
 		inline void setRot(const vec3& rot) { m_rot = rot; recalcViewMatrix(); }
 		inline const point& getPos() const { return m_pos; }

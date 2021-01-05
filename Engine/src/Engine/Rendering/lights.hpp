@@ -4,6 +4,9 @@
 #include "buffers.hpp"
 
 #define MAX_LIGHTS_PER_TYPE 10
+#define DIRECTIONAL_LIGHTS_BIND 1
+#define POINT_LIGHTS_BIND 2
+#define SPOT_LIGHTS_BIND 3
 
 namespace Engine
 {
@@ -108,38 +111,38 @@ namespace Engine
 	public:
 		void init();
 		//get the index of a dynamicLight in the globalBuffer: get the index and add the amount of static lights atm
-		inline directionalLight** addStaticDirLight(const directionalLight& light) {
+		[[nodiscard]] inline directionalLight** addStaticDirLight(const directionalLight& light) {
 			m_staticDirLights.push_back(light); m_staticDirLights.back().uid = uid();
 			m_staticDirLightPtrs.push_back(&m_staticDirLights.back()); updatePtrs();
 			updateNewDirLight(true); updateDynamicDirLights(); updateDirLightCount();//in case of a new static light the new light itself needs to be updated and all lights after it(the dynamic ones as well)
 			return &m_staticDirLightPtrs.back();
 		}
-		inline pointLight** addStaticPointLight(const pointLight& light) {
+		[[nodiscard]] inline pointLight** addStaticPointLight(const pointLight& light) {
 			m_staticPointLights.push_back(light); m_staticPointLights.back().uid = uid();
 			m_staticPointLightPtrs.push_back(&m_staticPointLights.back()); updatePtrs();
 			updateNewPointLight(true); updateDynamicPointLights(); updatePointLightCount();
 			return &m_staticPointLightPtrs.back();
 		}
-		inline spotLight** addStaticSpotLight(const spotLight& light) {
+		[[nodiscard]] inline spotLight** addStaticSpotLight(const spotLight& light) {
 			m_staticSpotLights.push_back(light); m_staticSpotLights.back().uid = uid();
 			m_staticSpotLightPtrs.push_back(&m_staticSpotLights.back()); updatePtrs();
 			updateNewSpotLight(true); updateDynamicSpotLights(); updateSpotLightCount();
 			return &m_staticSpotLightPtrs.back();
 		}
 		
-		inline directionalLight** addDynamicDirLight(const directionalLight& light) {
+		[[nodiscard]] inline directionalLight** addDynamicDirLight(const directionalLight& light) {
 			m_dynamicDirLights.push_back(light); m_dynamicDirLights.back().uid = uid();
 			m_dynamicDirLightPtrs.push_back(&m_dynamicDirLights.back()); updatePtrs();
 			updateNewDirLight(false); updateDirLightCount();//in case of a new dynamic light the light itself needs to be updated and the overall count
 			return &m_dynamicDirLightPtrs.back();
 		}
-		inline pointLight** addDynamicPointLight(const pointLight& light) {
+		[[nodiscard]] inline pointLight** addDynamicPointLight(const pointLight& light) {
 			m_dynamicPointLights.push_back(light); m_dynamicPointLights.back().uid = uid();
 			m_dynamicPointLightPtrs.push_back(&m_dynamicPointLights.back()); updatePtrs();
 			updateNewPointLight(false); updatePointLightCount();
 			return &m_dynamicPointLightPtrs.back();
 		}
-		inline spotLight** addDynamicSpotLight(const spotLight& light) {
+		[[nodiscard]] inline spotLight** addDynamicSpotLight(const spotLight& light) {
 			m_dynamicSpotLights.push_back(light); m_dynamicSpotLights.back().uid = uid();
 			m_dynamicSpotLightPtrs.push_back(&m_dynamicSpotLights.back()); updatePtrs();
 			updateNewSpotLight(false); updateSpotLightCount();

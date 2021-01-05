@@ -10,6 +10,8 @@ namespace Engine
 		static void drawIndexed(const Ref_ptr<vertexArray> va);
 		static void setClearColor(const glm::vec4& color);
 		static void clear();
+		static void clearDepth();
+		static void setViewport(const uint32_t width, const uint32_t heigt);
 		static uint32_t getMaxGlobalBuffers() { return s_RendererAPI->getMaxGlobalBuffers(); }
 		static uint8_t getMaxTextureBinds() { return s_RendererAPI->getMaxTextureBinds(); }
 	private:

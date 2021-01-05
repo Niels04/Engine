@@ -2,6 +2,7 @@
 
 #include "Engine/Rendering/buffers.hpp"
 #include "OpenGLVertexBufferLayout.hpp"
+#include "OpenGLTexture.hpp"
 
 namespace Engine
 {
@@ -137,5 +138,36 @@ namespace Engine
 		uint16_t m_size = 0;//maximum size of 65,535
 		uint16_t m_stack = 0;//points to the offset, at which the next element will be inserted into the layout
 		std::vector<uniformBufferElement> m_elements;
+	};
+
+	class GLRenderBuffer : public RenderBuffer
+	{
+		friend class GLFrameBuffer;//cuz frameBuffer needs to get the renderer_id for attachment
+	public:
+		GLRenderBuffer(RenderBufferUsage usage, uint32_t width, uint32_t height);
+		~GLRenderBuffer();
+		inline virtual void bind() const override;
+		inline virtual void unbind() const override;
+	private:
+		inline const uint32_t getRenderer_id() const { return m_renderer_id; }
+		uint32_t m_renderer_id;
+	};
+
+	class GLFrameBuffer : public FrameBuffer
+	{
+	public:
+		GLFrameBuffer();
+		~GLFrameBuffer();
+		inline virtual void bind() const override;
+		inline virtual void unbind() const override;
+
+		inline virtual void attachTexture(Ref_ptr<FrameBufferTexture>& texture) override;
+		inline virtual void attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer) override;
+	private:
+		uint32_t m_renderer_id;
+
+		//note that this will likely be polished in the future, cuz there can be a lot of buffers | for now just have a texture and a renderBuffer
+		Ref_ptr<GLFrameBufferTexture> m_texture;
+		Ref_ptr<GLRenderBuffer> m_renderBuffer;
 	};
 }

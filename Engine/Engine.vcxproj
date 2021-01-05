@@ -153,6 +153,7 @@
     <ClInclude Include="src\Engine\Rendering\buffers.hpp" />
     <ClInclude Include="src\Engine\Rendering\lights.hpp" />
     <ClInclude Include="src\Engine\Rendering\material.hpp" />
+    <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp" />
     <ClInclude Include="src\Engine\Rendering\perspCam.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderer.hpp" />
@@ -197,6 +198,7 @@
     <ClCompile Include="src\Engine\Rendering\buffers.cpp" />
     <ClCompile Include="src\Engine\Rendering\lights.cpp" />
     <ClCompile Include="src\Engine\Rendering\material.cpp" />
+    <ClCompile Include="src\Engine\Rendering\orthographicCam.cpp" />
     <ClCompile Include="src\Engine\Rendering\perspCam.cpp" />
     <ClCompile Include="src\Engine\Rendering\renderCommand.cpp" />
     <ClCompile Include="src\Engine\Rendering\renderer.cpp" />
@@ -237,4 +239,4 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-</Project> 
+</Project>

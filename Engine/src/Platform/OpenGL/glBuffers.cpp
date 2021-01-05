@@ -207,4 +207,137 @@ namespace Engine
         }
         GLCALL(glBufferSubData(GL_UNIFORM_BUFFER, offset, size, val));
     }
+    //:::::::::FRAME_BUFFER::::::::::::::
+    GLFrameBuffer::GLFrameBuffer()
+    {
+        GLCALL(glGenFramebuffers(1, &m_renderer_id));
+    }
+    GLFrameBuffer::~GLFrameBuffer()
+    {
+        GLCALL(glDeleteFramebuffers(1, &m_renderer_id));
+    }
+
+    void GLFrameBuffer::bind() const
+    {
+        GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, m_renderer_id));
+    }
+
+    void GLFrameBuffer::unbind() const
+    {
+        GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    }
+
+    void GLFrameBuffer::attachTexture(Ref_ptr<FrameBufferTexture>& texture)
+    {
+        m_texture = std::static_pointer_cast<GLFrameBufferTexture, FrameBufferTexture>(texture);
+        bind();
+        switch (m_texture->usage)
+        {
+        case(FrameBufferTextureUsage::COLOR):
+        {
+            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
+        }break;
+        case(FrameBufferTextureUsage::DEPTH):
+        {
+            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
+        }break;
+        case(FrameBufferTextureUsage::SHADOW_MAP):
+        {
+            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
+            GLCALL(glDrawBuffer(GL_NONE));//tell openGl that we don't intend on drawing any colors
+            GLCALL(glReadBuffer(GL_NONE));//IMPORTANT:::::::::::MIGHT NEED TO DO THIS WHEN RENDERING AND NOT WHEN ATTACHING TO THE BUFFER-> FIND THIS OUT::::::::::::::::
+        }break;
+        case(FrameBufferTextureUsage::STENCIL):
+        {
+            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
+        }break;
+        case(FrameBufferTextureUsage::DEPTH_STENCIL):
+        {
+            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
+        }break;
+        default:
+        {
+            ENG_CORE_ASSERT(false, "Error attaching FrameBufferTexture. \"usage\" was none of the accepted values.");
+        }break;
+        }
+        unbind();
+    }
+    void GLFrameBuffer::attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer)
+    {
+        m_renderBuffer = std::static_pointer_cast<GLRenderBuffer, RenderBuffer>(buffer);
+        bind();
+        switch (m_renderBuffer->usage)
+        {
+        case(RenderBufferUsage::COLOR):
+        {
+            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_renderBuffer->getRenderer_id()));
+        }break;
+        case(RenderBufferUsage::DEPTH):
+        {
+            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_renderBuffer->getRenderer_id()));
+        }break;
+        case(RenderBufferUsage::STENCIL):
+        {
+            //not supported atm(I heard only with new nvidia drivers)
+            //GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_renderBuffer->getRenderer_id()));
+            ENG_CORE_ASSERT(false, "Stencil-only renderbuffers are not supported at the moment. Consider using DEPTH_STENCIL.");
+        }break;
+        case(RenderBufferUsage::DEPTH_STENCIL):
+        {
+            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_renderBuffer->getRenderer_id()));
+        }break;
+        default:
+        {
+            ENG_CORE_ASSERT(false, "Error attaching renderBuffer. \"usage\" was none of the accepted values.");
+        }break;
+        }
+        unbind();
+    }
+    //::::::::RenderBuffer::::::::
+    GLRenderBuffer::GLRenderBuffer(RenderBufferUsage usage, uint32_t width, uint32_t height)
+        : RenderBuffer(usage)
+    {
+        GLCALL(glGenRenderbuffers(1, &m_renderer_id));
+        GLCALL(glBindRenderbuffer(GL_RENDERBUFFER, m_renderer_id));
+        switch (usage)
+        {
+        case(RenderBufferUsage::COLOR):
+        {
+            GLCALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height));
+        }break;
+        case(RenderBufferUsage::DEPTH):
+        {
+            GLCALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height));
+        }break;
+        case(RenderBufferUsage::STENCIL):
+        {
+            //not supported atm(I heard only with new nvidia drivers)
+            //GLCALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height));
+            ENG_CORE_ASSERT(false, "Stencil-only renderbuffers are not supported at the moment. Consider using DEPTH_STENCIL.");
+        }break;
+        case(RenderBufferUsage::DEPTH_STENCIL):
+        {
+            GLCALL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height));
+        }break;
+        default:
+        {
+            ENG_CORE_ASSERT(false, "Error creating GLRenderBuffer. \"usage\" was none of the accepted values.");
+        }break;
+        }
+        GLCALL(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+    }
+    GLRenderBuffer::~GLRenderBuffer()
+    {
+        glDeleteRenderbuffers(1, &m_renderer_id);
+    }
+
+    void GLRenderBuffer::bind() const
+    {
+        GLCALL(glBindRenderbuffer(GL_RENDERBUFFER, m_renderer_id));
+    }
+
+    void GLRenderBuffer::unbind() const
+    {
+        GLCALL(glBindRenderbuffer(GL_RENDERBUFFER, 0));
+    }
 }

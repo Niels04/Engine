@@ -5,7 +5,7 @@
 
 namespace Engine
 {
-	void OpenGLRendererAPI::init()
+	void OpenGLRendererAPI::init() const
 	{
 		//setup blending
 		GLCALL(glEnable(GL_BLEND));
@@ -15,19 +15,28 @@ namespace Engine
 		GLCALL(glDepthFunc(GL_LESS));//maybe because I scale between -1 and 1 but the depthbuffer accepts values between 0 and 1
 	}
 
-	void OpenGLRendererAPI::clear()
+	void OpenGLRendererAPI::clear() const
 	{
 		GLCALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	}
 
-	void OpenGLRendererAPI::setClearColor(const glm::vec4& color)
+	void OpenGLRendererAPI::clearDepth() const
+	{
+		GLCALL(glClear(GL_DEPTH_BUFFER_BIT));
+	}
+
+	void OpenGLRendererAPI::setClearColor(const glm::vec4& color) const
 	{
 		GLCALL(glClearColor(color.r, color.g, color.b, color.a));
 	}
 
-	void OpenGLRendererAPI::drawIndexed(const Ref_ptr<vertexArray> va)
+	void OpenGLRendererAPI::drawIndexed(const Ref_ptr<vertexArray> va) const
 	{
 		GLCALL(glDrawElements(GL_TRIANGLES, va->getIb()->getCount(), GL_UNSIGNED_INT, nullptr));
+	}
+	void OpenGLRendererAPI::setViewport(const uint32_t width, const uint32_t height) const
+	{
+		GLCALL(glViewport(0, 0, width, height));
 	}
 
 	const uint32_t OpenGLRendererAPI::getMaxGlobalBuffers() const

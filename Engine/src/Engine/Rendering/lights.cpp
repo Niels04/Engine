@@ -27,7 +27,7 @@ namespace Engine
 			directionalLightBuffer->lAddVec4B();
 			directionalLightBuffer->lAddVec4B();
 		}
-		directionalLightBuffer->bindToPoint(1);
+		directionalLightBuffer->bindToPoint(DIRECTIONAL_LIGHTS_BIND);
 		directionalLightBuffer->updateElement(0, &initialLightCount);
 		directionalLightBuffer->unbind();
 		pointLightBuffer = globalBuffer::createUnique(sizeof(int) * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(pointLight), DYNAMIC_DRAW);
@@ -40,7 +40,7 @@ namespace Engine
 			pointLightBuffer->lAddVec4B();
 			pointLightBuffer->lAddVec3B();
 		}
-		pointLightBuffer->bindToPoint(2);
+		pointLightBuffer->bindToPoint(POINT_LIGHTS_BIND);
 		pointLightBuffer->updateElement(0, &initialLightCount);
 		pointLightBuffer->unbind();
 		spotLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4 /*x4 because of padding*/+ (MAX_LIGHTS_PER_TYPE * sizeof(spotLight)), DYNAMIC_DRAW);
@@ -54,7 +54,7 @@ namespace Engine
 			spotLightBuffer->lAddVec4B();
 			spotLightBuffer->lAddFloatB();
 		}
-		spotLightBuffer->bindToPoint(3);
+		spotLightBuffer->bindToPoint(SPOT_LIGHTS_BIND);
 		spotLightBuffer->updateElement(0, &initialLightCount);
 		spotLightBuffer->unbind();
 	}

@@ -24,6 +24,7 @@
 #include "Engine/Rendering/lights.hpp"
 
 #include "Engine/Rendering/perspCam.hpp"
+#include "Engine/Rendering/orthographicCam.hpp"
 //_____________________________
 
 //openGLspecic, but neccessary, because only openGL has vertexArrays

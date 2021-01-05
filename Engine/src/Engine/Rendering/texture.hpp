@@ -15,11 +15,10 @@ namespace Engine
 	public:
 		virtual ~texture() = default;
 
-		virtual uint32_t getHeight() const = 0;
-		virtual uint32_t getWidth() const = 0;
+		virtual const uint32_t getHeight() const = 0;
+		virtual const uint32_t getWidth() const = 0;
 
 		virtual void bind(const uint8_t slot = 0) const = 0;
-		virtual void unbind() const = 0;
 	};
 
 	class texture2d : public texture//represents a 2d-texture, again purely virtual and implemented per graphics-API
@@ -27,5 +26,21 @@ namespace Engine
 	public:
 		virtual ~texture2d() = default;
 		static Ref_ptr<texture2d> create(const std::string& path, const uint32_t filterMin = FILTER_LINEAR, const uint32_t filterMag = FILTER_LINEAR);
+	};
+
+	enum class FrameBufferTextureUsage : uint8_t
+	{
+		COLOR, DEPTH, STENCIL, DEPTH_STENCIL, SHADOW_MAP
+	};
+
+	class FrameBufferTexture : public texture
+	{
+	public:
+		FrameBufferTexture(const FrameBufferTextureUsage INusage) : usage(INusage) {  }
+		virtual ~FrameBufferTexture() = default;
+		static Ref_ptr<FrameBufferTexture> create(const FrameBufferTextureUsage usage);
+		static Ref_ptr<FrameBufferTexture> createShadowMap(const uint32_t width, const uint32_t height);
+	public:
+		const FrameBufferTextureUsage usage;
 	};
 }

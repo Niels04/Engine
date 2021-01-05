@@ -34,11 +34,26 @@
 
 namespace Engine
 {
-	//dypedefing shared&unique pointers here -> stuff that specifically belongs to the engine, like assets will use these
+	//typedefining shared&unique pointers here -> stuff that specifically belongs to the engine, like assets will use these
 	template<typename T>
 	using Scope_ptr = std::unique_ptr<T>;//use "using" here instead of "typedef" because it let's us declare this as a template
 	template<typename T>				 //could also do something like usgint shaderRef_ptr = std::shared_ptr<Engine::shader>;
 	using Ref_ptr = std::shared_ptr<T>;
 	template<typename T>
 	using WeakRef_ptr = std::shared_ptr<T>;
+	//a pointer to a pointer that provides normal use like a ptr
+	template<typename T>
+	class PtrPtr
+	{
+	public:
+		PtrPtr() = default;
+		PtrPtr(const T** ptr) : m_ptr(ptr) {  }
+		inline void operator =(const T** ptr) { m_ptr = ptr; }
+		inline void operator =(T** ptr) { m_ptr = ptr; }
+		inline operator T*() const { return (*m_ptr); }
+		inline T* operator->() const { return (*m_ptr); }
+		inline T** get() const { return m_ptr; }
+	private:
+		T** m_ptr;
+	};
 }

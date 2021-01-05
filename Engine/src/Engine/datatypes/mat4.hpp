@@ -351,9 +351,9 @@ struct mat4
 		float r = tan((hFov * 0.5) * (3.141592653f / 180.0f)) * zNear;
 		float l = -r;
 #else
-		float t = tanf((vFov * 0.5) * (3.141592653f / 180.0f)) * zNear;
+		float t = tanf((vFov * 0.5f) * (3.141592653f / 180.0f)) * zNear;
 		float b = -t;
-		float r = tanf((hFov * 0.5) * (3.141592653f / 180.0f)) * zNear;
+		float r = tanf((hFov * 0.5f) * (3.141592653f / 180.0f)) * zNear;
 		float l = -r;
 #endif
 
@@ -374,9 +374,9 @@ struct mat4
 		float r = tan((hfov * 0.5) * (3.141592653f / 180.0f)) * Znear;
 		float l = -r;
 #else
-		float t = tanf((vfov * 0.5) * (3.141592653f / 180.0f)) * Znear;
+		float t = tanf((vfov * 0.5f) * (3.141592653f / 180.0f)) * Znear;
 		float b = -t;
-		float r = tanf((hfov * 0.5) * (3.141592653f / 180.0f)) * Znear;
+		float r = tanf((hfov * 0.5f) * (3.141592653f / 180.0f)) * Znear;
 		float l = -r;
 #endif
 
@@ -387,6 +387,26 @@ struct mat4
 		mat[2][2] = -(Zfar + Znear) / (Zfar - Znear);
 		mat[3][2] = ((-2.0f) * Zfar * Znear) / (Zfar - Znear);
 		mat[2][3] = -1.0f;
+	}
+	void setProjMatOrtho(real left, real right, real bottom, real top, real Znear, real Zfar)//set an orthographic projection matrix
+	{
+#ifdef DOUBLE
+		mat[0][0] = 2.0 / (right - left);
+		mat[0][3] = -((right + left) / (right - left));
+		mat[1][1] = 2.0 / (top - bottom);
+		mat[1][3] = -((top + bottom) / (top - bottom));
+		mat[2][2] = 2.0 / (Zfar - Znear);
+		mat[2][3] = -((Znear + Zfar) / (Zfar - Znear));
+		mat[3][3] = 1.0;
+#else
+		mat[0][0] = 2.0f / (right - left);
+		mat[0][3] = -((right + left) / (right - left));
+		mat[1][1] = 2.0f / (top - bottom);
+		mat[1][3] = -((top + bottom) / (top - bottom));
+		mat[2][2] = 2.0f / (Zfar - Znear);
+		mat[2][3] = -((Znear + Zfar) / (Zfar - Znear));
+		mat[3][3] = 1.0f;
+#endif
 	}
 	void Identity()
 	{

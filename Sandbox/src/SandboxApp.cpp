@@ -69,24 +69,30 @@ public:
 		ImGui::Text("rotation:");
 		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", m_camRot.x, m_camRot.y, m_camRot.z);
 		ImGui::End();
-		ImGui::Begin("PointLight");
-		ImGui::ColorEdit3("ambient", (float*)&(*m_lamp)->ambient);
-		ImGui::ColorEdit3("diffuse", (float*)&(*m_lamp)->diffuse);
-		ImGui::ColorEdit3("specular", (float*)&(*m_lamp)->specular);
-		ImGui::InputFloat3("position", (float*)&(*m_lamp)->position, 3);
+		/*ImGui::Begin("PointLight[0]");
+		ImGui::ColorEdit3("ambient", (float*)&m_lamp->ambient);
+		ImGui::ColorEdit3("diffuse", (float*)&m_lamp->diffuse);
+		ImGui::ColorEdit3("specular", (float*)&m_lamp->specular);
+		ImGui::InputFloat3("position", (float*)&m_lamp->position, 3);
+		ImGui::End();
+		ImGui::Begin("PointLight[1]");
+		ImGui::ColorEdit3("ambient", (float*)&m_testLamp->ambient);
+		ImGui::ColorEdit3("diffuse", (float*)&m_testLamp->diffuse);
+		ImGui::ColorEdit3("specular", (float*)&m_testLamp->specular);
+		ImGui::InputFloat3("position", (float*)&m_testLamp->position, 3);
 		ImGui::End();
 		ImGui::Begin("SpotLight[0]");
-		ImGui::ColorEdit3("ambient", (float*)&(*m_spotLight)->ambient);
-		ImGui::ColorEdit3("diffuse", (float*)&(*m_spotLight)->diffuse);
-		ImGui::ColorEdit3("specular", (float*)&(*m_spotLight)->specular);
-		ImGui::SliderFloat("cutoff", &(*m_spotLight)->cutOff, cosf(80.0f * (PI / 180.0f)), 1.0f);
+		ImGui::ColorEdit3("ambient", (float*)&m_spotLight->ambient);
+		ImGui::ColorEdit3("diffuse", (float*)&m_spotLight->diffuse);
+		ImGui::ColorEdit3("specular", (float*)&m_spotLight->specular);
+		ImGui::SliderFloat("cutoff", &m_spotLight->cutOff, cosf(80.0f * (PI / 180.0f)), 1.0f);
 		ImGui::End();
 		ImGui::Begin("SpotLight[1]");
-		ImGui::ColorEdit3("ambient", (float*)&(*m_testSpotLight)->ambient);
-		ImGui::ColorEdit3("diffuse", (float*)&(*m_testSpotLight)->diffuse);
-		ImGui::ColorEdit3("specular", (float*)&(*m_testSpotLight)->specular);
-		ImGui::SliderFloat("cutoff", &(*m_testSpotLight)->cutOff, cosf(80.0f * (PI / 180.0f)), 1.0f);
-		ImGui::End();
+		ImGui::ColorEdit3("ambient", (float*)&m_testSpotLight->ambient);
+		ImGui::ColorEdit3("diffuse", (float*)&m_testSpotLight->diffuse);
+		ImGui::ColorEdit3("specular", (float*)&m_testSpotLight->specular);
+		ImGui::SliderFloat("cutoff", &m_testSpotLight->cutOff, cosf(80.0f * (PI / 180.0f)), 1.0f);
+		ImGui::End();*/
 	}
 
 	void onEvent(Engine::Event& e) override
@@ -98,6 +104,7 @@ public:
 	bool onWindowResizeEvent(Engine::windowResizeEvent& e)
 	{
 		fovRecalc(e.getHeight(), e.getWidth());
+		Engine::renderCommand::setViewport(e.getWidth(), e.getHeight());
 		return false;
 	}
 
@@ -111,7 +118,8 @@ public:
 
 	void temporarySetup()
 	{
-		/*m_vertexArray = Engine::GLvertexArray::create();
+		{
+			/*m_vertexArray = Engine::GLvertexArray::create();
 
 		float pVertexBuffer[5 * 4] = {
 			-50.0f, -50.0f, -100.0f, 0.0f, 0.0f,
@@ -132,6 +140,15 @@ public:
 		m_vertexArray->addBuffer(vertexBuffer);//tie the buffer and it's layout to the vertexArray
 		m_vertexArray->addBuffer(indexBuffer);//tie the indexBuffer to the vertexArray
 		*/
+		}
+
+		//temporary stuff for testing
+		Engine::Ref_ptr<Engine::FrameBuffer> frameBuffer = Engine::FrameBuffer::create();
+		Engine::Ref_ptr<Engine::FrameBufferTexture> frameBufferTexture = Engine::FrameBufferTexture::createShadowMap(Shadow_Width, Shadow_Height);
+		Engine::Ref_ptr<Engine::RenderBuffer> renderBuffer = Engine::RenderBuffer::create(Engine::RenderBufferUsage::DEPTH_STENCIL);
+		frameBuffer->attachTexture(frameBufferTexture);
+		frameBuffer->attachRenderBuffer(renderBuffer);
+		//end temporary stuff for testing
 
 		m_vertexArray = Engine::vertexArray::create();
 		m_vertexArray->load("gun.model");
@@ -141,16 +158,16 @@ public:
 		m_cubeGeometry->unbind();
 
 		Engine::Ref_ptr<Engine::shader> lightTexShader = Engine::Renderer::getShaderLib()->load("basicPhong_one_texture.shader");
-		lightTexShader->bindUniformBlock("ViewProjection", 0);
-		lightTexShader->bindUniformBlock("directionalLights", 1);
-		lightTexShader->bindUniformBlock("pointLights", 2);
-		lightTexShader->bindUniformBlock("spotLights", 3);
+		lightTexShader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightTexShader->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		lightTexShader->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
 
 		Engine::Ref_ptr<Engine::shader> lightShader = Engine::Renderer::getShaderLib()->load("basicPhong_color.shader");
-		lightShader->bindUniformBlock("ViewProjection", 0);
-		lightShader->bindUniformBlock("directionalLights", 1);
-		lightShader->bindUniformBlock("pointLights", 2);
-		lightShader->bindUniformBlock("spotLights", 3);
+		lightShader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightShader->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		lightShader->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
 
 		m_texture = Engine::texture2d::create("Cerberus_A.tga");
 
@@ -178,10 +195,10 @@ public:
 		m_cube->setPos({ -5.0f, 0.0f, -10.0f });
 
 		m_sun = Engine::Renderer::addStaticDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f) });
-		m_lamp = Engine::Renderer::addDynamicPointLight({ vec3(-2.5f, 5.0f, -10.0f), vec3(0.2f, 0.8f, 0.2f), vec3(0.2f, 0.8f, 0.2f), vec3(0.1f, 0.9f, 0.1f), 1.0f, 0.01f, 0.01f });
+		/*m_lamp = Engine::Renderer::addDynamicPointLight({ vec3(-2.5f, 5.0f, -10.0f), vec3(0.2f, 0.8f, 0.2f), vec3(0.2f, 0.8f, 0.2f), vec3(0.1f, 0.9f, 0.1f), 1.0f, 0.01f, 0.01f });
 		m_testLamp = Engine::Renderer::addDynamicPointLight({ vec3(-2.5f, 5.0f, -10.0f), vec3(0.2f, 0.2f, 0.8f), vec3(0.2f, 0.2f, 0.8f), vec3(0.1f, 0.1f, 0.9f), 1.0f, 0.01f, 0.01f });
 		m_spotLight = Engine::Renderer::addDynamicSpotLight({ vec3(-2.5f, 0.0f, -10.0f), vec3(-1.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), cosf(15.0f * (PI / 180.0f)) });
-		m_testSpotLight = Engine::Renderer::addDynamicSpotLight({ vec3(-2.5f, 0.0f, -10.0f), vec3(1.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), cosf(15.0f * (PI / 180.0f)) });
+		m_testSpotLight = Engine::Renderer::addDynamicSpotLight({ vec3(-2.5f, 0.0f, -10.0f), vec3(1.0f, 0.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), cosf(15.0f * (PI / 180.0f)) });*/
 	}
 private:
 	//temporary stuff
@@ -191,11 +208,11 @@ private:
 	Engine::Ref_ptr<Engine::vertexArray> m_vertexArray;
 	Engine::Ref_ptr<Engine::vertexArray> m_cubeGeometry;
 	Engine::Ref_ptr<Engine::texture2d> m_texture;
-	Engine::directionalLight** m_sun;
-	Engine::pointLight** m_lamp;
-	Engine::pointLight** m_testLamp;
-	Engine::spotLight** m_spotLight;
-	Engine::spotLight** m_testSpotLight;
+	Engine::PtrPtr<Engine::directionalLight> m_sun;
+	Engine::PtrPtr<Engine::pointLight> m_lamp;
+	Engine::PtrPtr<Engine::pointLight> m_testLamp;
+	Engine::PtrPtr<Engine::spotLight> m_spotLight;
+	Engine::PtrPtr<Engine::spotLight> m_testSpotLight;
 	//end temporary stuff
 
 	Engine::perspectiveCamera m_cam;

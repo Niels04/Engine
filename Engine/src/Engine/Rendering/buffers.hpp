@@ -1,6 +1,7 @@
 #pragma once
 #include "Engpch.hpp"
 #include "vertexBufferLayout.hpp"
+#include "texture.hpp"
 
 //defines for usage(forked from openGL)
 #define STREAM_DRAW 0x88E0
@@ -21,7 +22,7 @@ namespace Engine
 	public:
 		//usage could for example be STATIC_DRAW(not going to stream data to this buffer)
 		static Ref_ptr<vertexBuffer> create(const uint32_t size, const void* data, const uint32_t usage = STATIC_DRAW);//usage is STATIC_DRAW by default
-		virtual ~vertexBuffer() {  }
+		virtual ~vertexBuffer() = default;
 
 		virtual inline void setLayout(Ref_ptr<vertexBufferLayout> layout) = 0;
 		virtual inline void bindLayout() const = 0;
@@ -35,7 +36,7 @@ namespace Engine
 	{
 	public:
 		static Ref_ptr<indexBuffer> create(const uint32_t count, const uint32_t* indices, const uint32_t usage = STATIC_DRAW);//usage is STATIC_DRAW by default
-		virtual ~indexBuffer() {  }
+		virtual ~indexBuffer() = default;
 
 		inline virtual uint32_t getCount() const = 0;
 
@@ -48,7 +49,7 @@ namespace Engine
 	public:
 		static Ref_ptr<globalBuffer> create(const uint16_t size, const uint32_t usage);//create and bind the buffer
 		static Scope_ptr<globalBuffer> createUnique(const uint16_t size, const uint32_t usage);//same
-		virtual ~globalBuffer() {  }
+		virtual ~globalBuffer() = default;
 
 		virtual void bind() const = 0;//bind the globalBuffer
 		virtual void unbind() const = 0;//unbind the globalBuffer
@@ -78,5 +79,37 @@ namespace Engine
 		virtual void updateFromTo(const uint8_t indexBegin, const uint8_t indexEnd, const void* val) const = 0;
 
 		inline virtual uint16_t getSize() const = 0;
+	};
+
+	enum class RenderBufferUsage : uint8_t
+	{
+		COLOR, DEPTH, STENCIL, DEPTH_STENCIL
+	};
+
+	class RenderBuffer
+	{
+	public:
+		static Ref_ptr<RenderBuffer> create(const RenderBufferUsage usage);
+		RenderBuffer(RenderBufferUsage Usage) : usage(Usage) {  }
+		virtual ~RenderBuffer() = default;
+
+		inline virtual void bind() const = 0;
+		inline virtual void unbind() const = 0;
+	public:
+		const RenderBufferUsage usage;//the RenderBuffer's usage
+	};
+
+	class FrameBuffer
+	{
+	public:
+		static Ref_ptr<FrameBuffer> create();
+		virtual ~FrameBuffer() = default;
+
+		inline virtual void bind() const = 0;
+		inline virtual void unbind() const = 0;
+
+		inline virtual void attachTexture(Ref_ptr<FrameBufferTexture>& texture) = 0;//attach a frameBufferTexture for color to the FrameBuffer -> probalby the only texture that will be attached
+		//to a frameBuffer cuz there are RenderBuffers, which are more efficient(but not so good for reading, thats why in the case of colors we wanna use a texture)
+		inline virtual void attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer) = 0;
 	};
 }

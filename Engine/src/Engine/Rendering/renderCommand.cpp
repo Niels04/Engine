@@ -22,8 +22,18 @@ namespace Engine
 		s_RendererAPI->clear();
 	}
 
+	void renderCommand::clearDepth()
+	{
+		s_RendererAPI->clearDepth();
+	}
+
 	void renderCommand::setClearColor(const glm::vec4& color)
 	{
 		s_RendererAPI->setClearColor(color);
+	}
+
+	void renderCommand::setViewport(const uint32_t width, const uint32_t height)
+	{
+		s_RendererAPI->setViewport(width, height);
 	}
 }
