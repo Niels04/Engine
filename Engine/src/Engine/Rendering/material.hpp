@@ -13,10 +13,14 @@ namespace Engine
 
 		static Ref_ptr<material> create(Ref_ptr<shader>& shader, const std::string& name);
 
-		void bind(uint16_t slot = 10);//reserve the first 10 slots for stuff like matrices and lights
+		inline void addShader(Ref_ptr<shader>& shader) { m_shaderRefs.push_back(shader); }
+		void bind(const uint16_t slot = 10, const uint8_t shader = 0);//reserve the first 10 slots for stuff like matrices and lights
+
+		/*REMEMBER: THE FIRST SHADER ALWAYS IS THE INITIALIZATION SHADER, THAT DEFINES THE MATERIAL'S PROPERTIES. The Rest of the shaders are just for rendering the material a different way(but they should
+		the same uniforms nonetheless)*/
 
 		inline const std::string& getName() const { return m_name; }
-		inline const WeakRef_ptr<shader> getShader() const { return m_shaderRef; }
+		inline const WeakRef_ptr<shader> getShader(const uint8_t index = 0) const { return m_shaderRefs[index]; }
 
 		//for setting a single uniform and instantly updating it
 		void setUniform1bF(const std::string& name, const bool bValue);
@@ -46,10 +50,10 @@ namespace Engine
 
 	private:
 		const std::string m_name;
-		WeakRef_ptr<shader> m_shaderRef;//store a weak_ptr because a material shouldn't take ownership over it's shader(if one would delete the shaderLib for some reason)
+		std::vector<WeakRef_ptr<shader>> m_shaderRefs;//store a weak_ptr because a material shouldn't take ownership over it's shader(if one would delete the shaderLib for some reason)
 		std::unordered_map<std::string, Ref_ptr<texture>> m_textures;
 		Scope_ptr<globalBuffer> m_globalBuffer;//this pointer inherits the material's lifetime, because it only belongs to this material
-		void* m_data;//where all the material's data is stored on cpu-side(maybe remove this in the future)
+		void* m_data;//where all the material's data is stored on cpu-side
 	};
 
 	class materialLib

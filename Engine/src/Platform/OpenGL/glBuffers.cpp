@@ -227,54 +227,36 @@ namespace Engine
         GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     }
 
-    void GLFrameBuffer::attachTexture(Ref_ptr<FrameBufferTexture>& texture)
+    void GLFrameBuffer::initShadow()
     {
-        m_texture = std::static_pointer_cast<GLFrameBufferTexture, FrameBufferTexture>(texture);
         bind();
-        switch (m_texture->usage)
-        {
-        case(FrameBufferTextureUsage::COLOR):
-        {
-            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
-        }break;
-        case(FrameBufferTextureUsage::DEPTH):
-        {
-            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
-        }break;
-        case(FrameBufferTextureUsage::SHADOW_MAP):
-        {
-            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
-            GLCALL(glDrawBuffer(GL_NONE));//tell openGl that we don't intend on drawing any colors
-            GLCALL(glReadBuffer(GL_NONE));//IMPORTANT:::::::::::MIGHT NEED TO DO THIS WHEN RENDERING AND NOT WHEN ATTACHING TO THE BUFFER-> FIND THIS OUT::::::::::::::::
-        }break;
-        case(FrameBufferTextureUsage::STENCIL):
-        {
-            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
-        }break;
-        case(FrameBufferTextureUsage::DEPTH_STENCIL):
-        {
-            GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_texture->getRenderer_id(), 0));
-        }break;
-        default:
-        {
-            ENG_CORE_ASSERT(false, "Error attaching FrameBufferTexture. \"usage\" was none of the accepted values.");
-        }break;
-        }
+        GLCALL(glDrawBuffer(GL_NONE));//tell openGl that we don't intend on drawing any colors
+        GLCALL(glReadBuffer(GL_NONE));
         unbind();
     }
-    void GLFrameBuffer::attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer)
+
+    void GLFrameBuffer::attachTexture(const Ref_ptr<ShadowMap2d>& map) const
     {
-        m_renderBuffer = std::static_pointer_cast<GLRenderBuffer, RenderBuffer>(buffer);
+        GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, map->getRenderer_id(), 0));
+    }
+
+    void GLFrameBuffer::attachTexture(const Ref_ptr<ShadowMap3d>& map) const
+    {
+        //GLCALL(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP, map->getRenderer_id(), 0, 0));//potential cause of errors, maybe use glFramebufferTexture() instead
+        GLCALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, map->getRenderer_id(), 0));
+    }
+   /* void GLFrameBuffer::attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer)
+    {
         bind();
-        switch (m_renderBuffer->usage)
+        switch (buffer->usage)
         {
         case(RenderBufferUsage::COLOR):
         {
-            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_renderBuffer->getRenderer_id()));
+            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, buffer->getRenderer_id()));
         }break;
         case(RenderBufferUsage::DEPTH):
         {
-            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_renderBuffer->getRenderer_id()));
+            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buffer->getRenderer_id()));
         }break;
         case(RenderBufferUsage::STENCIL):
         {
@@ -284,7 +266,7 @@ namespace Engine
         }break;
         case(RenderBufferUsage::DEPTH_STENCIL):
         {
-            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_renderBuffer->getRenderer_id()));
+            GLCALL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, buffer->getRenderer_id()));
         }break;
         default:
         {
@@ -292,7 +274,7 @@ namespace Engine
         }break;
         }
         unbind();
-    }
+    }*/
     //::::::::RenderBuffer::::::::
     GLRenderBuffer::GLRenderBuffer(RenderBufferUsage usage, uint32_t width, uint32_t height)
         : RenderBuffer(usage)

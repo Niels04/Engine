@@ -1,5 +1,6 @@
 #pragma once
 #include "Engpch.hpp"
+#include "pLightMatrices.hpp"
 
 namespace Engine
 {
@@ -34,6 +35,8 @@ namespace Engine
 
 		virtual void setUniform1i(const std::string& name, const int value) = 0;
 
+		virtual void setUniform1ui(const std::string& name, const uint32_t value) = 0;
+
 		virtual void setUniform1f(const std::string& name, const float fValue) = 0;
 		virtual void setUniform2f(const std::string& name, const float v0, const float v1) = 0;
 		virtual void setUniform3f(const std::string& name, const float v0, const float v1, const float v2) = 0;
@@ -41,8 +44,8 @@ namespace Engine
 		virtual void setUniform4f(const std::string& name, const float v0, const float v1, const float v2, const float v3) = 0;
 		virtual void setUniform4f(const std::string& name, const vec4& vec) = 0;
 
-		virtual void setUniformMat4(const std::string& name, const mat4& mat) = 0;
-
+		virtual void setUniformMat4(const std::string& name, const mat4& mat, const uint8_t transpose = 0) = 0;
+		virtual void setUniformMat4_6(const std::string& name, const pointLightMatrices& matrices, const uint8_t transpose = 0) = 0;
 
 		virtual void bindUniformBlock(const std::string& name, const uint32_t bindingPoint) = 0;
 	};

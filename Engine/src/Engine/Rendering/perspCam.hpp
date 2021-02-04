@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Engine/datatypes/include.hpp"
-
 namespace Engine
 {
 	class perspectiveCamera

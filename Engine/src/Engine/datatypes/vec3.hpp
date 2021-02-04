@@ -17,6 +17,8 @@ struct vec3
 		out.append(std::to_string(z)); out.push_back('\n');
 		return out;
 	}
+	inline vec3 operator -() const { return {-x, -y, -z}; }
+	inline vec3 operator *(const float factor) const { return {x * factor, y * factor, z * factor}; }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const vec3& vec)//this just exists so we can log easier

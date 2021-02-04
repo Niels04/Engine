@@ -325,6 +325,10 @@ namespace Engine
     {
         GLCALL(glUniform1i(getUniformLocation(name), (int)bValue));
     }
+    void GLshader::setUniform1ui(const std::string& name, const uint32_t value)
+    {
+        GLCALL(glUniform1ui(getUniformLocation(name), value));
+    }
     void GLshader::setUniform1f(const std::string& name, float fValue)
     {
         GLCALL(glUniform1f(getUniformLocation(name), fValue));
@@ -353,10 +357,14 @@ namespace Engine
     {
         GLCALL(glUniform1i(getUniformLocation(name), value));
     }
-    void GLshader::setUniformMat4(const std::string& name, const mat4& mat)
+    void GLshader::setUniformMat4(const std::string& name, const mat4& mat, const uint8_t transpose)
     {
-        GLCALL(glUniformMatrix4fv(getUniformLocation(name), 1, GL_TRUE, &mat.mat[0][0]));//last param specifies a pointer to our array of numbers
-        //third param set to true when our matrix needs to get transposed, gets set to true here, because I use my own library, that doesn't do that automatically
+        GLCALL(glUniformMatrix4fv(getUniformLocation(name), 1, transpose, &mat.mat[0][0]));//last param specifies a pointer to our array of numbers
+        //third param set to true when our matrix needs to get transposed
+    }
+    void GLshader::setUniformMat4_6(const std::string& name, const pointLightMatrices& matrices, const uint8_t transpose)
+    {
+        GLCALL(glUniformMatrix4fv(getUniformLocation(name), 6, transpose, &matrices.positiveX.mat[0][0]));
     }
     //setuniforms end
     void GLshader::bindUniformBlock(const std::string& name, uint32_t bindingPoint)

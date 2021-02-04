@@ -13,6 +13,8 @@ namespace Engine
 		//setup depth-testing
 		GLCALL(glEnable(GL_DEPTH_TEST));
 		GLCALL(glDepthFunc(GL_LESS));//maybe because I scale between -1 and 1 but the depthbuffer accepts values between 0 and 1
+		GLCALL(glEnable(GL_CULL_FACE));
+		GLCALL(glCullFace(GL_BACK));
 	}
 
 	void OpenGLRendererAPI::clear() const
@@ -34,9 +36,25 @@ namespace Engine
 	{
 		GLCALL(glDrawElements(GL_TRIANGLES, va->getIb()->getCount(), GL_UNSIGNED_INT, nullptr));
 	}
+
 	void OpenGLRendererAPI::setViewport(const uint32_t width, const uint32_t height) const
 	{
 		GLCALL(glViewport(0, 0, width, height));
+	}
+
+	void OpenGLRendererAPI::setBlend(const uint32_t sfactor, const uint32_t dfactor) const
+	{
+		GLCALL(glBlendFunc(sfactor, dfactor));
+	}
+
+	void OpenGLRendererAPI::setDepth(const uint32_t method) const
+	{
+		GLCALL(glDepthFunc(method));
+	}
+
+	void OpenGLRendererAPI::cullFace(uint32_t face) const
+	{
+		GLCALL(glCullFace(face));
 	}
 
 	const uint32_t OpenGLRendererAPI::getMaxGlobalBuffers() const

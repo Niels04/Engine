@@ -2,9 +2,9 @@
 
 #include "lights.hpp"
 
-#define DirLightIndexToElementIndex(x) x * 4//with 4 being the number of elements that make up a directional light
-#define PointLightIndexToElementIndex(x) x * 5
-#define SpotLightIndexToElementIndex(x) x * 6
+#define DirLightIndexToElementIndex(x) x * (4 + 1)//with 4 being the number of elements that make up a directional light
+#define PointLightIndexToElementIndex(x) x * (5 + 6/*cuz a pointLight has 6 transformation-matrices*/)
+#define SpotLightIndexToElementIndex(x) x * (6 + 1)//+1 cuz of the toLightSpaceMatrix
 
 #define staticDirLightElementCount DirLightIndexToElementIndex(m_staticDirLights.size())
 #define dynamicDirLightElementCount DirLightIndexToElementIndex(m_dynamicDirLights.size())
@@ -15,10 +15,20 @@
 
 namespace Engine
 {
+	mat4 lightMatrixCalculator::s_projDir = mat4::projMat(DIR_LIGHT_CAM);
+	mat4 lightMatrixCalculator::s_projPoint = mat4::projMat(POINT_LIGHT_CAM);
+	mat4 lightMatrixCalculator::s_projSpot = mat4::projMat(SPOT_LIGHT_CAM);
+
 	void LightManager::init()
 	{
+		m_depthFrameBuffer = FrameBuffer::create();
+		m_depthFrameBuffer->initShadow();//tell the rendering-api(opengl) that we don't intend on drawing any colours to this
+		m_depthShader_dir = shader::create("shadow/toDepthMap_dir.shader");
+		m_depthShader_point = shader::create("shadow/toDepthMap_point.shader");
+		m_depthShader_spot = shader::create("shadow/toDepthMap_spot.shader");
+
 		const int32_t initialLightCount = 0;//by default there is no light source
-		directionalLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(directionalLight), STATIC_DRAW);//add an int at the beginning for the count
+		directionalLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(std::pair<directionalLight, mat4>), STATIC_DRAW);//add an int at the beginning for the count
 		directionalLightBuffer->lAddIntB();//integer for count
 		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
 		{
@@ -26,11 +36,12 @@ namespace Engine
 			directionalLightBuffer->lAddVec4B();
 			directionalLightBuffer->lAddVec4B();
 			directionalLightBuffer->lAddVec4B();
+			directionalLightBuffer->lAddMat4B();//toLightSpaceMatrix
 		}
 		directionalLightBuffer->bindToPoint(DIRECTIONAL_LIGHTS_BIND);
 		directionalLightBuffer->updateElement(0, &initialLightCount);
 		directionalLightBuffer->unbind();
-		pointLightBuffer = globalBuffer::createUnique(sizeof(int) * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(pointLight), DYNAMIC_DRAW);
+		pointLightBuffer = globalBuffer::createUnique(sizeof(int) * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(std::pair<pointLight, pointLightMatrices>), DYNAMIC_DRAW);
 		pointLightBuffer->lAddIntB();//integer for count
 		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
 		{
@@ -39,11 +50,18 @@ namespace Engine
 			pointLightBuffer->lAddVec4B();
 			pointLightBuffer->lAddVec4B();
 			pointLightBuffer->lAddVec3B();
+			//toLightSpaceMatrix
+			pointLightBuffer->lAddMat4B();
+			pointLightBuffer->lAddMat4B();
+			pointLightBuffer->lAddMat4B();
+			pointLightBuffer->lAddMat4B();
+			pointLightBuffer->lAddMat4B();
+			pointLightBuffer->lAddMat4B();
 		}
 		pointLightBuffer->bindToPoint(POINT_LIGHTS_BIND);
 		pointLightBuffer->updateElement(0, &initialLightCount);
 		pointLightBuffer->unbind();
-		spotLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4 /*x4 because of padding*/+ (MAX_LIGHTS_PER_TYPE * sizeof(spotLight)), DYNAMIC_DRAW);
+		spotLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4 /*x4 because of padding*/+ (MAX_LIGHTS_PER_TYPE * sizeof(std::pair<spotLight, mat4>)), DYNAMIC_DRAW);
 		spotLightBuffer->lAddIntB();
 		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
 		{
@@ -52,7 +70,8 @@ namespace Engine
 			spotLightBuffer->lAddVec4B();
 			spotLightBuffer->lAddVec4B();
 			spotLightBuffer->lAddVec4B();
-			spotLightBuffer->lAddFloatB();
+			spotLightBuffer->lAddVec4B();//for padding
+			spotLightBuffer->lAddMat4B();//toLightSpaceMatrix
 		}
 		spotLightBuffer->bindToPoint(SPOT_LIGHTS_BIND);
 		spotLightBuffer->updateElement(0, &initialLightCount);
@@ -65,7 +84,7 @@ namespace Engine
 		auto itP = m_staticDirLightPtrs.begin();
 		for (; it != m_staticDirLights.end(); it++, itP++)
 		{
-			if (it->uid == toRemove->uid)
+			if (it->first.uid == toRemove->uid)
 			{
 				it = m_staticDirLights.erase(it);
 				m_staticDirLightPtrs.erase(itP);
@@ -78,6 +97,7 @@ namespace Engine
 		updateStaticDirLights(it);
 		updateDynamicDirLights();
 		toRemove = NULL;
+		m_dirLightTextures.pop_back();
 		return;
 	}
 
@@ -87,7 +107,7 @@ namespace Engine
 		auto itP = m_staticPointLightPtrs.begin();
 		for (; it != m_staticPointLights.end(); it++, itP++)
 		{
-			if (it->uid == toRemove->uid)
+			if (it->first.uid == toRemove->uid)
 			{
 				it = m_staticPointLights.erase(it);
 				m_staticPointLightPtrs.erase(itP);
@@ -101,6 +121,7 @@ namespace Engine
 		updateStaticPointLights(it);
 		updateDynamicPointLights();
 		toRemove = NULL;
+		m_pointLightTextures.pop_back();
 		return;
 	}
 
@@ -110,7 +131,7 @@ namespace Engine
 		auto itP = m_staticSpotLightPtrs.begin();
 		for (; it != m_staticSpotLights.end(); it++, itP++)
 		{
-			if (it->uid == toRemove->uid)
+			if (it->first.uid == toRemove->uid)
 			{
 				it = m_staticSpotLights.erase(it);
 				m_staticSpotLightPtrs.erase(itP);
@@ -124,6 +145,7 @@ namespace Engine
 		updateStaticSpotLights(it);
 		updateDynamicSpotLights();
 		toRemove = NULL;
+		m_spotLightTextures.pop_back();
 		return;
 	}
 
@@ -133,7 +155,7 @@ namespace Engine
 		auto itP = m_dynamicDirLightPtrs.begin();
 		for (; it != m_dynamicDirLights.end(); it++, itP++)
 		{
-			if (it->uid == toRemove->uid)
+			if (it->first.uid == toRemove->uid)
 			{
 				it = m_dynamicDirLights.erase(it);
 				m_dynamicDirLightPtrs.erase(itP);
@@ -146,6 +168,7 @@ namespace Engine
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
 		updateDynamicDirLights(it);
 		toRemove = NULL;
+		m_dirLightTextures.pop_back();
 		return;
 	}
 
@@ -155,7 +178,7 @@ namespace Engine
 		auto itP = m_dynamicPointLightPtrs.begin();
 		for (; it != m_dynamicPointLights.end(); it++, itP++)
 		{
-			if (it->uid == toRemove->uid)
+			if (it->first.uid == toRemove->uid)
 			{
 				it = m_dynamicPointLights.erase(it);
 				m_dynamicPointLightPtrs.erase(itP);
@@ -168,6 +191,7 @@ namespace Engine
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
 		updateDynamicPointLights(it);
 		toRemove = NULL;
+		m_pointLightTextures.pop_back();
 		return;
 	}
 
@@ -177,7 +201,7 @@ namespace Engine
 		auto itP = m_dynamicSpotLightPtrs.begin();
 		for (; it != m_dynamicSpotLights.end(); it++, itP++)
 		{
-			if (it->uid == toRemove->uid)
+			if (it->first.uid == toRemove->uid)
 			{
 				it = m_dynamicSpotLights.erase(it);
 				m_dynamicSpotLightPtrs.erase(itP);
@@ -190,6 +214,7 @@ namespace Engine
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
 		updateDynamicSpotLights(it);
 		toRemove = NULL;
+		m_spotLightTextures.pop_back();
 		return;
 	}
 
@@ -218,7 +243,7 @@ namespace Engine
 		directionalLightBuffer->unbind();
 	}
 
-	void LightManager::updateStaticDirLights(std::vector<directionalLight>::iterator it)
+	void LightManager::updateStaticDirLights(std::vector<std::pair<directionalLight, mat4>>::iterator it)
 	{
 		uint8_t index = it - m_staticDirLights.begin();
 		directionalLightBuffer->bind();
@@ -226,7 +251,7 @@ namespace Engine
 		directionalLightBuffer->unbind();
 	}
 
-	void LightManager::updateDynamicDirLights(std::vector<directionalLight>::iterator it)
+	void LightManager::updateDynamicDirLights(std::vector<std::pair<directionalLight, mat4>>::iterator it)
 	{
 		uint8_t index = it - m_dynamicDirLights.begin();
 		directionalLightBuffer->bind();
@@ -259,7 +284,7 @@ namespace Engine
 		pointLightBuffer->unbind();
 	}
 
-	void LightManager::updateStaticPointLights(std::vector<pointLight>::iterator it)
+	void LightManager::updateStaticPointLights(std::vector<std::pair<pointLight, pointLightMatrices>>::iterator it)
 	{
 		uint8_t index = it - m_staticPointLights.begin();
 		pointLightBuffer->bind();
@@ -267,7 +292,7 @@ namespace Engine
 		pointLightBuffer->unbind();
 	}
 
-	void LightManager::updateDynamicPointLights(std::vector<pointLight>::iterator it)
+	void LightManager::updateDynamicPointLights(std::vector<std::pair<pointLight, pointLightMatrices>>::iterator it)
 	{
 		uint8_t index = it - m_dynamicPointLights.begin();
 		pointLightBuffer->bind();
@@ -300,7 +325,7 @@ namespace Engine
 		spotLightBuffer->unbind();
 	}
 
-	void LightManager::updateStaticSpotLights(std::vector<spotLight>::iterator it)
+	void LightManager::updateStaticSpotLights(std::vector<std::pair<spotLight, mat4>>::iterator it)
 	{
 		uint8_t index = it - m_staticSpotLights.begin();
 		spotLightBuffer->bind();
@@ -308,12 +333,28 @@ namespace Engine
 		spotLightBuffer->unbind();
 	}
 
-	void LightManager::updateDynamicSpotLights(std::vector<spotLight>::iterator it)
+	void LightManager::updateDynamicSpotLights(std::vector<std::pair<spotLight, mat4>>::iterator it)
 	{
 		uint8_t index = it - m_dynamicSpotLights.begin();
 		spotLightBuffer->bind();
 		spotLightBuffer->updateFromTo(1 + staticSpotLightElementCount + SpotLightIndexToElementIndex(index), staticSpotLightElementCount + dynamicSpotLightElementCount,
 			&m_dynamicSpotLights[index]);
 		spotLightBuffer->unbind();
+	}
+
+	void LightManager::updateDynamicLightMatrices()
+	{
+		for (auto& light : m_dynamicDirLights)
+		{
+			light.second = mat4::transposed(lightMatrixCalculator::getMatrix(light.first));
+		}
+		for (auto& light : m_dynamicPointLights)
+		{
+			light.second = lightMatrixCalculator::getMatrix(light.first);
+		}
+		for (auto& light : m_dynamicSpotLights)
+		{
+			light.second = mat4::transposed(lightMatrixCalculator::getMatrix(light.first));
+		}
 	}
 }

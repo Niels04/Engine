@@ -21,7 +21,7 @@ namespace Engine
 		m_window = std::unique_ptr<window>(window::create({ "Engine", 720U, 1080U, }));
 		m_window->setEventCallbackFn(BIND_EVENT_FN(onEvent));
 
-		Engine::Renderer::init();//setup some stuff in the renderer, for which a current graphics context is needed
+		Engine::Renderer::init(m_window->getWidth(), m_window->getHeight());//setup some stuff in the renderer, for which a current graphics context is needed
 
 		m_ImGuiLayer = new imGuiLayer;//we create the imGuiLayer by default and push it as an overlay onto the layerstack
 		pushOverlay(m_ImGuiLayer);

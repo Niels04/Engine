@@ -17,7 +17,8 @@ namespace Engine
 	}
 	void OrthographicCamera::recalcViewMatrix()
 	{
-		mat4 rotation = mat4::Rotx(-m_rot.x) * mat4::Roty(-m_rot.y) * mat4::Rotz(-m_rot.z);
+		//mat4 rotation = mat4::Rotx(-m_rot.x) * mat4::Roty(-m_rot.y) * mat4::Rotz(-m_rot.z);
+		mat4 rotation = mat4::lookAt({ m_lookAt.x, m_lookAt.y, m_lookAt.z, 0.0f });
 		mat4 translation = mat4::transMat(-m_pos);
 		m_viewMat = rotation * translation;//okay, actually do the translation first, it's logic if u think about it
 		//m_viewMat = translation * rotation;//important order!!! (rotation get's done first and therefore written the last)

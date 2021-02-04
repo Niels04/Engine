@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClInclude Include="src\Engine.hpp" />
     <ClInclude Include="src\Engine\Application.hpp" />
+    <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
     <ClInclude Include="src\Engine\EntryPoint.hpp" />
     <ClInclude Include="src\Engine\Events\ApplicationEvent.hpp" />
     <ClInclude Include="src\Engine\Events\Event.hpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="src\Engine\Rendering\material.hpp" />
     <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp" />
     <ClInclude Include="src\Engine\Rendering\perspCam.hpp" />
+    <ClInclude Include="src\Engine\Rendering\pLightMatrices.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderer.hpp" />
     <ClInclude Include="src\Engine\Rendering\rendererAPI.hpp" />

@@ -36,4 +36,19 @@ namespace Engine
 	{
 		s_RendererAPI->setViewport(width, height);
 	}
+
+	void renderCommand::setBlend(const uint32_t sfactor, const uint32_t dfactor)
+	{
+		s_RendererAPI->setBlend(sfactor, dfactor);
+	}
+
+	void renderCommand::setDepth(const uint32_t method)
+	{
+		s_RendererAPI->setDepth(method);
+	}
+
+	void renderCommand::cullFace(const uint32_t face)
+	{
+		s_RendererAPI->cullFace(face);
+	}
 }

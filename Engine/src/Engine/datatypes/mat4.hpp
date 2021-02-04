@@ -3,12 +3,14 @@
 #include "types.hpp"
 #include "vec4.hpp"
 
+#define RAD(x) x * 0.0174533f
+
 //a 4x4 matrix
 struct mat4
 {
 	real mat[4][4];//first is rows, second is columns
 	mat4()
-	{ 
+	{
 		//initialize to 0
 		for (uint8_t i = 0; i < 4; i++)
 		{
@@ -130,6 +132,36 @@ struct mat4
 		out.mat[2][2] = 1.0;
 		out.mat[2][3] = transZ;
 		out.mat[3][3] = 1.0;
+		return out;
+	}
+	static mat4 transMat(const vec4& trans)//don't use this to translate w -> it just ignores the vector's fourth component
+	{
+		mat4 out;
+		out.mat[0][0] = 1.0;
+		out.mat[0][3] = trans.x;
+		out.mat[1][1] = 1.0;
+		out.mat[1][3] = trans.y;
+		out.mat[2][2] = 1.0;
+		out.mat[2][3] = trans.z;
+		out.mat[3][3] = 1.0;
+		return out;
+	}
+	static mat4 lookAt(const vec4& vec, const vec4 tmp = {0.0f, 0.7071067f, 0.07071067f, 0.0f}/*the temporary,arbitrary up-vector*/)//normalized vector pointing towards -z of the new coordinate-system
+	{
+		vec4 forward = -vec;
+		vec4 right = vec4::normalized(vec4::cross(tmp, forward));//get the positive x- vector
+		vec4 up = vec4::cross(forward, right);
+		mat4 out;
+		out[0][0] = right.x;
+		out[1][0] = right.y;
+		out[2][0] = right.z;
+		out[0][1] = up.x;
+		out[1][1] = up.y;
+		out[2][1] = up.z;
+		out[0][2] = forward.x;
+		out[1][2] = forward.y;
+		out[2][2] = forward.z;
+		out[3][3] = 1.0f;
 		return out;
 	}
 	void setScaleMat(const vec3& factor)
@@ -259,8 +291,8 @@ struct mat4
 		mat[1][1] = std::cos(angle);
 		mat[1][2] = std::sin(-angle);
 #else
-		mat[1][1] = std::cosf(angle);
-		mat[1][2] = std::sinf(-angle);
+		mat[1][1] = close0(std::cosf(angle));
+		mat[1][2] = close0(std::sinf(-angle));
 #endif
 		mat[2][1] = -mat[1][2];//avoid calling trigonometric functions again, since the need time to calculate
 		mat[2][2] = mat[1][1];//same here
@@ -274,8 +306,8 @@ struct mat4
 		out.mat[1][1] = std::cos(angle);
 		out.mat[1][2] = std::sin(-angle);
 #else
-		out.mat[1][1] = std::cosf(angle);
-		out.mat[1][2] = std::sinf(-angle);
+		out.mat[1][1] = close0(std::cosf(angle));
+		out.mat[1][2] = close0(std::sinf(-angle));
 #endif
 		out.mat[2][1] = -out.mat[1][2];//avoid calling trigonometric functions again, since the need time to calculate
 		out.mat[2][2] = out.mat[1][1];//same here
@@ -288,8 +320,8 @@ struct mat4
 		mat[0][0] = std::cos(angle);
 		mat[0][2] = std::sin(angle);
 #else
-		mat[0][0] = std::cosf(angle);
-		mat[0][2] = std::sinf(angle);
+		mat[0][0] = close0(std::cosf(angle));
+		mat[0][2] = close0(std::sinf(angle));
 #endif
 		mat[1][1] = 1.0;
 		mat[2][0] = -mat[0][2];//avoid calling trigonometric functions again, since the need time to calculate
@@ -303,8 +335,8 @@ struct mat4
 		out.mat[0][0] = std::cos(angle);
 		out.mat[0][2] = std::sin(angle);
 #else
-		out.mat[0][0] = std::cosf(angle);
-		out.mat[0][2] = std::sinf(angle);
+		out.mat[0][0] = close0(std::cosf(angle));
+		out.mat[0][2] = close0(std::sinf(angle));
 #endif
 		out.mat[1][1] = 1.0;
 		out.mat[2][0] = -out.mat[0][2];//avoid calling trigonometric functions again, since the need time to calculate
@@ -318,8 +350,8 @@ struct mat4
 		mat[0][0] = std::cos(angle);
 		mat[0][1] = std::sin(-angle);
 #else
-		mat[0][0] = std::cosf(angle);
-		mat[0][1] = std::sinf(-angle);
+		mat[0][0] = close0(std::cosf(angle));
+		mat[0][1] = close0(std::sinf(-angle));
 #endif
 		mat[1][0] = -mat[0][1];//avoid calling trigonometric functions again, since the need time to calculate
 		mat[1][1] = mat[0][0];//same here
@@ -333,8 +365,8 @@ struct mat4
 		out.mat[0][0] = std::cos(angle);
 		out.mat[0][1] = std::sin(-angle);
 #else
-		out.mat[0][0] = std::cosf(angle);
-		out.mat[0][1] = std::sinf(-angle);
+		out.mat[0][0] = close0(std::cosf(angle));
+		out.mat[0][1] = close0(std::sinf(-angle));
 #endif
 		out.mat[1][0] = -out.mat[0][1];//avoid calling trigonometric functions again, since the need time to calculate
 		out.mat[1][1] = out.mat[0][0];//same here
@@ -351,9 +383,10 @@ struct mat4
 		float r = tan((hFov * 0.5) * (3.141592653f / 180.0f)) * zNear;
 		float l = -r;
 #else
-		float t = tanf((vFov * 0.5f) * (3.141592653f / 180.0f)) * zNear;
+		float test = tanf(RAD(vFov * 0.5f));
+		float t = tanf(RAD(vFov * 0.5f)) * zNear;
 		float b = -t;
-		float r = tanf((hFov * 0.5f) * (3.141592653f / 180.0f)) * zNear;
+		float r = tanf(RAD(hFov * 0.5f)) * zNear;
 		float l = -r;
 #endif
 
@@ -361,9 +394,12 @@ struct mat4
 		out.mat[2][0] = (r + l) / (r - l);
 		out.mat[1][1] = (2.0f * zNear) / (t - b);
 		out.mat[2][1] = (t + b) / (t - b);
-		out.mat[2][2] = (zFar + zNear) / (zFar - zNear);
-		out.mat[3][2] = ((-2.0f) * zFar * zNear) / (zFar - zNear);
+		out.mat[2][2] = -(zFar) / (zFar - zNear);
+		out.mat[3][2] = -(zFar * zNear) / (zFar - zNear);
+		//out.mat[2][2] = (zFar + zNear) / (zFar - zNear);
+		//out.mat[3][2] = ((-2.0f) * zFar * zNear) / (zFar - zNear);
 		out.mat[2][3] = -1.0f;
+		out.mat[3][3] = 0.0f;
 		return out;
 	}
 	void setProjMat(real Znear, real Zfar, real hfov, real vfov)//set the openGL projection-Matrix
@@ -374,9 +410,9 @@ struct mat4
 		float r = tan((hfov * 0.5) * (3.141592653f / 180.0f)) * Znear;
 		float l = -r;
 #else
-		float t = tanf((vfov * 0.5f) * (3.141592653f / 180.0f)) * Znear;
+		float t = tanf(RAD(vfov * 0.5f)) * Znear;
 		float b = -t;
-		float r = tanf((hfov * 0.5f) * (3.141592653f / 180.0f)) * Znear;
+		float r = tanf(RAD(hfov * 0.5f)) * Znear;
 		float l = -r;
 #endif
 
@@ -384,9 +420,34 @@ struct mat4
 		mat[2][0] = (r + l) / (r - l);
 		mat[1][1] = (2.0f * Znear) / (t - b);
 		mat[2][1] = (t + b) / (t - b);
-		mat[2][2] = -(Zfar + Znear) / (Zfar - Znear);
-		mat[3][2] = ((-2.0f) * Zfar * Znear) / (Zfar - Znear);
+		mat[2][2] = -(Zfar) / (Zfar - Znear);
+		mat[3][2] = -(Zfar * Znear) / (Zfar - Znear);
+		//mat[2][2] = -(Zfar + Znear) / (Zfar - Znear);
+		//mat[3][2] = ((-2.0f) * Zfar * Znear) / (Zfar - Znear);
 		mat[2][3] = -1.0f;
+		mat[3][3] = 0.0f;
+	}
+	static mat4 projMat(real left, real right, real bottom, real top, real Znear, real Zfar)
+	{
+		mat4 out;
+#ifdef DOUBLE
+		out[0][0] = 2.0 / (right - left);
+		out[0][3] = -((right + left) / (right - left));
+		out[1][1] = 2.0 / (top - bottom);
+		out[1][3] = -((top + bottom) / (top - bottom));
+		out[2][2] = 2.0 / (Zfar - Znear);
+		out[2][3] = -((Znear + Zfar) / (Zfar - Znear));
+		out[3][3] = 1.0;
+#else
+		out[0][0] = 2.0f / (right - left);
+		out[0][3] = -((right + left) / (right - left));
+		out[1][1] = 2.0f / (top - bottom);
+		out[1][3] = -((top + bottom) / (top - bottom));
+		out[2][2] = 2.0f / (Zfar - Znear);
+		out[2][3] = -((Znear + Zfar) / (Zfar - Znear));
+		out[3][3] = 1.0f;
+#endif
+		return out;
 	}
 	void setProjMatOrtho(real left, real right, real bottom, real top, real Znear, real Zfar)//set an orthographic projection matrix
 	{

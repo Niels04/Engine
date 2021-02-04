@@ -12,6 +12,7 @@ namespace Engine
 {
 	class texture//purely virtual, represents any kind of texture
 	{//mostly exist, because sometimes one might want to work with a texture, regardless wether it's 2d of 3d
+		friend class GLFrameBuffer;
 	public:
 		virtual ~texture() = default;
 
@@ -19,6 +20,9 @@ namespace Engine
 		virtual const uint32_t getWidth() const = 0;
 
 		virtual void bind(const uint8_t slot = 0) const = 0;
+
+	private:
+		virtual const uint32_t getRenderer_id() const = 0;
 	};
 
 	class texture2d : public texture//represents a 2d-texture, again purely virtual and implemented per graphics-API
@@ -28,19 +32,17 @@ namespace Engine
 		static Ref_ptr<texture2d> create(const std::string& path, const uint32_t filterMin = FILTER_LINEAR, const uint32_t filterMag = FILTER_LINEAR);
 	};
 
-	enum class FrameBufferTextureUsage : uint8_t
+	class ShadowMap2d : public texture
 	{
-		COLOR, DEPTH, STENCIL, DEPTH_STENCIL, SHADOW_MAP
+	public:
+		virtual ~ShadowMap2d() = default;
+		static Ref_ptr<ShadowMap2d> create(const uint32_t width, const uint32_t height);
 	};
 
-	class FrameBufferTexture : public texture
+	class ShadowMap3d : public texture
 	{
 	public:
-		FrameBufferTexture(const FrameBufferTextureUsage INusage) : usage(INusage) {  }
-		virtual ~FrameBufferTexture() = default;
-		static Ref_ptr<FrameBufferTexture> create(const FrameBufferTextureUsage usage);
-		static Ref_ptr<FrameBufferTexture> createShadowMap(const uint32_t width, const uint32_t height);
-	public:
-		const FrameBufferTextureUsage usage;
+		virtual ~ShadowMap3d() = default;
+		static Ref_ptr<ShadowMap3d> create(const uint32_t width, const uint32_t height);
 	};
 }

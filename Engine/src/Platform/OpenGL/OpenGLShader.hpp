@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/Rendering/shader.hpp"
+#include "Engine/Rendering/lights.hpp"
 
 namespace Engine
 {
@@ -38,6 +39,8 @@ namespace Engine
 
 			virtual void setUniform1i(const std::string& name, const int value) override;
 
+			virtual void setUniform1ui(const std::string& name, const uint32_t value) override;
+
 			virtual void setUniform1f(const std::string& name, const float fValue) override;
 			virtual void setUniform2f(const std::string& name, const float v0, const float v1) override;
 			virtual void setUniform3f(const std::string& name, const float v0, const float v1, const float v2) override;
@@ -45,7 +48,8 @@ namespace Engine
 			virtual void setUniform4f(const std::string& name, const float v0, const float v1, const float v2, const float v3) override;
 			virtual void setUniform4f(const std::string& name, const vec4& vec) override;
 
-			virtual void setUniformMat4(const std::string& name, const mat4& mat) override;
+			virtual void setUniformMat4(const std::string& name, const mat4& mat, const uint8_t transpose = 0) override;
+			virtual void setUniformMat4_6(const std::string& name, const pointLightMatrices& mat, const uint8_t transpose = 0) override;
 
 
 			virtual void bindUniformBlock(const std::string& name, const uint32_t bindingPoint) override;

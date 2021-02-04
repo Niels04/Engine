@@ -28,17 +28,17 @@ namespace Engine
 		}
 	}
 
-	Ref_ptr<FrameBufferTexture> FrameBufferTexture::create(const FrameBufferTextureUsage usage)
+	Ref_ptr<ShadowMap2d> ShadowMap2d::create(const uint32_t width, const uint32_t height)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return std::make_shared<GLFrameBufferTexture>(usage, Application::Get().getWindow().getWidth(), Application::Get().getWindow().getHeight());//frameBuffer texture has the size of our current window
+			return std::make_shared<GLShadowMap2d>(width, height);
 		}break;
 		case RendererAPI::API::NONE:
 		{
-			ENG_CORE_WARN("Tried to create a FrameBufferColorTexture while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			ENG_CORE_WARN("Tried to create a ShadowMap2d while RenderingAPI was set to \"NONE\". Returning nullptr.");
 			return nullptr;
 		}break;
 		default:
@@ -48,17 +48,17 @@ namespace Engine
 		}
 	}
 
-	Ref_ptr<FrameBufferTexture> FrameBufferTexture::createShadowMap(const uint32_t width, const uint32_t height)
+	Ref_ptr<ShadowMap3d> ShadowMap3d::create(const uint32_t width, const uint32_t height)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return std::make_shared<GLFrameBufferTexture>(width, height);
+			return std::make_shared<GLShadowMap3d>(width, height);
 		}break;
 		case RendererAPI::API::NONE:
 		{
-			ENG_CORE_WARN("Tried to create a FrameBufferColorTexture while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			ENG_CORE_WARN("Tried to create a ShadowMap3d while RenderingAPI was set to \"NONE\". Returning nullptr.");
 			return nullptr;
 		}break;
 		default:

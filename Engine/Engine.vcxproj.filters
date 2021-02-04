@@ -184,6 +184,8 @@
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp" />
+    <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
+    <ClInclude Include="src\Engine\Rendering\pLightMatrices.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">

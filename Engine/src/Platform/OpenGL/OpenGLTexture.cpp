@@ -52,56 +52,53 @@ namespace Engine
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));//binding textures at multiple slots is only usefull when rendering objects, that use multiple textures(because all of the object's textures have to be
 		//accessible in the shader at the same time
 	}
-	//::::::::FRAMEBUFFER_TEXTURE:::::::::
-	GLFrameBufferTexture::GLFrameBufferTexture(const FrameBufferTextureUsage INusage, const uint32_t width, const uint32_t height)
-		: FrameBufferTexture(INusage)
+	
+	//SHADOW_MAP_2D::::::::::
+	GLShadowMap2d::GLShadowMap2d(const uint32_t width, const uint32_t height)
+		: m_width(width), m_height(height)
 	{
 		GLCALL(glGenTextures(1, &m_renderer_id));
 		GLCALL(glBindTexture(GL_TEXTURE_2D, m_renderer_id));
-		switch (usage)
-		{
-		case(FrameBufferTextureUsage::COLOR):
-		{
-			GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr));//create a texture that stores RGB-colors
-		}break;
-		case(FrameBufferTextureUsage::DEPTH):
-		{
-			GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
-		}break;
-		case(FrameBufferTextureUsage::STENCIL):
-		{
-			GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_STENCIL_INDEX8, width, height, 0, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, nullptr));
-		}break;
-		case(FrameBufferTextureUsage::DEPTH_STENCIL):
-		{
-			GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr));
-		}break;
-		default:
-		{
-			ENG_CORE_ASSERT(false, "Error creating GLFrameBufferTexture. \"usage\" was none of the accepted values.");
-		}break;
-		}
-		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-	}
-	GLFrameBufferTexture::GLFrameBufferTexture(const uint32_t width, const uint32_t height)
-		: FrameBufferTexture(FrameBufferTextureUsage::DEPTH)
-	{
-		GLCALL(glGenTextures(1, &m_renderer_id));
-		GLCALL(glBindTexture(GL_TEXTURE_2D, m_renderer_id));
-		GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
-		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));//maybe set this to linear in order to get smoother shadows?
+		GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));//maybe switch this with glTexStorage2D
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
 		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER));
+		float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };//set border color, so that stuff outside the light's frustum is never in shadow
+		GLCALL(glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor));
 	}
-	GLFrameBufferTexture::~GLFrameBufferTexture()
+	GLShadowMap2d::~GLShadowMap2d()
 	{
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
-	
-	void GLFrameBufferTexture::bind(const uint8_t slot) const
+
+	void GLShadowMap2d::bind(const uint8_t slot) const
 	{
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
+
+	//SHADOW_MAP_3D:::::::
+	GLShadowMap3d::GLShadowMap3d(const uint32_t width, const uint32_t height)
+		: m_width(width), m_height(height)
+	{
+		GLCALL(glGenTextures(1, &m_renderer_id));
+		GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_renderer_id));
+		for (uint8_t i = 0; i < 6; i++)
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	}
+	GLShadowMap3d::~GLShadowMap3d()
+	{
+		GLCALL(glDeleteTextures(1, &m_renderer_id));
+	}
+
+	void GLShadowMap3d::bind(const uint8_t slot) const
+	{
+		GLCALL(glBindTextureUnit(slot, m_renderer_id));
+	}
+	
 }

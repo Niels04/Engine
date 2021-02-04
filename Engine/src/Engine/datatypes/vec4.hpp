@@ -15,6 +15,8 @@ struct vec4
 	//operators
 	inline const real* data() const { return &x; }//return pointer to data
 	inline const real operator[](const uint8_t index) const { _ASSERT(index < 4); return (real) * (&x + index); }
+	inline vec4 operator -() const { return { -x, -y, -z, -w }; }
+	inline vec4 operator*(const float factor) const { return {x * factor, y * factor, z * factor, w * factor}; }
 	std::string toString() const //only for debug purposes
 	{
 		std::string out;
@@ -24,6 +26,12 @@ struct vec4
 		out.append(std::to_string(w)); out.push_back('\n');
 		return out;
 	}
+	//mathematical operations
+	static vec4 cross(const vec4& a, const vec4& b)
+	{
+		return { a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x, 0.0f };
+	}
+	static vec4 normalized(const vec4& vec) { float len = sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z); return { vec.x / len, vec.y / len, vec.z / len, 0.0f }; }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const vec4& vec)//this just exists so we can log easier

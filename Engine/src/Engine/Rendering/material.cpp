@@ -10,22 +10,23 @@ namespace Engine
 	}
 
 	material::material(Ref_ptr<shader>& shader, const std::string& name)
-		: m_shaderRef(shader), m_name(name)
+		: m_name(name)
 	{
+		m_shaderRefs.push_back(shader);
 		//reserve memory for the materialUniforms
-		if (m_shaderRef->getMaterialUniformsSize())//if there are any uniforms to be set
+		if (m_shaderRefs[0]->getMaterialUniformsSize())//if there are any uniforms to be set
 		{
-			m_data = malloc(m_shaderRef->getMaterialUniformsSize());
-			m_globalBuffer = globalBuffer::createUnique(m_shaderRef->getMaterialUniformsSize(), STATIC_DRAW);//because the shader-class reads the size directly from shader-source-code we can pass it in here without worries
-			const std::unordered_map<std::string, shader::uniformProps>& temp = m_shaderRef->getMaterialUniforms();
+			m_data = malloc(m_shaderRefs[0]->getMaterialUniformsSize());
+			m_globalBuffer = globalBuffer::createUnique(m_shaderRefs[0]->getMaterialUniformsSize(), STATIC_DRAW);//because the shader-class reads the size directly from shader-source-code we can pass it in here without worries
+			const std::unordered_map<std::string, shader::uniformProps>& temp = m_shaderRefs[0]->getMaterialUniforms();
 			for (const std::pair<const std::string, shader::uniformProps>& it : temp)//add all the layouts to the globalBuffer
 			{
 				m_globalBuffer->lAdd(it.second.type, it.second.offset);
 			}
 		}
-		if (m_shaderRef->hasTextures())//if the shader has any textures
+		if (m_shaderRefs[0]->hasTextures())//if the shader has any textures
 		{
-			const std::vector<std::string>& textures = m_shaderRef->getTextures();
+			const std::vector<std::string>& textures = m_shaderRefs[0]->getTextures();
 			ENG_CORE_ASSERT(textures.size() <= materialLib::getMaxTexSlots(), "The shader expects more textures than this graphics card supports slots.");
 			for (const std::string& it : textures)
 			{
@@ -36,170 +37,170 @@ namespace Engine
 
 	material::~material()
 	{
-		if(m_shaderRef->getMaterialUniformsSize())//don't free memory that hasn't be allocated!!!(if size is 0 no memory was allocated)
+		if(m_shaderRefs[0]->getMaterialUniformsSize())//don't free memory that hasn't be allocated!!!(if size is 0 no memory was allocated)
 			free(m_data);
 	}
 
-	void material::bind(uint16_t slot)
+	void material::bind(const uint16_t slot, const uint8_t shader)
 	{
 		//materialUniforms in the "material"-block
-		m_shaderRef->bind();
-		if (m_shaderRef->getMaterialUniformsSize())//if there even are uniforms to bind(there may be a material, which is just composed of textures)
+		m_shaderRefs[shader]->bind();
+		if (m_shaderRefs[shader]->getMaterialUniformsSize())//if there even are uniforms to bind(there may be a material, which is just composed of textures)
 		{
-			m_shaderRef->bindUniformBlock("material", slot);
+			m_shaderRefs[shader]->bindUniformBlock("material", slot);
 			m_globalBuffer->bindToPoint(slot);
 			m_globalBuffer->unbind();
 		}
 		//textures
 		uint8_t texSlot = 0;
-		for (const auto& it : m_shaderRef->getTextures())//range-based for-loop should work with function that returns reference to vector(tested it)
+		for (const auto& it : m_shaderRefs[shader]->getTextures())//range-based for-loop should work with function that returns reference to vector(tested it)
 		{
 			m_textures[it]->bind(texSlot);
-			m_shaderRef->setUniform1i(it, texSlot);
+			m_shaderRefs[shader]->setUniform1i(it, texSlot);
 			texSlot++;
 		}
 	}
 
 	void material::setUniform1bF(const std::string& name, const bool bValue)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, (int*)(&bValue));//this may not work because we cast a *bool to an *int
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, (int*)(&bValue));//this may not work because we cast a *bool to an *int
 		m_globalBuffer->unbind();
-		*(int*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = (int)bValue;
+		*(int*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset) = (int)bValue;
 	}
 	void material::setUniform1iF(const std::string& name, const int iValue)
 	{
 		//test this!!!
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, &iValue);
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, &iValue);
 		m_globalBuffer->unbind();
-		*(int*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = iValue;
+		*(int*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset) = iValue;
 	}
 	void material::setUniform1fF(const std::string& name, const float fValue)
 	{
 		//test this!!!
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, &fValue);
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, &fValue);
 		m_globalBuffer->unbind();
-		*(float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = fValue;
+		*(float*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset) = fValue;
 	}
 	void material::setUniform2fF(const std::string& name, const float v0, const float v1)
 	{
 		//test this!!!
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
-		float* temp = (float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset);
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		float* temp = (float*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset);
 		*temp = v0; temp++;
 		*temp = v1;
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, temp);
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, temp);
 		m_globalBuffer->unbind();
 	}
 	void material::setUniform3fF(const std::string& name, const float v0, const float v1, const float v2)
 	{
 		//test this!!!
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
-		float* temp = (float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset);
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		float* temp = (float*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset);
 		*temp = v0; temp++;
 		*temp = v1; temp++;
 		*temp = v2;
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, temp);
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, temp);
 		m_globalBuffer->unbind();
 	}
 	void material::setUniform3fF(const std::string& name, const vec3& vec)
 	{
 		//test this!!!
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, &vec);
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, &vec);
 		m_globalBuffer->unbind();
-		memcpy(((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset), &vec, sizeof(vec3));//copy the vector's memory into the buffer
+		memcpy(((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset), &vec, sizeof(vec3));//copy the vector's memory into the buffer
 	}
 	void material::setUniform4fF(const std::string& name, const float v0, const float v1, const float v2, const float v3)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
-		float* temp = (float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset);
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		float* temp = (float*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset);
 		*temp = v0; temp++;
 		*temp = v1; temp++;
 		*temp = v2; temp++;
 		*temp = v3;
 		//probably an error somewhere here
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, temp);
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, temp);
 		m_globalBuffer->unbind();
 	}
 	void material::setUniform4fF(const std::string& name, const vec4& vec)
 	{
 		//test this!!!
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, &vec);
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, &vec);
 		m_globalBuffer->unbind();
-		memcpy(((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset), &vec, sizeof(vec4));//copy the vector's memory into the buffer
+		memcpy(((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset), &vec, sizeof(vec4));//copy the vector's memory into the buffer
 	}
 	void material::setUniformMat4F(const std::string& name, const mat4& mat)
 	{
 		//test this!!!
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		m_globalBuffer->bind();
-		m_globalBuffer->updateElement(m_shaderRef->getMaterialUniforms().find(name)->second.index, &mat);
+		m_globalBuffer->updateElement(m_shaderRefs[0]->getMaterialUniforms().find(name)->second.index, &mat);
 		m_globalBuffer->unbind();
-		memcpy(((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset), &mat, sizeof(mat4));//copy the vector's memory into the buffer
+		memcpy(((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset), &mat, sizeof(mat4));//copy the vector's memory into the buffer
 	}
 	void material::setUniform1b(const std::string& name, const bool bValue)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		*(int*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = (int)bValue;
+		*(int*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset) = (int)bValue;
 	}
 	void material::setUniform1i(const std::string& name, const int iValue)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		*(int*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = iValue;
+		*(int*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset) = iValue;
 	}
 	void material::setUniform1f(const std::string& name, const float fValue)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		*(float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset) = fValue;
+		*(float*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset) = fValue;
 	}
 	void material::setUniform2f(const std::string& name, const float v0, const float v1)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		float* temp = (float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset);
+		float* temp = (float*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset);
 		*temp = v0; temp++;
 		*temp = v1;
 	}
 	void material::setUniform3f(const std::string& name, const vec3& vec)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		memcpy(((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset), &vec, sizeof(vec3));//copy the vector's memory into the buffer
+		memcpy(((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset), &vec, sizeof(vec3));//copy the vector's memory into the buffer
 	}
 	void material::setUniform3f(const std::string& name, const float v0, const float v1, const float v2)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		float* temp = (float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset);
+		float* temp = (float*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset);
 		*temp = v0; temp++;
 		*temp = v1; temp++;
 		*temp = v2;
 	}
 	void material::setUniform4f(const std::string& name, const vec4& vec)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
-		memcpy(((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset), &vec, sizeof(vec4));//copy the vector's memory into the buffer
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		memcpy(((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset), &vec, sizeof(vec4));//copy the vector's memory into the buffer
 	}
 	void material::setUniform4f(const std::string& name, const float v0, const float v1, const float v2, const float v3)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
-		float* temp = (float*)((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset);
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		float* temp = (float*)((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset);
 		*temp = v0; temp++;
 		*temp = v1; temp++;
 		*temp = v2; temp++;
@@ -207,9 +208,9 @@ namespace Engine
 	}
 	void material::setUniformMat4(const std::string& name, const mat4& mat)
 	{
-		ENG_CORE_ASSERT(m_shaderRef->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
+		ENG_CORE_ASSERT(m_shaderRefs[0]->getMaterialUniforms().count(name), "Tried to update materialUniform but there is no uniform with this name in the shader.");
 		//::::::::test this:::::::::
-		memcpy(((char*)m_data + m_shaderRef->getMaterialUniforms().find(name)->second.offset), &mat, sizeof(mat4));//copy the matrix' memory into the buffer
+		memcpy(((char*)m_data + m_shaderRefs[0]->getMaterialUniforms().find(name)->second.offset), &mat, sizeof(mat4));//copy the matrix' memory into the buffer
 	}
 
 	void material::setTexture(const std::string& name, const Ref_ptr<texture>& tex)

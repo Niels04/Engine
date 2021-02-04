@@ -108,8 +108,11 @@ namespace Engine
 		inline virtual void bind() const = 0;
 		inline virtual void unbind() const = 0;
 
-		inline virtual void attachTexture(Ref_ptr<FrameBufferTexture>& texture) = 0;//attach a frameBufferTexture for color to the FrameBuffer -> probalby the only texture that will be attached
+		virtual void initShadow() = 0;//initializes the globalBuffer for usage with shadows
+
+		inline virtual void attachTexture(const Ref_ptr<ShadowMap2d>& map) const = 0;
+		inline virtual void attachTexture(const Ref_ptr<ShadowMap3d>& map) const = 0;
 		//to a frameBuffer cuz there are RenderBuffers, which are more efficient(but not so good for reading, thats why in the case of colors we wanna use a texture)
-		inline virtual void attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer) = 0;
+		//inline virtual void attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer) = 0;
 	};
 }

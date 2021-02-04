@@ -161,13 +161,12 @@ namespace Engine
 		inline virtual void bind() const override;
 		inline virtual void unbind() const override;
 
-		inline virtual void attachTexture(Ref_ptr<FrameBufferTexture>& texture) override;
-		inline virtual void attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer) override;
+		virtual void initShadow() override;
+
+		inline virtual void attachTexture(const Ref_ptr<ShadowMap2d>& map) const override;
+		inline virtual void attachTexture(const Ref_ptr<ShadowMap3d>& map) const override;
+		//inline virtual void attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer) override;
 	private:
 		uint32_t m_renderer_id;
-
-		//note that this will likely be polished in the future, cuz there can be a lot of buffers | for now just have a texture and a renderBuffer
-		Ref_ptr<GLFrameBufferTexture> m_texture;
-		Ref_ptr<GLRenderBuffer> m_renderBuffer;
 	};
 }
