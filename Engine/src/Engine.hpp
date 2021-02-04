@@ -6,6 +6,7 @@
 #include "Engine/Log.hpp"
 #include "Engine/ImGui/ImGuiLayer.hpp"
 #include "Engine/core/timeStep.hpp"
+#include "Engine/perspectiveCameraController.hpp"
 
 //___own datatypes such as mats and vectors____
 #include "Engine/datatypes/include.hpp"

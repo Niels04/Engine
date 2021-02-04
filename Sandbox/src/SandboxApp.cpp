@@ -3,16 +3,12 @@
 
 #define PI 3.1415926f
 
-//this define is temporary and will be moved into Renderer or light or something like that
-#define toLightMatrix_BIND 4 //globalBuffer binding-point for the toLightMatrix
-
 class renderLayer : public Engine::layer
 {
 public:
 	renderLayer(const float hFov, const float zNear, const float zFar)
-		: layer("RenderLayer"), m_hFov(hFov), m_zNear(zNear), m_zFar(zFar), m_camPos({ -10.0f, 10.0f, 0.0f })
+		: layer("RenderLayer"), m_cam(zNear, zFar, hFov, static_cast<float>(Engine::Application::Get().getWindow().getWidth() / static_cast<float>(Engine::Application::Get().getWindow().getHeight())))
 	{
-		fovRecalc(Engine::Application::Get().getWindow().getHeight(), Engine::Application::Get().getWindow().getWidth());//calculate the vertical fov and set the camera
 		temporarySetup();
 	}
 	~renderLayer()
@@ -21,40 +17,14 @@ public:
 
 	void onUpdate(Engine::timestep ts) override
 	{
-		//temp
-		//update pos
-		if (Engine::input::isKeyDown(ENG_KEY_LEFT))
-			m_camPos.x -= (m_camSpeed * ts);//multiply by delta time, in order to not tie movement-speeds to framerate
-		else if (Engine::input::isKeyDown(ENG_KEY_RIGHT))
-			m_camPos.x += (m_camSpeed * ts);
-		if (Engine::input::isKeyDown(ENG_KEY_SPACE))
-			m_camPos.y += (m_camSpeed * ts);
-		else if (Engine::input::isKeyDown(ENG_KEY_CAPS_LOCK))
-			m_camPos.y -= (m_camSpeed * ts);
-		if (Engine::input::isKeyDown(ENG_KEY_UP))
-			m_camPos.z -= (m_camSpeed * ts);
-		else if (Engine::input::isKeyDown(ENG_KEY_DOWN))
-			m_camPos.z += (m_camSpeed * ts);
-		m_cam.setPos({m_camPos.x, m_camPos.y, m_camPos.z});
-		//update rot
-		if (Engine::input::isKeyDown(ENG_KEY_Q))
-			m_camRot.x += (m_camRotSpeed * ts);
-		else if (Engine::input::isKeyDown(ENG_KEY_A))
-			m_camRot.x -= (m_camRotSpeed * ts);
-		if (Engine::input::isKeyDown(ENG_KEY_W))
-			m_camRot.y += (m_camRotSpeed * ts);
-		else if (Engine::input::isKeyDown(ENG_KEY_S))
-			m_camRot.y -= (m_camRotSpeed * ts);
-		if (Engine::input::isKeyDown(ENG_KEY_E))
-			m_camRot.z += (m_camRotSpeed * ts);
-		else if (Engine::input::isKeyDown(ENG_KEY_D))
-			m_camRot.z -= (m_camRotSpeed * ts);
-		m_cam.setRot(m_camRot);
-		//end temp
+		//update
+		m_cam.onUpdate(ts);
+
+		//render
 		Engine::renderCommand::setClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
 		Engine::renderCommand::clear();
 
-		Engine::Renderer::beginScene(m_cam);
+		Engine::Renderer::beginScene(m_cam.getCam());
 		{
 			Engine::Renderer::sub(m_gun);
 			Engine::Renderer::sub(m_plane);
@@ -70,16 +40,14 @@ public:
 
 	void onImGuiRender() override
 	{
+		const vec4& camPos = m_cam.getPos();
+		const vec3& camRot = m_cam.getRot();
 		ImGui::Begin("Camera");
 		ImGui::Text("position:");
-		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", m_camPos.x, m_camPos.y, m_camPos.z);
+		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", camPos.x, camPos.y, camPos.z);
 		ImGui::Text("rotation:");
-		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", m_camRot.x, m_camRot.y, m_camRot.z);
+		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", camRot.x, camRot.y, camRot.z);
 		ImGui::End();
-		/*ImGui::Begin("cam_control");
-		ImGui::InputFloat3("Position", (float*)&m_camPos, 2);
-		ImGui::InputFloat3("Rotation", (float*)&m_camRot, 2);
-		ImGui::End();*/
 		ImGui::Begin("PointLight[0]");
 		ImGui::ColorEdit3("ambient", (float*)&m_lamp->ambient);
 		ImGui::ColorEdit3("diffuse", (float*)&m_lamp->diffuse);
@@ -97,36 +65,28 @@ public:
 		ImGui::ColorEdit3("diffuse", (float*)&m_spotLight->diffuse);
 		ImGui::ColorEdit3("specular", (float*)&m_spotLight->specular);
 		ImGui::SliderFloat("cutoff", &m_spotLight->cutOff, cosf(80.0f * (PI / 180.0f)), 1.0f);
-		ImGui::End();
+		ImGui::End();*/
 		ImGui::Begin("SpotLight[1]");
 		ImGui::ColorEdit3("ambient", (float*)&m_testSpotLight->ambient);
 		ImGui::ColorEdit3("diffuse", (float*)&m_testSpotLight->diffuse);
 		ImGui::ColorEdit3("specular", (float*)&m_testSpotLight->specular);
 		ImGui::SliderFloat("cutoff", &m_testSpotLight->cutOff, cosf(80.0f * (PI / 180.0f)), 1.0f);
 		ImGui::SliderFloat3("position", (float*)&m_testSpotLight->position, -50.0f, 50.0f);
-		ImGui::End();*/
+		ImGui::End();
 	}
 
 	void onEvent(Engine::Event& e) override
 	{
+		m_cam.onEvent(e);
 		Engine::eventDispatcher dispatcher(e);
 		dispatcher.dispatchEvent<Engine::windowResizeEvent>(ENG_BIND_EVENT_FN(renderLayer::onWindowResizeEvent));
 	}
 	//onEvent-functions
 	bool onWindowResizeEvent(Engine::windowResizeEvent& e)
 	{
-		fovRecalc(e.getHeight(), e.getWidth());
 		Engine::Renderer::setMainViewPort(e.getWidth(), e.getHeight());
 		Engine::renderCommand::setViewport(e.getWidth(), e.getHeight());
 		return false;
-	}
-
-	void fovRecalc(unsigned int height, unsigned int width)
-	{
-		//calculate the verticalFov and initialize the camera
-		float aspectRatioInverse = static_cast<float>(height) / static_cast<float>(width);
-		float vFov = std::atanf(aspectRatioInverse * std::tanf(0.5f * m_hFov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / PI);
-		m_cam.set(m_zNear, m_zFar, m_hFov, vFov);
 	}
 
 	void temporarySetup()
@@ -235,7 +195,6 @@ public:
 	}
 
 private:
-	//temporary stuff
 	Engine::materialLib m_matLib;
 	Engine::Ref_ptr<Engine::mesh> m_gun;
 	Engine::Ref_ptr<Engine::mesh> m_plane;
@@ -247,15 +206,8 @@ private:
 	Engine::PtrPtr<Engine::directionalLight> m_sun;
 	Engine::PtrPtr<Engine::pointLight> m_lamp;
 	Engine::PtrPtr<Engine::spotLight> m_testSpotLight;
-	//end temporary stuff
 
-	Engine::perspectiveCamera m_cam;
-	vec3 m_camPos;
-	float m_camSpeed = 12.0f;
-	vec3 m_camRot;
-	float m_camRotSpeed = 60 * 0.0174533f;//1 degree in radians
-	float m_zNear, m_zFar;
-	float m_hFov;
+	Engine::PerspectiveCameraController m_cam;
 };
 
 class Sandbox : public Engine::Application

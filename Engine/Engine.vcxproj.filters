@@ -186,6 +186,7 @@
     <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp" />
     <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
     <ClInclude Include="src\Engine\Rendering\pLightMatrices.hpp" />
+    <ClInclude Include="src\Engine\perspectiveCameraController.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -282,5 +283,6 @@
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\orthographicCam.cpp" />
+    <ClCompile Include="src\Engine\perspectiveCameraController.cpp" />
   </ItemGroup>
 </Project>
