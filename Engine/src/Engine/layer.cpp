@@ -8,9 +8,4 @@ namespace Engine
 	{
 
 	}
-
-	layer::~layer()
-	{
-
-	}
 }

@@ -137,6 +137,7 @@ namespace Engine
 			data.callback(event);
 		});
 
+		ENG_CORE_ASSERT(glfwRawMouseMotionSupported(), "This computer doesn't seem to provide raw mouse motion data.");
 	}
 
 	void windowsWindow::shutdown()
@@ -150,7 +151,7 @@ namespace Engine
 		m_context->swapBuffers();
 	}
 
-	void windowsWindow::setVsync(bool enabled)
+	void windowsWindow::setVsync(const bool enabled)
 	{
 		if (enabled)
 		{
@@ -163,9 +164,49 @@ namespace Engine
 
 		m_data.Vsync = enabled;
 	}
-
 	bool windowsWindow::isVsync() const
 	{
 		return m_data.Vsync;
+	}
+
+	void windowsWindow::setDissableCursor(const bool enabled)
+	{
+		if (enabled)
+			glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		else
+			glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		m_data.dissableCursor = enabled;
+	}
+	bool windowsWindow::isDissableCursor() const
+	{
+		return m_data.dissableCursor;
+	}
+
+	void windowsWindow::setFullscreen(const bool enabled)
+	{
+		if (enabled)
+			glfwSetWindowMonitor(m_window, glfwGetPrimaryMonitor(), 0, 0, 1920, 1080, GLFW_DONT_CARE);
+		else
+			glfwSetWindowMonitor(m_window, nullptr, 100, 100, m_data.width, m_data.height, GLFW_DONT_CARE);
+		m_data.fullscreen = enabled;
+	}
+	bool windowsWindow::isFullscreen() const
+	{
+		return m_data.fullscreen;
+	}
+
+	void windowsWindow::setRawMouseInput(const bool enabled)
+	{
+		if (!m_data.dissableCursor)
+			ENG_CORE_WARN("Tried to enable rawMouse input, while cursor was still enabled. Make sure to dissable cursor first using \"setDissableCursor(const bool enable)\".");
+		if (enabled)
+			glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+		else
+			glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+		m_data.rawMouseInput = enabled;
+	}
+	bool windowsWindow::isRawMouseInput() const
+	{
+		return m_data.rawMouseInput;
 	}
 }

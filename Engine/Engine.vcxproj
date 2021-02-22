@@ -150,6 +150,9 @@
     <ClInclude Include="src\Engine\Events\MouseEvent.hpp" />
     <ClInclude Include="src\Engine\ImGui\ImGuiLayer.hpp" />
     <ClInclude Include="src\Engine\Log.hpp" />
+    <ClInclude Include="src\Engine\objects\light_effects.hpp" />
+    <ClInclude Include="src\Engine\objects\movement.hpp" />
+    <ClInclude Include="src\Engine\objects\scene.hpp" />
     <ClInclude Include="src\Engine\perspectiveCameraController.hpp" />
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp" />
     <ClInclude Include="src\Engine\Rendering\buffers.hpp" />
@@ -197,6 +200,9 @@
     <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp" />
     <ClCompile Include="src\Engine\Log.cpp" />
+    <ClCompile Include="src\Engine\objects\light_effects.cpp" />
+    <ClCompile Include="src\Engine\objects\movement.cpp" />
+    <ClCompile Include="src\Engine\objects\scene.cpp" />
     <ClCompile Include="src\Engine\perspectiveCameraController.cpp" />
     <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp" />
     <ClCompile Include="src\Engine\Rendering\buffers.cpp" />

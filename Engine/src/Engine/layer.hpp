@@ -11,7 +11,7 @@ namespace Engine
 	{
 	public:
 		layer(const std::string& name = "Layer");
-		virtual ~layer();
+		virtual ~layer() = default;
 
 		virtual void onAttach() {  }//when the layer is pushed onto the layerStack
 		virtual void onDetach() {  }//when the layer is removed from the layerStack

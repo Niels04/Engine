@@ -187,6 +187,9 @@
     <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
     <ClInclude Include="src\Engine\Rendering\pLightMatrices.hpp" />
     <ClInclude Include="src\Engine\perspectiveCameraController.hpp" />
+    <ClInclude Include="src\Engine\objects\scene.hpp" />
+    <ClInclude Include="src\Engine\objects\movement.hpp" />
+    <ClInclude Include="src\Engine\objects\light_effects.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -284,5 +287,8 @@
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\orthographicCam.cpp" />
     <ClCompile Include="src\Engine\perspectiveCameraController.cpp" />
+    <ClCompile Include="src\Engine\objects\scene.cpp" />
+    <ClCompile Include="src\Engine\objects\movement.cpp" />
+    <ClCompile Include="src\Engine\objects\light_effects.cpp" />
   </ItemGroup>
 </Project>

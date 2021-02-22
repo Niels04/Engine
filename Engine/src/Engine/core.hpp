@@ -48,6 +48,7 @@ namespace Engine
 	public:
 		PtrPtr() = default;
 		PtrPtr(const T** ptr) : m_ptr(ptr) {  }
+		PtrPtr(T** ptr) : m_ptr(ptr) {  }
 		inline void operator =(const T** ptr) { m_ptr = ptr; }
 		inline void operator =(T** ptr) { m_ptr = ptr; }
 		inline operator T*() const { return (*m_ptr); }

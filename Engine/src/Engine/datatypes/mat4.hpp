@@ -46,8 +46,26 @@ struct mat4
 		}
 		return result;
 	}
+	static mat4 inverse3x3(const mat4& mat)
+	{
+		const float determinant = (mat[0][0] * mat[1][1] * mat[2][2] + (mat[0][1] * mat[1][2] * mat[2][0]) + (mat[0][2] * mat[1][0] * mat[2][1]) - (mat[0][2] * mat[1][1] * mat[2][0]) - (mat[0][0] * mat[1][2] * mat[2][1]) - (mat[0][1] * mat[1][0] * mat[2][2]));
+		_ASSERT(determinant != 0.0f);
+		const float D_inv = 1.0f / determinant;
+		mat4 inverse;
+		inverse[0][0] = (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) * D_inv;
+		inverse[0][1] = -(mat[0][1] * mat[2][2] - mat[0][2] * mat[2][1]) * D_inv;
+		inverse[0][2] = (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]) * D_inv;
+		inverse[1][0] = -(mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) * D_inv;
+		inverse[1][1] = (mat[0][0] * mat[2][2] - mat[0][2] * mat[2][0]) * D_inv;
+		inverse[1][2] = -(mat[0][0] * mat[1][2] - mat[0][2] * mat[1][0]) * D_inv;
+		inverse[2][0] = (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]) * D_inv;
+		inverse[2][1] = -(mat[0][0] * mat[2][1] - mat[0][1] * mat[2][0]) * D_inv;
+		inverse[2][2] = (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]) * D_inv;
+		return inverse;
+	}
 	//operators
 	inline real* operator[](const uint8_t index) { _ASSERT(index < 4); return mat[index]; }
+	inline const real* operator[](const uint8_t index) const { _ASSERT(index < 4); return mat[index]; }
 	mat4 multip(const mat4& rhs) const
 	{
 		mat4 out;

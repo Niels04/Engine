@@ -18,15 +18,14 @@ namespace Engine
 		{
 
 		}
-		inline const perspectiveCamera& getCam() { return m_cam; }
+		inline const perspectiveCamera& getCam() const { return m_cam; }
 		inline const vec4& getPos() const { return m_camPos; }
 		inline const vec3& getRot() const { return m_camRot; }
-		void onUpdate(timestep& ts);
+		void onUpdate(timestep& ts, const bool rotate);
 		void onEvent(Event& e);
 	private:
 		bool onWindowResizedEvent(windowResizeEvent& e);
 		bool onMouseScrolledEvent(mouseScrollEvent& e);
-		bool onMouseMovedEvent(mouseMoveEvent& e);
 	private:
 		float m_aspectRatio;
 		float m_speed = 12.0f;
@@ -41,5 +40,6 @@ namespace Engine
 		float m_farPlane;
 		float m_fov;//the horizontal fov
 		perspectiveCamera m_cam;
+		float mouse_last[2] = { 0.0f };
 	};
 }

@@ -36,9 +36,15 @@ namespace Engine
 
 		//window attribures:
 		virtual void setEventCallbackFn(const EventCallbackFn& callback) = 0;
-		virtual void setVsync(bool enabled) = 0;
+		virtual void setVsync(const bool enabled) = 0;
 		virtual bool isVsync() const = 0;
-
+		virtual void setDissableCursor(bool enabled) = 0;
+		virtual bool isDissableCursor() const = 0;
+		virtual void setFullscreen(const bool enabled) = 0;
+		virtual bool isFullscreen() const = 0;
+		virtual void setRawMouseInput(const bool enabled) = 0;
+		virtual bool isRawMouseInput() const = 0;
+		
 		virtual void* getNativeWindow() const = 0;
 
 		static window* create(const windowProps& windowProps = windowProps());

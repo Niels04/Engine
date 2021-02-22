@@ -21,8 +21,14 @@ namespace Engine
 
 		//window attributes:
 		inline void setEventCallbackFn(const EventCallbackFn& callback) override { m_data.callback = callback; }
-		void setVsync(bool enabled) override;
-		bool isVsync() const override;
+		virtual void setVsync(const bool enabled) override;
+		virtual bool isVsync() const override;
+		virtual void setDissableCursor(const bool enabled) override;
+		virtual bool isDissableCursor() const override;
+		virtual void setFullscreen(const bool enabled) override;
+		virtual bool isFullscreen() const override;
+		virtual void setRawMouseInput(const bool enalbed) override;
+		virtual bool isRawMouseInput() const override;
 
 		inline virtual void* getNativeWindow() const { return m_window; }
 	private:
@@ -37,6 +43,9 @@ namespace Engine
 			std::string title;
 			unsigned int height, width;
 			bool Vsync;
+			bool dissableCursor;
+			bool fullscreen;
+			bool rawMouseInput;
 
 			EventCallbackFn callback;
 		};

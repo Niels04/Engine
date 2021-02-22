@@ -19,6 +19,8 @@ struct vec4
 	inline vec4 operator*(const float factor) const { return {x * factor, y * factor, z * factor, w * factor}; }
 	inline void operator -=(const vec4& other) { x -= other.x; y -= other.y; z -= other.z; w -= other.w; }
 	inline void operator +=(const vec4& other) { x += other.x; y += other.y; z += other.z; w += other.w; }
+	inline vec4 operator -(const vec4& other) const { return { x - other.x, y - other.y, z - other.z, w - other.w }; };
+	inline vec4 operator +(const vec4& other) const { return { x + other.x, y + other.y, z + other.z, w + other.w }; }
 	std::string toString() const //only for debug purposes
 	{
 		std::string out;
