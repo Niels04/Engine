@@ -24,6 +24,11 @@ namespace Engine
 		m_modelMat = translation * rotation * scale * shear;//first scale, then rotate(I guess the order doesn't matter here) and THEN translate(very important!!!)
 	}
 
+	void mesh::recalcNormalMat()
+	{
+		m_normalMat = mat3::transposed(mat3::inverse(mat3(m_modelMat)));
+	}
+
 	void mesh::attachMovement(Ref_ptr<MeshMovement>& movement)
 	{
 		movement->attachToMesh(this);

@@ -28,6 +28,7 @@ namespace Engine
 		Ref_ptr<vertexArray> getVa() const { return m_geometry; }
 		WeakRef_ptr<material> getMaterial() const { return m_material; }
 		const mat4& getModelMat() const { return m_modelMat; }
+		const mat3& getNormalMat() const { return m_normalMat; }
 		const vec4& getPos() const { return m_position; }
 		const vec3& getRot() const { return m_rotation; }
 		const vec3& getScale() const { return m_scale; }
@@ -37,10 +38,10 @@ namespace Engine
 		bool getRotationMode() const { return m_rotationMode; }
 
 		inline void setPos(const vec4& newPos) { m_position = newPos; recalcModelMat(); }
-		inline void setRot(const vec3& newRot) { m_rotation = newRot; recalcModelMat(); }
-		inline void setLookAt(const vec3& newLookAt) { m_rotation = newLookAt; recalcModelMat(); }
-		inline void setScale(const vec3& newScale) { m_scale = newScale; recalcModelMat(); }
-		inline void setScale(const float newScale) { m_scale = { newScale, newScale, newScale }; recalcModelMat(); }
+		inline void setRot(const vec3& newRot) { m_rotation = newRot; recalcModelMat(); recalcNormalMat(); }
+		inline void setLookAt(const vec3& newLookAt) { m_rotation = newLookAt; recalcModelMat(); ENG_CORE_WARN("Don't use this method (\"mesh::setLookAt\") right now."); }
+		inline void setScale(const vec3& newScale) { m_scale = newScale; recalcModelMat(); recalcNormalMat(); }
+		inline void setScale(const float newScale) { m_scale = { newScale, newScale, newScale }; recalcModelMat(); recalcNormalMat(); }
 		//be aware of what you're doing when applying a shear! Normals are not corrected so lighting will look weird!!!
 		inline void setShear(const float xy, const float xz, const float yx, const float yz, const float zx, const float zy) {
 			m_shear[0] = xy; m_shear[1] = xz; m_shear[2] = yx; m_shear[3] = yz;
@@ -67,6 +68,7 @@ namespace Engine
 		vec3 m_scale;
 		float m_shear[6] = {0};
 		mat4 m_modelMat;//the meshe's model matrix -> get's calculated with respect to position, rotation, shear and scale
+		mat3 m_normalMat;//the meshe's normalMat -> get's calculated with respect to rotation, shear and scale
 		uint8_t m_rotationMode;
 		const std::string m_name;
 		std::vector<Ref_ptr<MeshMovement>> m_movements;
@@ -74,5 +76,6 @@ namespace Engine
 		std::vector<std::pair<PtrPtr<spotLight>, vec4>> m_attachedSpotLights;
 
 		void recalcModelMat();
+		void recalcNormalMat();
 	};
 }

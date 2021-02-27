@@ -13,8 +13,9 @@ public:
 		Engine::Application::Get().getWindow().setFullscreen(false);
 		//for now just call the different functions here, that load the scenes
 		//plane_head_rotate();
-		//duck_water();
-		experiment();
+		boat_water();
+		//experiment();
+		//normalMapping();
 	}
 	~SandboxLayer()
 	{
@@ -205,14 +206,14 @@ public:
 		m_scene.addLight(spotLight);
 	}
 
-	void duck_water()
+	void boat_water()
 	{
 		Engine::Ref_ptr<Engine::vertexArray> environment_va = Engine::vertexArray::create();
 		environment_va->load("cube_solid.model");
 		environment_va->unbind();
-		Engine::Ref_ptr<Engine::vertexArray> head_va = Engine::vertexArray::create();
-		head_va->load("head.model");
-		head_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> figure_va = Engine::vertexArray::create();
+		figure_va->load("figure.model");
+		figure_va->unbind();
 		Engine::Ref_ptr<Engine::vertexArray> boat_va = Engine::vertexArray::create();
 		boat_va->load("boat.model");
 		boat_va->unbind();
@@ -226,7 +227,7 @@ public:
 		Engine::Ref_ptr<Engine::texture2d> spot_light_tex = Engine::texture2d::create("spotlight_bc.png");
 		Engine::Ref_ptr<Engine::texture2d> duck_tex = Engine::texture2d::create("09-Default_albedo.jpg");
 		Engine::Ref_ptr<Engine::texture2d> lighthouse_tex = Engine::texture2d::create("lighthouse_tex.png");
-		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("head.png");
+		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("figure_tex.png");
 
 		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_one_texture_shadow_additive_dir.shader");
 		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
@@ -296,26 +297,25 @@ public:
 		environment->setScale(11.1111111f);
 		m_scene.addMesh(environment);
 
-		Engine::Ref_ptr<Engine::mesh> boat = Engine::mesh::create(boat_va, boat_mat, "duck");
+		Engine::Ref_ptr<Engine::mesh> boat = Engine::mesh::create(boat_va, boat_mat, "boat");
 		boat->setScale(0.5f);
 		boat->setPos({-6.5f, -8.8f, 0.0f, 1.0f});
 		boat->attachMovement(Engine::CircularMeshMovement::create(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 0.0174533f * 60.0f));
 		boat->attachMovement(Engine::MeshRotation::create(0.0f, 1.05f, 0.0f));
 		m_scene.addMesh(boat);
 
-		Engine::Ref_ptr<Engine::material> headMat = Engine::material::create(lightTexShader_dir, "headMat");//just use the variant for directional lights for initialization
-		headMat->addShader(lightTexShader_point);
-		headMat->addShader(lightTexShader_spot);
-		headMat->setTexture("u_texture", headTex);
-		m_scene.addMaterial(headMat);
+		Engine::Ref_ptr<Engine::material> figureMat = Engine::material::create(lightTexShader_dir, "figureMat");//just use the variant for directional lights for initialization
+		figureMat->addShader(lightTexShader_point);
+		figureMat->addShader(lightTexShader_spot);
+		figureMat->setTexture("u_texture", headTex);
+		m_scene.addMaterial(figureMat);
 
-		Engine::Ref_ptr<Engine::mesh> head = Engine::mesh::create(head_va, headMat, "head");
-		head->setPos({ -8.0f, -8.0f, 0.0f, 1.0f });
-		head->setScale(0.05f);
-		head->setRot({0.0f, PI, 0.0f});
-		head->attachMovement(Engine::CircularMeshMovement::create(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 0.0174533f * 60.0f));
-		head->attachMovement(Engine::MeshRotation::create(0.0f, 1.05f, 0.0f));
-		m_scene.addMesh(head);
+		Engine::Ref_ptr<Engine::mesh> figure = Engine::mesh::create(figure_va, figureMat, "figure");
+		figure->setPos({ -7.6f, -8.0f, 1.0f, 1.0f });
+		figure->setRot({0.0f, -PI / 2.0f, 0.0f});
+		figure->attachMovement(Engine::CircularMeshMovement::create(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 0.0174533f * 60.0f));
+		figure->attachMovement(Engine::MeshRotation::create(0.0f, 1.05f, 0.0f));
+		m_scene.addMesh(figure);
 
 		Engine::Ref_ptr<Engine::mesh> water = Engine::mesh::create(water_va, water_mat, "water");
 		water->setPos({ 0.0f, -9.5f, 0.0f, 1.0f });
@@ -472,6 +472,82 @@ public:
 		m_scene.addLight(sun);
 		Engine::PtrPtr<Engine::pointLight> lamp(Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.2f, 0.2f, 0.2f), vec3(0.2f, 0.2f, 0.2f), vec3(0.2f, 0.2f, 0.2f), 1.0f, 0.01f, 0.01f }));
 		m_scene.addLight(lamp);
+	}
+
+	void normalMapping()
+	{
+		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
+		plane_va->load("gun_tb.model");
+		plane_va->unbind();
+		//for testing manually assemble the va:
+		/*vec3 pos1(-1.0f, 1.0f, 0.0f);
+		vec3 pos2(-1.0f, -1.0f, 0.0f);
+		vec3 pos3(1.0f, -1.0f, 0.0f);
+		vec3 pos4(1.0f, 1.0f, 0.0f);
+		std::pair<float, float> uv1(0.0f, 1.0f);
+		std::pair<float, float> uv2(0.0f, 0.0f);
+		std::pair<float, float> uv3(1.0f, 0.0f);
+		std::pair<float, float> uv4(1.0f, 1.0f);
+		vec3 normal(0.0f, 0.0f, 1.0f);
+
+		vec3 edge1 = pos2 - pos1;
+		vec3 edge2 = pos3 - pos1;
+		std::pair<float, float> deltauv1(uv2.first - uv1.first, uv2.second - uv1.second);
+		std::pair<float, float> deltauv2(uv3.first - uv1.first, uv3.second - uv1.second);
+		float inverseDet = 1.0f / (deltauv1.first * deltauv2.second - deltauv2.first * deltauv1.second);
+		vec3 tang;
+		vec3 bitang;
+		tang.x = inverseDet * (deltauv2.second * edge1.x - deltauv1.second * edge2.x);
+		tang.y = inverseDet * (deltauv2.second * edge1.y - deltauv1.second * edge2.y);
+		tang.z = inverseDet * (deltauv2.second * edge1.z - deltauv1.second * edge2.z);
+		bitang.x = inverseDet * (-deltauv2.first * edge1.x + deltauv1.first * edge2.x);
+		bitang.y = inverseDet * (-deltauv2.first * edge1.y + deltauv1.first * edge2.y);
+		bitang.z = inverseDet * (-deltauv2.first * edge1.z + deltauv1.first * edge2.z);
+
+		float vb[] = { -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, tang.x, tang.y, tang.z, bitang.x, bitang.y, bitang.z,
+					   -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, tang.x, tang.y, tang.z, bitang.x, bitang.y, bitang.z,
+						1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, tang.x, tang.y, tang.z, bitang.x, bitang.y, bitang.z,
+						1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, tang.x, tang.y, tang.z, bitang.x, bitang.y, bitang.z, };
+		Engine::Ref_ptr<Engine::vertexBuffer> plane_vb = Engine::vertexBuffer::create(sizeof(vb), vb);
+		Engine::Ref_ptr<Engine::vertexBufferLayout> plane_layout = Engine::vertexBufferLayout::create();
+		plane_layout->pushFloat(3); plane_layout->pushFloat(2); plane_layout->pushFloat(3); plane_layout->pushFloat(3); plane_layout->pushFloat(3);
+		plane_vb->setLayout(plane_layout);
+		plane_va->addBuffer(plane_vb);
+		uint32_t indices[] = { 0, 1, 2, 2, 3, 0 };
+		Engine::Ref_ptr<Engine::indexBuffer> plane_ib = Engine::indexBuffer::create(6, indices);
+		plane_va->addBuffer(plane_ib);
+		plane_va->unbind();*/
+
+		Engine::Ref_ptr<Engine::texture2d> planeTex = Engine::texture2d::create("Cerberus_A.tga");
+		Engine::Ref_ptr<Engine::texture2d> planeNormal = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
+		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightTexShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/normal_mapping/basicPhong_one_texture_shadow_additive_point.shader");
+		lightTexShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/normal_mapping/basicPhong_one_texture_shadow_additive_spot.shader");
+		lightTexShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		lightTexShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::material> wallMat = Engine::material::create(lightTexShader_dir, "brick_mat");//just use the variant for directional lights for initialization
+		wallMat->addShader(lightTexShader_point);
+		wallMat->addShader(lightTexShader_spot);
+		wallMat->setTexture("u_texture", planeTex);
+		wallMat->setTexture("u_normalMap", planeNormal);
+		m_scene.addMaterial(wallMat);
+
+		Engine::Ref_ptr<Engine::mesh> brick_wall = Engine::mesh::create(plane_va, wallMat, "brick_wall");
+		//brick_wall->setRot({PI/2.0f, 0.0f, 0.0f});
+		m_scene.addMesh(brick_wall);
+
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.8f, 0.8f, 0.8f), vec3(1.0f, 1.0f, 1.0f) });
+		m_scene.addLight(sun);
 	}
 
 private:

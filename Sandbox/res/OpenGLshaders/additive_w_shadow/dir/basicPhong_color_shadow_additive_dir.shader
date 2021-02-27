@@ -41,11 +41,11 @@ layout(std140) uniform directionalLights_v
 
 uniform uint u_lightIndex;
 uniform mat4 u_modelMat;
+uniform mat3 u_normalMat;
 
 void main()
 {
-	mat3 normalMat = transpose(inverse(mat3(u_modelMat)));//maybe calculate this on cpu-side, so the calculation only gets done once per model
-	v_normal = normalMat * a_normal;
+	v_normal = u_normalMat * a_normal;
 	v_fragPos = vec3(u_modelMat * vec4(a_pos, 1.0f));
 	v_fragPos_light = dirLights_v[u_lightIndex].toLightSpace * vec4(v_fragPos, 1.0f);
 	v_viewPos = inverse(viewMat)[3].xyz;//try to get rid of inversing this matrix

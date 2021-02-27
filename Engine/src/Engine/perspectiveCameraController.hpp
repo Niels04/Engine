@@ -16,7 +16,6 @@ namespace Engine
 			: m_cam(zNear, zFar, Fov, std::atanf((1.0f / aspectRatio)* std::tanf(0.5f * Fov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / 3.14159265f)), m_aspectRatio(aspectRatio), m_nearPlane(zNear),
 			m_farPlane(zFar), m_fov(Fov)
 		{
-
 		}
 		inline const perspectiveCamera& getCam() const { return m_cam; }
 		inline const vec4& getPos() const { return m_camPos; }

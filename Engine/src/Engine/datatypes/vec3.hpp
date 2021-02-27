@@ -18,6 +18,7 @@ struct vec3
 		return out;
 	}
 	inline vec3 operator -() const { return {-x, -y, -z}; }
+	inline vec3 operator -(const vec3& other) const { return { x - other.x, y - other.y, z - other.z }; }
 	inline vec3 operator *(const float factor) const { return {x * factor, y * factor, z * factor}; }
 };
 

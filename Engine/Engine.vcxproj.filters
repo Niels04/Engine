@@ -190,6 +190,7 @@
     <ClInclude Include="src\Engine\objects\scene.hpp" />
     <ClInclude Include="src\Engine\objects\movement.hpp" />
     <ClInclude Include="src\Engine\objects\light_effects.hpp" />
+    <ClInclude Include="src\Engine\datatypes\mat3.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">

@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClInclude Include="src\Engine.hpp" />
     <ClInclude Include="src\Engine\Application.hpp" />
+    <ClInclude Include="src\Engine\datatypes\mat3.hpp" />
     <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
     <ClInclude Include="src\Engine\EntryPoint.hpp" />
     <ClInclude Include="src\Engine\Events\ApplicationEvent.hpp" />

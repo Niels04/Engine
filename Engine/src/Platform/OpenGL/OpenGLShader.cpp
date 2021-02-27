@@ -366,6 +366,10 @@ namespace Engine
     {
         GLCALL(glUniformMatrix4fv(getUniformLocation(name), 6, transpose, &matrices.positiveX.mat[0][0]));
     }
+    void GLshader::setUniformMat3(const std::string& name, const mat3& mat, const uint8_t transpose)
+    {
+        GLCALL(glUniformMatrix3fv(getUniformLocation(name), 1, transpose, &mat.mat[0][0]));
+    }
     //setuniforms end
     void GLshader::bindUniformBlock(const std::string& name, uint32_t bindingPoint)
     {

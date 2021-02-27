@@ -91,6 +91,7 @@ namespace Engine
 			Ref_ptr<material> mat = Mesh->getMaterial();
 			mat->bind(10);//start binding materials at slot 10 and reserve all slots below that for matrices and lights
 			mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+			mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
 			mat->getShader()->setUniform1i("u_shadowMap", 8);
 			mat->getShader()->setUniform1ui("u_lightIndex", index);
 			Ref_ptr<vertexArray> geometry = Mesh->getVa();
@@ -109,6 +110,7 @@ namespace Engine
 				Ref_ptr<material> mat = Mesh->getMaterial();
 				mat->bind(10);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
 				mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+				mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
 				mat->getShader()->setUniform1i("u_shadowMap", 8);
 				mat->getShader()->setUniform1ui("u_lightIndex", index);
 				Ref_ptr<vertexArray> geometry = Mesh->getVa();
@@ -127,6 +129,7 @@ namespace Engine
 				Ref_ptr<material> mat = Mesh->getMaterial();
 				mat->bind(10, 1);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
 				mat->getShader(1)->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+				mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
 				mat->getShader(1)->setUniform1i("u_shadowMap", 8);
 				mat->getShader(1)->setUniform1ui("u_lightIndex", index);
 				Ref_ptr<vertexArray> geometry = Mesh->getVa();
@@ -145,6 +148,7 @@ namespace Engine
 				Ref_ptr<material> mat = Mesh->getMaterial();
 				mat->bind(10, 2);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
 				mat->getShader(2)->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+				mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
 				mat->getShader(2)->setUniform1i("u_shadowMap", 8);
 				mat->getShader(2)->setUniform1ui("u_lightIndex", index);
 				Ref_ptr<vertexArray> geometry = Mesh->getVa();
