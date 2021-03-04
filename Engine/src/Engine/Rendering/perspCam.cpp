@@ -9,11 +9,19 @@ namespace Engine
 		m_projMat.transpose();//maybe build the matrix the other way around instead of having to transpose it all the time
 		m_viewProjMat = m_projMat * m_viewMat;
 	}
-	void perspectiveCamera::set(float zNear, float zFar, float hFov, float vFov)
+	void perspectiveCamera::initialize(float zNear, float zFar, float hFov, float vFov)
 	{
 		m_projMat.setProjMat(zNear, zFar, hFov, vFov);
 		m_projMat.transpose();//maybe build the matrix the other way around instead of having to transpose it all the time
 		m_viewProjMat = m_projMat * m_viewMat;
+	}
+	void perspectiveCamera::clear()
+	{
+		m_projMat.Identity();
+		m_viewMat.Identity();
+		m_viewProjMat.Identity();
+		m_pos = { 0.0f, 0.0f, 0.0f };
+		m_rot = { 0.0f, 0.0f, 0.0f };
 	}
 	void perspectiveCamera::recalcViewMatrix()
 	{

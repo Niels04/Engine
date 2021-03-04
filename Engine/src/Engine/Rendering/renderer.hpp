@@ -29,6 +29,7 @@ namespace Engine
 
 		inline static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
 		inline static shaderLib* getShaderLib() { return s_shaderLib; }
+		inline static LightManager* getLightManager() { return &s_sceneData->lightManager; }
 
 		//inline static void setDebugDrawLights(bool DebugDrawLights) { s_DebugDrawLights = DebugDrawLights; /*initialize shaders and models that are needet to draw the lights HERE(if set to false de-initialize all the buffers and shaders)*/ }
 

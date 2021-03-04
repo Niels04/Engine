@@ -236,6 +236,11 @@ namespace Engine
 		s_maxTexSlots = renderCommand::getMaxTextureBinds();//get the maximum number of textures that can be bind simultaneously
 	}
 
+	void materialLib::clear()
+	{
+		m_materials.clear();
+	}
+
 	void materialLib::add(const Ref_ptr<material>& material)
 	{
 		if (!m_materials.count(material->getName()))//if no shader with this name is currently loaded

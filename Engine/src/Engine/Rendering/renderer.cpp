@@ -85,21 +85,24 @@ namespace Engine
 		renderCommand::clear();
 		uint32_t index = 0;
 		auto& dirLightMap = s_sceneData->lightManager.dirLightMaps();
-		(*dirLightMap)->bind(8);
-		for (const auto& Mesh : s_renderQueue)
+		if (s_sceneData->lightManager.getDirLightCount())
 		{
-			Ref_ptr<material> mat = Mesh->getMaterial();
-			mat->bind(10);//start binding materials at slot 10 and reserve all slots below that for matrices and lights
-			mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-			mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
-			mat->getShader()->setUniform1i("u_shadowMap", 8);
-			mat->getShader()->setUniform1ui("u_lightIndex", index);
-			Ref_ptr<vertexArray> geometry = Mesh->getVa();
-			geometry->bind();
-			renderCommand::drawIndexed(geometry);
+			(*dirLightMap)->bind(8);
+			for (const auto& Mesh : s_renderQueue)
+			{
+				Ref_ptr<material> mat = Mesh->getMaterial();
+				mat->bind(10);//start binding materials at slot 10 and reserve all slots below that for matrices and lights
+				mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+				mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
+				mat->getShader()->setUniform1i("u_shadowMap", 8);
+				mat->getShader()->setUniform1ui("u_lightIndex", index);
+				Ref_ptr<vertexArray> geometry = Mesh->getVa();
+				geometry->bind();
+				renderCommand::drawIndexed(geometry);
+			}
+			index++;
+			dirLightMap++;
 		}
-		index++;
-		dirLightMap++;
 		renderCommand::setBlend(ENG_ONE, ENG_ONE);//enable additive blending
 		renderCommand::setDepth(ENG_EQUAL);
 		for (uint8_t i = 1; i < s_sceneData->lightManager.getDirLightCount(); i++, dirLightMap++)

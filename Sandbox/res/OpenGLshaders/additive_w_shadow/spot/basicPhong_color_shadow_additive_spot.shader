@@ -102,7 +102,7 @@ vec3 calcSpotLight(spotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, flo
 	vec3 specular = vec3(0.0f);
 	if (angle > light.specular.w)//cuz the cosine get's bigger when the angle get's smaller(so we actually test if the angle is smaller)
 	{
-		//diffuse
+		//diffuses
 		diffuse = light.diffuse.xyz * diff.xyz * max(0.0f, dot(lightDir, normal)) * shadow;
 		//specular
 		specular = light.specular.xyz * spec.xyz * pow(max(0.0f, dot(reflect(-lightDir, normal), viewDir)), shininess) * shadow;
@@ -121,7 +121,8 @@ float calcSpotShadow(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
 	clipSpaceCoords = clipSpaceCoords * 0.5f + 0.5f;
 	if (clipSpaceCoords.z > 1.0f)
 		return 0.0f;//no shadow if we are past the far-plane of the light's camera
-	float shadowBias = max(0.01 * (1.0f - dot(normal, lightDir)), shadowBias_min);
+	//float shadowBias = max(0.01 * (1.0f - dot(normal, lightDir)), shadowBias_min);
+	float shadowBias = 0.0f;
 	//pcf:
 	float shadow = 0.0f;
 	vec2 texelSize = 1.0f / textureSize(u_shadowMap, 0);//get the size of the texture at mipmap-level 0

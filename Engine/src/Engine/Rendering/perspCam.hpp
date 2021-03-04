@@ -7,7 +7,8 @@ namespace Engine
 	public:
 		perspectiveCamera() = default;
 		perspectiveCamera(const float zNear, const float zFar, const float hFov, const float vFov);
-		void set(const float zNear, const float zFar, const float hFov, const float vFov);
+		void initialize(const float zNear, const float zFar, const float hFov, const float vFov);//used for initialization after a call to "clear"
+		void clear();//clear the camera -> before usage make a call to "initialize"
 		inline void setPos(const vec3& pos) { m_pos = pos; recalcViewMatrix(); }
 		inline void setRot(const vec3& rot) { m_rot = rot; recalcViewMatrix(); }
 		inline const vec3& getPos() const { return m_pos; }

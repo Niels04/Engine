@@ -39,7 +39,32 @@ namespace Engine
 		else if (input::isKeyDown(ENG_KEY_S))
 			m_camPos -= (m_forward * m_speed * ts);
 		m_cam.setPos(m_camPos.xyz());
+
 	}
+
+	void PerspectiveCameraController::initialize(const float zNear, const float zFar, const float Fov, const float aspectRatio)
+	{
+		m_cam.initialize(zNear, zFar, Fov, std::atanf((1.0f / aspectRatio) * std::tanf(0.5f * Fov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / 3.14159265f));
+		m_aspectRatio = aspectRatio;
+		m_nearPlane = zNear; m_farPlane = zFar;
+		m_fov = Fov;
+	}
+
+	void PerspectiveCameraController::clear()
+	{
+		//set everything back to original values
+		m_cam.clear();
+		m_camPos = { 0.0f, 0.0f, 0.0f, 1.0f };
+		m_camRot = { 0.0f, 0.0f, 0.0f };
+		m_up = { 0.0f, 1.0f, 0.0f, 0.0f };
+		m_forward = { 0.0f, 0.0f, -1.0f, 0.0f };
+		m_right = { 1.0f, 0.0f, 0.0f, 0.0f };
+		m_zoomLevel = 1.0f;
+		mouse_last[0] = 0.0f; mouse_last[1] = 0.0f;
+		m_speed = 12.0f;
+		m_rotSpeed = 60 * 0.0174533f;//1 degree in radians
+	}
+
 	void PerspectiveCameraController::onEvent(Event& e)
 	{
 		eventDispatcher dispatcher(e);
@@ -50,7 +75,7 @@ namespace Engine
 	bool PerspectiveCameraController::onWindowResizedEvent(windowResizeEvent& e)
 	{
 		float aspectRatioInverse = static_cast<float>(e.getHeight()) / static_cast<float>(e.getWidth());
-		m_cam.set(m_nearPlane, m_farPlane, m_fov, std::atanf(aspectRatioInverse * std::tanf(0.5f * m_fov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / 3.14159265f));
+		m_cam.initialize(m_nearPlane, m_farPlane, m_fov, std::atanf(aspectRatioInverse * std::tanf(0.5f * m_fov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / 3.14159265f));
 		return false;
 	}
 	bool PerspectiveCameraController::onMouseScrolledEvent(mouseScrollEvent& e)

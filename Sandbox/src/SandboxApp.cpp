@@ -13,9 +13,11 @@ public:
 		Engine::Application::Get().getWindow().setFullscreen(false);
 		//for now just call the different functions here, that load the scenes
 		//plane_head_rotate();
-		boat_water();
+		//boat_water();
 		//experiment();
 		//normalMapping();
+		//bridge();
+		//nrm_map_spc_map();
 	}
 	~SandboxLayer()
 	{
@@ -46,7 +48,10 @@ public:
 
 	void onImGuiRender() override
 	{
-		m_scene.onImGuiRender();
+		if (!m_sceneLoaded)
+			showSceneSelect();
+		else
+			m_scene.onImGuiRender();
 	}
 
 	void onEvent(Engine::Event& e) override
@@ -87,8 +92,52 @@ public:
 			else
 				Engine::Application::Get().getWindow().setFullscreen(true);
 		}break;
+		case(ENG_KEY_ESCAPE):
+		{
+			m_scene.clear(Engine::Renderer::getLightManager());
+			m_scene.initialize(90.0f, 0.1f, 1000.0f, static_cast<float>(Engine::Application::Get().getWindow().getWidth() / static_cast<float>(Engine::Application::Get().getWindow().getHeight())));
+			Engine::Renderer::getShaderLib()->clear();
+			Engine::Application::Get().getWindow().setDissableCursor(false);
+			m_sceneLoaded = false;
+		}break;
 		}
 		return false;
+	}
+
+	void showSceneSelect()
+	{
+		ImGui::Begin("Select a scene.");
+		if(ImGui::Button("plane_head_rotate"))
+		{
+			plane_head_rotate();
+			m_sceneLoaded = true;
+		}
+		else if (ImGui::Button("boat_water"))
+		{
+			boat_water();
+			m_sceneLoaded = true;
+		}
+		else if (ImGui::Button("experiment"))
+		{
+			experiment();
+			m_sceneLoaded = true;
+		}
+		else if (ImGui::Button("normalMapping"))
+		{
+			normalMapping();
+			m_sceneLoaded = true;
+		}
+		else if (ImGui::Button("bridge"))
+		{
+			bridge();
+			m_sceneLoaded = true;
+		}
+		else if (ImGui::Button("norm_map_spc_map"))
+		{
+			nrm_map_spc_map();
+			m_sceneLoaded = true;
+		}
+		ImGui::End();
 	}
 
 	void plane_head_rotate()
@@ -100,7 +149,7 @@ public:
 		plane_va->load("plane.model");
 		plane_va->unbind();
 		Engine::Ref_ptr<Engine::vertexArray> helmet_va = Engine::vertexArray::create();
-		helmet_va->load("helmet.model");
+		helmet_va->load("helmet_tb.model");
 		helmet_va->unbind();
 		Engine::Ref_ptr<Engine::vertexArray> cube_va = Engine::vertexArray::create();
 		cube_va->load("cube.model");
@@ -134,9 +183,24 @@ public:
 		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
 		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
 
+		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
+		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/normal_mapping/basicPhong_one_texture_shadow_additive_point.shader");
+		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/normal_mapping/basicPhong_one_texture_shadow_additive_spot.shader");
+		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+
 		//m_gunTex = Engine::texture2d::create("Cerberus_A.tga");
 		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("head.png");
 		Engine::Ref_ptr<Engine::texture2d> helmetTex = Engine::texture2d::create("armor_115_head_alb.png");
+		Engine::Ref_ptr<Engine::texture2d> helmetNormalTex = Engine::texture2d::create("armor_115_head_nrm.png");
 		//m_cubeTex = Engine::texture2d::create("chiseled_stone_bricks.png", FILTER_NEAREST);<-work on rgba-textures
 		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png");
 
@@ -156,10 +220,11 @@ public:
 		headMat->setTexture("u_texture", headTex);
 		m_scene.addMaterial(headMat);
 
-		Engine::Ref_ptr<Engine::material> helmetMat = Engine::material::create(lightTexShader_dir, "helmetMat");
-		helmetMat->addShader(lightTexShader_point);
-		helmetMat->addShader(lightTexShader_spot);
+		Engine::Ref_ptr<Engine::material> helmetMat = Engine::material::create(lightTexShader_dir_normalMap, "helmetMat");
+		helmetMat->addShader(lightTexShader_point_normalMap);
+		helmetMat->addShader(lightTexShader_spot_normalMap);
 		helmetMat->setTexture("u_texture", helmetTex);
+		helmetMat->setTexture("u_normalMap", helmetNormalTex);
 		m_scene.addMaterial(helmetMat);
 
 		Engine::Ref_ptr<Engine::material> cubeMat = Engine::material::create(lightTexShader_dir, "cubeMat");
@@ -476,82 +541,248 @@ public:
 
 	void normalMapping()
 	{
-		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
-		plane_va->load("gun_tb.model");
-		plane_va->unbind();
-		//for testing manually assemble the va:
-		/*vec3 pos1(-1.0f, 1.0f, 0.0f);
-		vec3 pos2(-1.0f, -1.0f, 0.0f);
-		vec3 pos3(1.0f, -1.0f, 0.0f);
-		vec3 pos4(1.0f, 1.0f, 0.0f);
-		std::pair<float, float> uv1(0.0f, 1.0f);
-		std::pair<float, float> uv2(0.0f, 0.0f);
-		std::pair<float, float> uv3(1.0f, 0.0f);
-		std::pair<float, float> uv4(1.0f, 1.0f);
-		vec3 normal(0.0f, 0.0f, 1.0f);
+		Engine::Ref_ptr<Engine::vertexArray> gun_va = Engine::vertexArray::create();
+		gun_va->load("gun_tb.model");
+		gun_va->unbind();
 
-		vec3 edge1 = pos2 - pos1;
-		vec3 edge2 = pos3 - pos1;
-		std::pair<float, float> deltauv1(uv2.first - uv1.first, uv2.second - uv1.second);
-		std::pair<float, float> deltauv2(uv3.first - uv1.first, uv3.second - uv1.second);
-		float inverseDet = 1.0f / (deltauv1.first * deltauv2.second - deltauv2.first * deltauv1.second);
-		vec3 tang;
-		vec3 bitang;
-		tang.x = inverseDet * (deltauv2.second * edge1.x - deltauv1.second * edge2.x);
-		tang.y = inverseDet * (deltauv2.second * edge1.y - deltauv1.second * edge2.y);
-		tang.z = inverseDet * (deltauv2.second * edge1.z - deltauv1.second * edge2.z);
-		bitang.x = inverseDet * (-deltauv2.first * edge1.x + deltauv1.first * edge2.x);
-		bitang.y = inverseDet * (-deltauv2.first * edge1.y + deltauv1.first * edge2.y);
-		bitang.z = inverseDet * (-deltauv2.first * edge1.z + deltauv1.first * edge2.z);
+		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga");
+		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
 
-		float vb[] = { -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, tang.x, tang.y, tang.z, bitang.x, bitang.y, bitang.z,
-					   -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, tang.x, tang.y, tang.z, bitang.x, bitang.y, bitang.z,
-						1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, tang.x, tang.y, tang.z, bitang.x, bitang.y, bitang.z,
-						1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, tang.x, tang.y, tang.z, bitang.x, bitang.y, bitang.z, };
-		Engine::Ref_ptr<Engine::vertexBuffer> plane_vb = Engine::vertexBuffer::create(sizeof(vb), vb);
-		Engine::Ref_ptr<Engine::vertexBufferLayout> plane_layout = Engine::vertexBufferLayout::create();
-		plane_layout->pushFloat(3); plane_layout->pushFloat(2); plane_layout->pushFloat(3); plane_layout->pushFloat(3); plane_layout->pushFloat(3);
-		plane_vb->setLayout(plane_layout);
-		plane_va->addBuffer(plane_vb);
-		uint32_t indices[] = { 0, 1, 2, 2, 3, 0 };
-		Engine::Ref_ptr<Engine::indexBuffer> plane_ib = Engine::indexBuffer::create(6, indices);
-		plane_va->addBuffer(plane_ib);
-		plane_va->unbind();*/
+		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
+		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
 
-		Engine::Ref_ptr<Engine::texture2d> planeTex = Engine::texture2d::create("Cerberus_A.tga");
-		Engine::Ref_ptr<Engine::texture2d> planeNormal = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
+		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/normal_mapping/basicPhong_one_texture_shadow_additive_point.shader");
+		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/normal_mapping/basicPhong_one_texture_shadow_additive_spot.shader");
+		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/normal_mapping/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(lightTexShader_dir_normalMap, "gun_mat");//just use the variant for directional lights for initialization
+		gunMat->addShader(lightTexShader_point_normalMap);
+		gunMat->addShader(lightTexShader_spot_normalMap);
+		gunMat->setTexture("u_texture", gunDiffTex);
+		gunMat->setTexture("u_normalMap", gunNormalTex);
+		m_scene.addMaterial(gunMat);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/normal_mapping/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::material> wallMat = Engine::material::create(lightTexShader_dir, "brick_mat");//just use the variant for directional lights for initialization
-		wallMat->addShader(lightTexShader_point);
-		wallMat->addShader(lightTexShader_spot);
-		wallMat->setTexture("u_texture", planeTex);
-		wallMat->setTexture("u_normalMap", planeNormal);
-		m_scene.addMaterial(wallMat);
-
-		Engine::Ref_ptr<Engine::mesh> brick_wall = Engine::mesh::create(plane_va, wallMat, "brick_wall");
-		//brick_wall->setRot({PI/2.0f, 0.0f, 0.0f});
-		m_scene.addMesh(brick_wall);
+		Engine::Ref_ptr<Engine::mesh> gun = Engine::mesh::create(gun_va, gunMat, "gun");
+		m_scene.addMesh(gun);
 
 		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.8f, 0.8f, 0.8f), vec3(1.0f, 1.0f, 1.0f) });
 		m_scene.addLight(sun);
+		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f), 1.0f, 0.01f, 0.01f });
+		m_scene.addLight(lamp);
+	}
+
+	void bridge()
+	{
+		//load geometry
+		Engine::Ref_ptr<Engine::vertexArray> bridge_a_va = Engine::vertexArray::create();
+		bridge_a_va->load("bridge/bridge_a_tb.model");
+		bridge_a_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> bridge_b_va = Engine::vertexArray::create();
+		bridge_b_va->load("bridge/bridge_b_tb.model");
+		bridge_b_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> wall_a_va = Engine::vertexArray::create();
+		wall_a_va->load("bridge/wall_a_tb.model");
+		wall_a_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> wall_c_va = Engine::vertexArray::create();
+		wall_c_va->load("bridge/wall_c_tb.model");
+		wall_c_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> wall_d_va = Engine::vertexArray::create();
+		wall_d_va->load("bridge/wall_d_tb.model");
+		wall_d_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
+		plane_va->load("plane.model");
+		plane_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> boar_va = Engine::vertexArray::create();
+		boar_va->load("boar_tb.model");
+		boar_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> deer_va = Engine::vertexArray::create();
+		deer_va->load("deer_tb.model");
+		deer_va->unbind();
+
+		//load textures
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_A_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_A_Alb.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_B_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_B_Alb.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_A_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_A_Alb.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_C_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_C_Alb.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_D_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_D_Alb.png");
+		Engine::Ref_ptr<Engine::texture2d> Boar_Alb = Engine::texture2d::create("Boar_Alb_1.png");
+		Engine::Ref_ptr<Engine::texture2d> Deer_Body_Alb = Engine::texture2d::create("Deer_Body_Alb.png");
+
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_A_Nrm = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_A_Nrm_fixed.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_B_Nrm = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_B_Nrm_fixed.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_A_Nrm = Engine::texture2d::create("bridge/Rock_RuinStoneWall_A_Nrm_fixed.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_C_Nrm = Engine::texture2d::create("bridge/Rock_RuinStoneWall_C_Nrm_fixed.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_D_Nrm = Engine::texture2d::create("bridge/Rock_RuinStoneWall_D_Nrm_fixed.png");
+		Engine::Ref_ptr<Engine::texture2d> Boar_Nrm = Engine::texture2d::create("Boar_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> Deer_Body_Nrm = Engine::texture2d::create("Deer_Body_Nrm.png");
+
+		//load shaders
+		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
+		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/normal_mapping/basicPhong_one_texture_shadow_additive_point.shader");
+		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/normal_mapping/basicPhong_one_texture_shadow_additive_spot.shader");
+		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
+		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
+		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
+		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_spot->bindUniformBlock("spotLights", POINT_LIGHTS_BIND);
+		lightShader_spot->bindUniformBlock("spotLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		//create materials
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_A = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneBridge_A");
+		Mat_Rock_RuinStoneBridge_A->addShader(lightTexShader_point_normalMap);
+		Mat_Rock_RuinStoneBridge_A->addShader(lightTexShader_spot_normalMap);
+		Mat_Rock_RuinStoneBridge_A->setTexture("u_texture", Rock_RuinStoneBridge_A_Alb);
+		Mat_Rock_RuinStoneBridge_A->setTexture("u_normalMap", Rock_RuinStoneBridge_A_Nrm);
+		m_scene.addMaterial(Mat_Rock_RuinStoneBridge_A);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_B = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneBridge_B");
+		Mat_Rock_RuinStoneBridge_B->addShader(lightTexShader_point_normalMap);
+		Mat_Rock_RuinStoneBridge_B->addShader(lightTexShader_spot_normalMap);
+		Mat_Rock_RuinStoneBridge_B->setTexture("u_texture", Rock_RuinStoneBridge_B_Alb);
+		Mat_Rock_RuinStoneBridge_B->setTexture("u_normalMap", Rock_RuinStoneBridge_B_Nrm);
+		m_scene.addMaterial(Mat_Rock_RuinStoneBridge_B);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_A = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneWall_A");
+		Mat_Rock_RuinStoneWall_A->addShader(lightTexShader_point_normalMap);
+		Mat_Rock_RuinStoneWall_A->addShader(lightTexShader_spot_normalMap);
+		Mat_Rock_RuinStoneWall_A->setTexture("u_texture", Rock_RuinStoneWall_A_Alb);
+		Mat_Rock_RuinStoneWall_A->setTexture("u_normalMap", Rock_RuinStoneWall_A_Nrm);
+		m_scene.addMaterial(Mat_Rock_RuinStoneWall_A);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_C = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneWall_C");
+		Mat_Rock_RuinStoneWall_C->addShader(lightTexShader_point_normalMap);
+		Mat_Rock_RuinStoneWall_C->addShader(lightTexShader_spot_normalMap);
+		Mat_Rock_RuinStoneWall_C->setTexture("u_texture", Rock_RuinStoneWall_C_Alb);
+		Mat_Rock_RuinStoneWall_C->setTexture("u_normalMap", Rock_RuinStoneWall_C_Nrm);
+		m_scene.addMaterial(Mat_Rock_RuinStoneWall_C);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_D = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneWall_D");
+		Mat_Rock_RuinStoneWall_D->addShader(lightTexShader_point_normalMap);
+		Mat_Rock_RuinStoneWall_D->addShader(lightTexShader_spot_normalMap);
+		Mat_Rock_RuinStoneWall_D->setTexture("u_texture", Rock_RuinStoneWall_D_Alb);
+		Mat_Rock_RuinStoneWall_D->setTexture("u_normalMap", Rock_RuinStoneWall_D_Nrm);
+		m_scene.addMaterial(Mat_Rock_RuinStoneWall_D);
+		Engine::Ref_ptr<Engine::material> green = Engine::material::create(lightShader_dir, "green");
+		green->addShader(lightShader_point);
+		green->addShader(lightShader_spot);
+		green->setUniform4f("amb", 0.05f, 0.2f, 0.05f, 1.0f);
+		green->setUniform4f("diff", 0.2f, 0.8f, 0.2f, 1.0f);
+		green->setUniform4f("spec", 0.2f, 0.8f, 0.2f, 1.0f);
+		green->setUniform1f("shininess", 100.0f);
+		green->flushAll();
+		m_scene.addMaterial(green);
+		Engine::Ref_ptr<Engine::material> Mat_Boar = Engine::material::create(lightTexShader_dir_normalMap, "Boar");
+		Mat_Boar->addShader(lightTexShader_point_normalMap);
+		Mat_Boar->addShader(lightTexShader_spot_normalMap);
+		Mat_Boar->setTexture("u_texture", Boar_Alb);
+		Mat_Boar->setTexture("u_normalMap", Boar_Nrm);
+		m_scene.addMaterial(Mat_Boar);
+		Engine::Ref_ptr<Engine::material> Mat_Deer = Engine::material::create(lightTexShader_dir_normalMap, "Deer");
+		Mat_Deer->addShader(lightTexShader_point_normalMap);
+		Mat_Deer->addShader(lightTexShader_spot_normalMap);
+		Mat_Deer->setTexture("u_texture", Deer_Body_Alb);
+		Mat_Deer->setTexture("u_normalMap", Deer_Body_Nrm);
+		m_scene.addMaterial(Mat_Deer);
+
+		//create meshes
+		Engine::Ref_ptr<Engine::mesh> bridge_a = Engine::mesh::create(bridge_a_va, Mat_Rock_RuinStoneBridge_A, "bridge_a");
+		bridge_a->setPos({ 0.0f, 0.0f, 10.0f, 1.0f });
+		m_scene.addMesh(bridge_a);
+		Engine::Ref_ptr<Engine::mesh> bridge_b = Engine::mesh::create(bridge_b_va, Mat_Rock_RuinStoneBridge_B, "bridge_b");
+		bridge_b->setPos({ 0.0f, 0.0f, 10.0f, 1.0f });
+		m_scene.addMesh(bridge_b);
+		Engine::Ref_ptr<Engine::mesh> wall_a = Engine::mesh::create(wall_a_va, Mat_Rock_RuinStoneWall_A, "wall_a");
+		wall_a->setPos({ 0.0f, 0.0f, 10.0f, 1.0f });
+		m_scene.addMesh(wall_a);
+		Engine::Ref_ptr<Engine::mesh> wall_c = Engine::mesh::create(wall_c_va, Mat_Rock_RuinStoneWall_C, "wall_c");
+		wall_c->setPos({ 0.0f, 0.0f, 10.0f, 1.0f });
+		m_scene.addMesh(wall_c);
+		Engine::Ref_ptr<Engine::mesh> wall_d = Engine::mesh::create(wall_d_va, Mat_Rock_RuinStoneWall_D, "wall_d");
+		wall_d->setPos({ 0.0f, 0.0f, 10.0f, 1.0f });
+		m_scene.addMesh(wall_d);
+		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, green, "plane");
+		plane->setScale(10.0f);
+		plane->setPos({0.0f, -8.0f, 0.0f, 1.0f});
+		m_scene.addMesh(plane);
+		Engine::Ref_ptr<Engine::mesh> boar = Engine::mesh::create(boar_va, Mat_Boar, "boar");
+		boar->setPos({0.0f, -0.1f, 0.0f, 1.0f});
+		m_scene.addMesh(boar);
+		Engine::Ref_ptr<Engine::mesh> deer = Engine::mesh::create(deer_va, Mat_Deer, "deer");
+		deer->setPos({ 0.0f, -0.1f, 5.0f, 1.0f });
+		m_scene.addMesh(deer);
+
+		//add lights
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f) });
+		m_scene.addLight(sun);
+		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f), 1.0f, 0.01f, 0.01f });
+		m_scene.addLight(lamp);
+}
+
+	void nrm_map_spc_map()
+	{
+		Engine::Ref_ptr<Engine::vertexArray> gun_va = Engine::vertexArray::create();
+		gun_va->load("gun_tb.model");
+		gun_va->unbind();
+
+		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga");
+		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
+		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_R.tga");
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/nrm_map_spec_map/basicPhong_one_texture_shadow_additive_dir.shader");
+		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/nrm_map_spec_map/basicPhong_one_texture_shadow_additive_point.shader");
+		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/nrm_map_spec_map/basicPhong_one_texture_shadow_additive_spot.shader");
+		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(lightTexShader_dir_normalMap, "gun_mat");//just use the variant for directional lights for initialization
+		gunMat->addShader(lightTexShader_point_normalMap);
+		gunMat->addShader(lightTexShader_spot_normalMap);
+		gunMat->setTexture("u_texture", gunDiffTex);
+		gunMat->setTexture("u_normalMap", gunNormalTex);
+		gunMat->setTexture("u_specMap", gunSpecTex);
+		m_scene.addMaterial(gunMat);
+
+		Engine::Ref_ptr<Engine::mesh> gun = Engine::mesh::create(gun_va, gunMat, "gun");
+		m_scene.addMesh(gun);
+
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.8f, 0.8f, 0.8f), vec3(1.0f, 1.0f, 1.0f) });
+		m_scene.addLight(sun);
+		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f), 1.0f, 0.01f, 0.01f });
+		m_scene.addLight(lamp);
 	}
 
 private:
 	Engine::Scene m_scene;
+	bool m_sceneLoaded = false;
 };
 
 class Sandbox : public Engine::Application

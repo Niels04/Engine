@@ -3,8 +3,9 @@
 #endMatUniformBlock
 
 #textures
-#count 1
+#count 2
 #tex 'u_texture'
+#tex 'u_normalMap'
 #endTextures
 
 #type vertex

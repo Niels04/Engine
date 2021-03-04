@@ -112,7 +112,7 @@ namespace Engine
 	};
 
 //defines for shadows
-#define DIR_LIGHT_CAM -10.0f, 10.0f, -10.0f, 10.0f, -1.0f, -20.0f//default orthographic camera for a directional-light
+#define DIR_LIGHT_CAM -20.0f, 20.0f, -20.0f, 20.0f, -1.0f, -60.0f//default orthographic camera for a directional-light
 #define SPOT_LIGHT_CAM 1.0f, 20.0f, 90.0f, 90.0f//default projectionMatrix for a spotLight
 #define POINT_LIGHT_CAM 1.0f, 60.0f, 90.0f, 90.0f//default camera for a pointLight
 
@@ -194,6 +194,8 @@ namespace Engine
 			m_spotLightTextures.push_back(ShadowMap2d::create(Shadow_Width, Shadow_Height));
 			return &m_dynamicSpotLightPtrs.back();
 		}
+
+		void clear();
 
 		void rmStaticDirLight(directionalLight* toRemove);
 		void rmStaticPointLight(pointLight* toRemove);

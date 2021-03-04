@@ -72,6 +72,11 @@ namespace Engine
 		return m_shaders[name];
 	}
 
+	void shaderLib::clear()
+	{	
+		m_shaders.clear();
+	}
+
 	Ref_ptr<shader> shaderLib::load(const std::string& fileName)
 	{
 		std::string name = fileName.substr(0, fileName.rfind(".") == std::string::npos ? fileName.size() - 1 : fileName.rfind("."));//find out what the shader's default name should be

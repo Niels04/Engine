@@ -78,6 +78,26 @@ namespace Engine
 		spotLightBuffer->unbind();
 	}
 
+	void LightManager::clear()
+	{
+		m_staticDirLights.clear();
+		m_staticPointLights.clear();
+		m_staticSpotLights.clear();
+		m_dynamicDirLights.clear();
+		m_dynamicPointLights.clear();
+		m_dynamicSpotLights.clear();
+		m_staticDirLightPtrs.clear();
+		m_staticPointLightPtrs.clear();
+		m_staticSpotLightPtrs.clear();
+		m_dynamicDirLightPtrs.clear();
+		m_dynamicPointLightPtrs.clear();
+		m_dynamicSpotLightPtrs.clear();
+		m_dirLightTextures.clear();
+		m_pointLightTextures.clear();
+		m_spotLightTextures.clear();
+		//could initialize all gpu-memory to 0 here, but im not goin to bother with that, since there is no reason, the old data will just be overwritten
+	}
+
 	void LightManager::rmStaticDirLight(directionalLight* toRemove)
 	{
 		auto it = m_staticDirLights.begin();

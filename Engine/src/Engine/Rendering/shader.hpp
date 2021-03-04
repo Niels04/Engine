@@ -60,6 +60,7 @@ namespace Engine
 		Ref_ptr<shader> load(const std::string& fileName);
 		void name(const std::string& nameOld, const std::string& nameNew);//save the shader that is currently stored with keyVal "nameOld" with the new keyval "nameNew" (does not change the shader's internal name)
 		bool exists(const std::string& name);
+		void clear();//remove all shaders from the shaderLib
 	private:
 		std::unordered_map<std::string, Ref_ptr<shader>> m_shaders;//first is name, second is corresponding shader
 	};

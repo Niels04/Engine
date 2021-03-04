@@ -15,6 +15,9 @@ namespace Engine
 		Scene(const float fov, const float nearPlane, const float farPlane, const float aspectRatio);
 		~Scene();
 
+		void initialize(const float fov, const float nearPlane, const float farPlane, const float aspectRatio);//after the scene has been cleared, call this function to initialize a new scene
+		void clear(LightManager* lightManager);//delete absolutely everything from the scene
+
 		inline const perspectiveCamera& getCamera() const { return m_camControl.getCam(); }
 
 		void addMaterial(const Ref_ptr<material>& mat);

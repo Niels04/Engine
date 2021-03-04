@@ -15,6 +15,31 @@ namespace Engine
 		//add some code to delete all the light's from the light-manager(maybe initially give the scene a ptr to the lightManager or maybe do Renderer::removeLight())
 	}
 
+	void Scene::initialize(const float fov, const float nearPlane, const float farPlane, const float aspectRatio)
+	{
+		m_camControl.initialize(nearPlane, farPlane, fov, aspectRatio);
+	}
+
+	void Scene::clear(LightManager* lightManager)
+	{
+		m_camControl.clear();
+		m_meshes.clear();//is it actually safe to delete like this?
+		m_dirLightMovements.clear();
+		m_pointLightMovements.clear();
+		m_spotLightMovements.clear();
+		m_dirLightEffects.clear();
+		m_pointLightEffects.clear();
+		m_spotLightEffects.clear();
+		m_dirLightAnimations.clear();
+		m_pointLightAnimations.clear();
+		m_spotLightAnimations.clear();
+		m_matLib.clear();
+		m_dirLights.clear();
+		m_pointLights.clear();
+		m_spotLights.clear();
+		lightManager->clear();
+	}
+
 	void Scene::onUpdate(timestep& ts, const bool rotateCam)
 	{
 		m_camControl.onUpdate(ts, rotateCam);

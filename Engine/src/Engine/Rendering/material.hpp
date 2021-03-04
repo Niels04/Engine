@@ -69,6 +69,7 @@ namespace Engine
 		void remove(const std::string& name);//remove the material with name "name"
 		void name(const std::string& nameOld, const std::string& nameNew);//save the material that is currently stored with keyVal "nameOld" with the new keyval "nameNew"
 		bool exists(const std::string& name);
+		void clear();//remove all materials from the library
 		
 		inline static const uint8_t getMaxTexSlots() { return s_maxTexSlots; }
 	private:

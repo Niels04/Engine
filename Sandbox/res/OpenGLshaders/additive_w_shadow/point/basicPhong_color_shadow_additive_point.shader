@@ -103,7 +103,8 @@ float calcPointShadow(vec3 lightPos, vec3 normal, vec3 lightDir, float viewDista
 	float depth_current = length(dir);
 	if (depth_current > zFar)
 		return 0.0f;//no shadow if we are past the far-plane of the light's camera
-	float shadowBias = max(0.1 * (1.0f - dot(normal, lightDir)), shadowBias_min);
+	//float shadowBias = max(0.1 * (1.0f - dot(normal, lightDir)), shadowBias_min);
+	float shadowBias = 0.0f;
 	float shadow = 0.0f;
 	float diskRad = (1.0f + (viewDistance / zFar)) / 50.0f;
 	for (int i = 0; i < samples; i++)
