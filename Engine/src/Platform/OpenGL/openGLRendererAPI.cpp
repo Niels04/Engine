@@ -12,7 +12,7 @@ namespace Engine
 		GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 		//setup depth-testing
 		GLCALL(glEnable(GL_DEPTH_TEST));
-		GLCALL(glDepthFunc(GL_LESS));//maybe because I scale between -1 and 1 but the depthbuffer accepts values between 0 and 1
+		GLCALL(glDepthFunc(GL_LESS));
 		GLCALL(glEnable(GL_CULL_FACE));
 		GLCALL(glCullFace(GL_BACK));
 	}
@@ -47,14 +47,37 @@ namespace Engine
 		GLCALL(glBlendFunc(sfactor, dfactor));
 	}
 
+	void OpenGLRendererAPI::enableBlend(const bool enabled) const
+	{
+		GLCALL(glDisable(GL_BLEND));
+	}
+
 	void OpenGLRendererAPI::setDepth(const uint32_t method) const
 	{
 		GLCALL(glDepthFunc(method));
 	}
 
+	void OpenGLRendererAPI::enableDepth(const bool enabled) const
+	{
+		GLCALL(glDisable(GL_DEPTH_TEST));
+	}
+
 	void OpenGLRendererAPI::cullFace(uint32_t face) const
 	{
 		GLCALL(glCullFace(face));
+	}
+
+	void OpenGLRendererAPI::drawToBuffers(const uint32_t count, va_list params) const
+	{
+		uint32_t* buffers = nullptr;
+		buffers = (uint32_t*)malloc(count * sizeof(uint32_t));
+		uint32_t val;
+		for (uint8_t i = 0; i < count; i++)
+		{
+			val = va_arg(params, uint32_t);
+			buffers[i] = val;
+		}
+		GLCALL(glDrawBuffers(count, buffers));
 	}
 
 	const uint32_t OpenGLRendererAPI::getMaxGlobalBuffers() const

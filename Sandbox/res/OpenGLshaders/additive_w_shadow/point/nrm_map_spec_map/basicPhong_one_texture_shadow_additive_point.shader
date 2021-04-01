@@ -72,6 +72,7 @@ layout(std140) uniform pointLights
 };
 
 layout(location = 0) out vec4 color;
+layout(location = 1) out vec4 bright_color;
 
 in vec3 v_viewPos;
 in vec3 v_fragPos;
@@ -144,4 +145,5 @@ void main()
 	//colOutput = vec3(texture(u_shadowMap, v_fragPos - pLights[u_lightIndex].position.xyz));
 
 	color = vec4(colOutput, 1.0f);
+	bright_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);//if bloom is enabled, the second color-attachment needs to be set to black, in order for this shader not to contribute to the bloom-effect
 };

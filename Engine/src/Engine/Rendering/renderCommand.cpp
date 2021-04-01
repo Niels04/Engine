@@ -42,13 +42,31 @@ namespace Engine
 		s_RendererAPI->setBlend(sfactor, dfactor);
 	}
 
+	void renderCommand::enableBlend(const bool enabled)
+	{
+		s_RendererAPI->enableBlend(enabled);
+	}
+
 	void renderCommand::setDepth(const uint32_t method)
 	{
 		s_RendererAPI->setDepth(method);
 	}
 
+	void renderCommand::enableDepth(const bool enabled)
+	{
+		s_RendererAPI->enableDepth(enabled);
+	}
+
 	void renderCommand::cullFace(const uint32_t face)
 	{
 		s_RendererAPI->cullFace(face);
+	}
+
+	void renderCommand::drawToBuffers(const uint32_t count, ...)
+	{
+		va_list params;
+		va_start(params, count);//pass in the last fixed parameter to get a ptr to the begin of the variadic parameters
+		s_RendererAPI->drawToBuffers(count, params);
+		va_end(params);
 	}
 }

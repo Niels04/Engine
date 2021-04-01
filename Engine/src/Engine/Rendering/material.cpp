@@ -4,13 +4,13 @@
 
 namespace Engine
 {
-	Ref_ptr<material> material::create(Ref_ptr<shader>& shader, const std::string& name)
+	Ref_ptr<material> material::create(Ref_ptr<shader>& shader, const std::string& name, uint32_t flags, uint32_t blend_src, uint32_t blend_dest)
 	{
-		return std::make_shared<material>(shader, name);
+		return std::make_shared<material>(shader, name, flags, blend_src, blend_dest);
 	}
 
-	material::material(Ref_ptr<shader>& shader, const std::string& name)
-		: m_name(name)
+	material::material(Ref_ptr<shader>& shader, const std::string& name, uint32_t flags, uint32_t blend_src, uint32_t blend_dest)
+		: m_name(name), m_properties(flags, blend_src, blend_dest)
 	{
 		m_shaderRefs.push_back(shader);
 		//reserve memory for the materialUniforms

@@ -88,8 +88,9 @@ namespace Engine
 
 	class RenderBuffer
 	{
+		friend class GLFrameBuffer;//cuz the framebuffer needs to read the renderer_id
 	public:
-		static Ref_ptr<RenderBuffer> create(const RenderBufferUsage usage);
+		static Ref_ptr<RenderBuffer> create(const RenderBufferUsage usage, const uint32_t width, const uint32_t height);
 		RenderBuffer(RenderBufferUsage Usage) : usage(Usage) {  }
 		virtual ~RenderBuffer() = default;
 
@@ -97,6 +98,8 @@ namespace Engine
 		inline virtual void unbind() const = 0;
 	public:
 		const RenderBufferUsage usage;//the RenderBuffer's usage
+	private:
+		inline virtual const uint32_t getRenderer_id() const = 0;
 	};
 
 	class FrameBuffer
@@ -108,11 +111,12 @@ namespace Engine
 		inline virtual void bind() const = 0;
 		inline virtual void unbind() const = 0;
 
-		virtual void initShadow() = 0;//initializes the globalBuffer for usage with shadows
+		virtual void initShadow() const = 0;//initializes the globalBuffer for usage with shadows
+		inline virtual void checkStatus() const = 0;
 
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap2d>& map) const = 0;
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap3d>& map) const = 0;
-		//to a frameBuffer cuz there are RenderBuffers, which are more efficient(but not so good for reading, thats why in the case of colors we wanna use a texture)
-		//inline virtual void attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer) = 0;
+		inline virtual void attachTexture(const Ref_ptr<texture2d>& tex, const uint32_t slot = 0) const = 0;
+		inline virtual void attachRenderBuffer(const Ref_ptr<RenderBuffer>& buffer) const = 0;
 	};
 }

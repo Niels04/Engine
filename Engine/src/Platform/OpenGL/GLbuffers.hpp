@@ -149,7 +149,7 @@ namespace Engine
 		inline virtual void bind() const override;
 		inline virtual void unbind() const override;
 	private:
-		inline const uint32_t getRenderer_id() const { return m_renderer_id; }
+		inline virtual const uint32_t getRenderer_id() const override { return m_renderer_id; }
 		uint32_t m_renderer_id;
 	};
 
@@ -161,11 +161,13 @@ namespace Engine
 		inline virtual void bind() const override;
 		inline virtual void unbind() const override;
 
-		virtual void initShadow() override;
+		virtual void initShadow() const override;
+		virtual void checkStatus() const override;
 
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap2d>& map) const override;
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap3d>& map) const override;
-		//inline virtual void attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer) override;
+		inline virtual void attachTexture(const Ref_ptr<texture2d>& tex, const uint32_t slot = 0) const override;
+		inline virtual void attachRenderBuffer(const Ref_ptr<RenderBuffer>& buffer) const override;
 	private:
 		uint32_t m_renderer_id;
 	};

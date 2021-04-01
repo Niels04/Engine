@@ -7,9 +7,6 @@
 #include "Engine/Rendering/material.hpp"
 #include "Engine/core/timeStep.hpp"
 
-#define ROT_MODE_NORMAL 0U
-#define ROT_MODE_LOOKAT 1U
-
 namespace Engine
 {
 	class MeshMovement;
@@ -21,6 +18,7 @@ namespace Engine
 		//maybe also implement a constructor, that only takes a vertexArray, and supplies a default material
 		mesh(const Ref_ptr<vertexArray>& vertexArray, const Ref_ptr<material>& material, const std::string& name, const vec3& position,
 			const vec3& rotation, const vec3& scale);
+		virtual ~mesh() = default;
 		static Ref_ptr<mesh> create(const Ref_ptr<vertexArray>& vertexArray, const Ref_ptr<material>& material, const std::string& name, const vec3& position = { 0.0f, 0.0f, 0.0f },
 			const vec3& rotation = { 0.0f, 0.0f, 0.0f }, const vec3& scale = { 1.0f, 1.0f, 1.0f }) {
 			return std::make_shared<mesh>(vertexArray, material, name, position, rotation, scale); }
@@ -34,15 +32,10 @@ namespace Engine
 		const vec3& getScale() const { return m_scale; }
 		const std::string& getName() const { return m_name; }
 
-		void setRotationMode(const uint8_t mode) { m_rotationMode = mode; }
-		bool getRotationMode() const { return m_rotationMode; }
-
 		inline void setPos(const vec4& newPos) { m_position = newPos; recalcModelMat(); }
 		inline void setRot(const vec3& newRot) { m_rotation = newRot; recalcModelMat(); recalcNormalMat(); }
-		inline void setLookAt(const vec3& newLookAt) { m_rotation = newLookAt; recalcModelMat(); ENG_CORE_WARN("Don't use this method (\"mesh::setLookAt\") right now."); }
 		inline void setScale(const vec3& newScale) { m_scale = newScale; recalcModelMat(); recalcNormalMat(); }
 		inline void setScale(const float newScale) { m_scale = { newScale, newScale, newScale }; recalcModelMat(); recalcNormalMat(); }
-		//be aware of what you're doing when applying a shear! Normals are not corrected so lighting will look weird!!!
 		inline void setShear(const float xy, const float xz, const float yx, const float yz, const float zx, const float zy) {
 			m_shear[0] = xy; m_shear[1] = xz; m_shear[2] = yx; m_shear[3] = yz;
 			m_shear[4] = zx; m_shear[5] = zy; recalcModelMat();
@@ -58,7 +51,7 @@ namespace Engine
 		}
 		void onUpdate(timestep& ts);
 
-	private:
+	protected:
 		//assets
 		Ref_ptr<vertexArray> m_geometry;
 		WeakRef_ptr<material> m_material;//store as weak_ptr because a mesh should never take ownership over it's material(material ownership is in hands of a class that manages materials)
@@ -69,13 +62,15 @@ namespace Engine
 		float m_shear[6] = {0};
 		mat4 m_modelMat;//the meshe's model matrix -> get's calculated with respect to position, rotation, shear and scale
 		mat3 m_normalMat;//the meshe's normalMat -> get's calculated with respect to rotation, shear and scale
-		uint8_t m_rotationMode;
 		const std::string m_name;
 		std::vector<Ref_ptr<MeshMovement>> m_movements;
 		std::vector<PtrPtr<pointLight>> m_attachedPointLights;
 		std::vector<std::pair<PtrPtr<spotLight>, vec4>> m_attachedSpotLights;
 
 		void recalcModelMat();
-		void recalcNormalMat();
+		inline void recalcNormalMat()
+		{
+			m_normalMat = mat3::transposed(mat3::inverse(mat3(m_modelMat)));
+		}
 	};
 }

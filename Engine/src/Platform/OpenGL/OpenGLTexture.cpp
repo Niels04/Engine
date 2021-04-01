@@ -7,7 +7,7 @@
 
 namespace Engine
 {
-	GLtexture2d::GLtexture2d(const std::string& name, const uint32_t filterMin, const uint32_t filterMag)
+	GLtexture2d::GLtexture2d(const std::string& name, const bool sRGB, const uint32_t filterMin, const uint32_t filterMag)
 		: m_path("res/textures/")
 	{
 		m_path.append(name);
@@ -20,12 +20,18 @@ namespace Engine
 		GLenum internalFormat = 0/*how openGL stores the texture*/, dataFormat = 0;
 		if (channels == 4)
 		{
-			internalFormat = GL_RGBA8;
+			if (sRGB)
+				internalFormat = GL_SRGB8_ALPHA8;
+			else
+				internalFormat = GL_RGBA8;
 			dataFormat = GL_RGBA;
 		}
 		else if (channels == 3)
 		{
-			internalFormat = GL_RGB8;
+			if (sRGB)
+				internalFormat = GL_SRGB8;
+			else
+				internalFormat = GL_RGB8;
 			dataFormat = GL_RGB;
 		}
 		ENG_CORE_ASSERT(internalFormat && dataFormat, "Eighter \"internalFormat\" or \"dataFormat\" (or both)was 0 when loading a texture.");
@@ -40,6 +46,17 @@ namespace Engine
 		texture but we set them to 0 here*/0, 0, m_width, m_height, /*here we supply the format of our data*/dataFormat, /*form in which our data comes(stb_image gives unsigned bytes)*/GL_UNSIGNED_BYTE, data));
 		
 		stbi_image_free(data);//deallocate the memory returned form stbi_load again
+	}
+
+	GLtexture2d::GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag)
+	{
+		GLenum internalFormat = format;
+		m_width = width; m_height = height;
+		GLCALL(glCreateTextures(GL_TEXTURE_2D, 1, &m_renderer_id));
+		GLCALL(glTextureStorage2D(m_renderer_id, /*if we had mulitple mipmaps then we would put something other than 1 in for levels*/1, /*define how openGL internally
+		stores the texture*/internalFormat, m_width, m_height));
+		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_MIN_FILTER, filterMin));
+		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_MAG_FILTER, filterMag));
 	}
 
 	GLtexture2d::~GLtexture2d()

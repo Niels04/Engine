@@ -323,7 +323,7 @@ namespace Engine
     //setuniforms:
     void GLshader::setUniform1b(const std::string& name, bool bValue)//just for comfort, gets converted to int anyways
     {
-        GLCALL(glUniform1i(getUniformLocation(name), (int)bValue));
+        GLCALL(glUniform1i(getUniformLocation(name), static_cast<int>(bValue)));
     }
     void GLshader::setUniform1ui(const std::string& name, const uint32_t value)
     {

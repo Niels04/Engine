@@ -7,7 +7,8 @@ namespace Engine
 	class GLtexture2d : public texture2d
 	{
 	public:
-		GLtexture2d(const std::string& name, const uint32_t filterMin, const uint32_t filterMag);
+		GLtexture2d(const std::string& name, const bool sRGB, const uint32_t filterMin, const uint32_t filterMag);
+		GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag);
 		~GLtexture2d();
 
 		inline const uint32_t getHeight() const override { return m_height; }

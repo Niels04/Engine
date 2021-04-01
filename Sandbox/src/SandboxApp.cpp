@@ -11,13 +11,6 @@ public:
 	{
 		Engine::Application::Get().getWindow().setDissableCursor(false);
 		Engine::Application::Get().getWindow().setFullscreen(false);
-		//for now just call the different functions here, that load the scenes
-		//plane_head_rotate();
-		//boat_water();
-		//experiment();
-		//normalMapping();
-		//bridge();
-		//nrm_map_spc_map();
 	}
 	~SandboxLayer()
 	{
@@ -29,20 +22,21 @@ public:
 		m_scene.onUpdate(ts, Engine::Application::Get().getWindow().isDissableCursor());
 
 		//render
-		Engine::renderCommand::setClearColor({ 0.1f, 0.1f, 0.1f, 1.0f });
+		//Engine::renderCommand::setClearColor({ 0.0171f, 0.0171f, 0.0171f, 1.0f });
+		Engine::renderCommand::setClearColor({ 0.0f, 0.0f, 0.0f, 1.0f });
 		Engine::renderCommand::clear();
 
 		Engine::Renderer::beginScene(m_scene.getCamera());
 		{
-			for (const auto& Mesh : m_scene)
+			for (auto& it = m_scene.meshes_begin(); it != m_scene.meshes_end(); it++)
 			{
-				Engine::Renderer::sub(Mesh);
+				Engine::Renderer::sub(*it);
 			}
 		}
 		Engine::Renderer::endScene();
 		//first render to the depth maps
 		Engine::Renderer::RenderDepthMaps();
-		//then render the scene with the shadows
+		//then render the scene with the shadows applied
 		Engine::Renderer::Flush();
 	}
 
@@ -51,7 +45,10 @@ public:
 		if (!m_sceneLoaded)
 			showSceneSelect();
 		else
+		{
 			m_scene.onImGuiRender();
+			Engine::Renderer::onImGuiRender();
+		}
 	}
 
 	void onEvent(Engine::Event& e) override
@@ -137,6 +134,11 @@ public:
 			nrm_map_spc_map();
 			m_sceneLoaded = true;
 		}
+		else if (ImGui::Button("emissive"))
+		{
+			emissive();
+			m_sceneLoaded = true;
+		}
 		ImGui::End();
 	}
 
@@ -198,11 +200,11 @@ public:
 		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
 
 		//m_gunTex = Engine::texture2d::create("Cerberus_A.tga");
-		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("head.png");
-		Engine::Ref_ptr<Engine::texture2d> helmetTex = Engine::texture2d::create("armor_115_head_alb.png");
+		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("head.png", true);
+		Engine::Ref_ptr<Engine::texture2d> helmetTex = Engine::texture2d::create("armor_115_head_alb.png", true);
 		Engine::Ref_ptr<Engine::texture2d> helmetNormalTex = Engine::texture2d::create("armor_115_head_nrm.png");
 		//m_cubeTex = Engine::texture2d::create("chiseled_stone_bricks.png", FILTER_NEAREST);<-work on rgba-textures
-		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png");
+		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png", true);
 
 		Engine::Ref_ptr<Engine::material> red = Engine::material::create(lightShader_dir, "red");//just use the variant for directional lights for initialization
 		red->addShader(lightShader_point);
@@ -255,19 +257,19 @@ public:
 		cube->setPos({0.0f, 1.0f, 8.0f, 1.0f});
 		m_scene.addMesh(cube);
 
-		Engine::PtrPtr<Engine::directionalLight> sun(Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f) } ));
+		Engine::PtrPtr<Engine::directionalLight> sun(Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f) } ));
 		m_scene.addLight(sun);
 		Engine::Ref_ptr<Engine::DirLightMovement> rotate = Engine::DirLightMovement::create(0.0174533f * 60.0f * 0.25f, 0.0f, 0.0f);
 		rotate->attachToLight(sun);
 		m_scene.addLightMovement(rotate);
 		//m_moon = Engine::Renderer::addStaticDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f) } ); <-doesn't work because of the lookAt-function edge-case
 		//m_sun_2 = Engine::Renderer::addStaticDirLight({ vec3(-0.5773502f, -0.5773502, -0.5773502f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f) });
-		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(2.0f, 1.0f, 0.0f), vec3(0.5f, 0.1f, 0.1f), vec3(0.5f, 0.1f, 0.1f), vec3(0.5f, 0.1f, 0.1f), 1.0f, 0.01f, 0.01f });
+		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(2.0f, 1.0f, 0.0f), vec3(0.1f, 0.02f, 0.02f), vec3(0.5f, 0.1f, 0.1f), vec3(0.5f, 0.1f, 0.1f), 1.0f, 0.01f, 0.01f });
 		m_scene.addLight(lamp);
 		Engine::Ref_ptr<Engine::PointLightMovement> move_circular = Engine::CircularPointLightMovement::create(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), 0.0174533f * 60.0f);
 		move_circular->attachToLight(lamp);
 		m_scene.addLightMovement(move_circular);
-		Engine::PtrPtr<Engine::spotLight> spotLight =  Engine::Renderer::addDynamicSpotLight({ vec3(-6.0f, 8.0f, 4.75f), vec3(0.0f, -1.0f, 0.0f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), cosf(15.0f * (PI / 180.0f)) });
+		Engine::PtrPtr<Engine::spotLight> spotLight =  Engine::Renderer::addDynamicSpotLight({ vec3(-6.0f, 8.0f, 4.75f), vec3(0.0f, -1.0f, 0.0f), vec3(0.05f, 0.05f, 0.5f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), cosf(15.0f * (PI / 180.0f)) });
 		m_scene.addLight(spotLight);
 	}
 
@@ -289,10 +291,9 @@ public:
 		lighthouse_va->load("lighthouse_textured.model");
 		lighthouse_va->unbind();
 
-		Engine::Ref_ptr<Engine::texture2d> spot_light_tex = Engine::texture2d::create("spotlight_bc.png");
-		Engine::Ref_ptr<Engine::texture2d> duck_tex = Engine::texture2d::create("09-Default_albedo.jpg");
-		Engine::Ref_ptr<Engine::texture2d> lighthouse_tex = Engine::texture2d::create("lighthouse_tex.png");
-		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("figure_tex.png");
+		Engine::Ref_ptr<Engine::texture2d> duck_tex = Engine::texture2d::create("09-Default_albedo.jpg", true);
+		Engine::Ref_ptr<Engine::texture2d> lighthouse_tex = Engine::texture2d::create("lighthouse_tex.png", true);
+		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("figure_tex.png", true);
 
 		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_one_texture_shadow_additive_dir.shader");
 		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
@@ -390,18 +391,16 @@ public:
 		lighthouse->setPos({0.0f, 0.0f, 0.0f, 1.0f});
 		m_scene.addMesh(lighthouse);
 
-		Engine::PtrPtr<Engine::directionalLight> sun(Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f) }));
-		m_scene.addLight(sun);
-		Engine::PtrPtr<Engine::pointLight> lamp(Engine::Renderer::addDynamicPointLight({ vec3(6.0f, 5.0f, 3.0f), vec3(0.2f, 0.2f, 0.2f), vec3(0.2f, 0.2f, 0.2f), vec3(0.2f, 0.2f, 0.2f), 1.0f, 0.01f, 0.01f }));
+		Engine::PtrPtr<Engine::pointLight> lamp(Engine::Renderer::addDynamicPointLight({ vec3(6.0f, 5.0f, 3.0f), vec3(0.14f, 0.14f, 0.14f), vec3(0.14f, 0.14f, 0.14f), vec3(0.14f, 0.14f, 0.14f), 1.0f, 0.00f, 1.0f }));//only use the quadratic component
 		m_scene.addLight(lamp);
-		Engine::PtrPtr<Engine::spotLight> spot_0(Engine::Renderer::addDynamicSpotLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, -0.242542f, -0.970167f), vec3(0.9f, 0.9f, 0.6f), vec3(0.9f, 0.9f, 0.6f), vec3(0.9f, 0.9f, 0.6f), cosf(15.0f * (PI / 180.0f)) }));
+		Engine::PtrPtr<Engine::spotLight> spot_0(Engine::Renderer::addDynamicSpotLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, -0.242542f, -0.970167f), vec3(0.45f, 0.45f, 0.3f), vec3(0.45f, 0.45f, 0.3f), vec3(0.45f, 0.45f, 0.3), cosf(15.0f * (PI / 180.0f)) }));
 		m_scene.addLight(spot_0);
 		Engine::Ref_ptr<Engine::SpotLightMovement> rotation_0 = Engine::SpotLightRotation::create(0.0f, -0.9f, 0.0f);
 		rotation_0->attachToLight(spot_0);
 		m_scene.addLightMovement(rotation_0);
 		uint32_t animationSteps[] = { 0, 0, 0, 1, 2, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1 };
-		Engine::Ref_ptr<Engine::SpotLightAnimation> flicker = Engine::SpotLightAnimation::create(3, 10, 20, 0.3f, 1.0f, 1.0f, animationSteps,
-			vec3(0.9f, 0.9f, 0.6f), vec3(0.72f, 0.72f, 0.48f), vec3(0.0f, 0.0f, 0.0f));
+		Engine::Ref_ptr<Engine::SpotLightAnimation> flicker = Engine::SpotLightAnimation::create(3, 10, 20, 0.1f, 1.0f, 1.0f, animationSteps,
+			vec3(0.315f, 0.315f, 0.21f), vec3(0.252f, 0.252f, 0.168f), vec3(0.0f, 0.0f, 0.0f));
 		flicker->attachToLight(spot_0);
 		m_scene.addLightAnimation(flicker);
 	}
@@ -424,8 +423,8 @@ public:
 		text_va->load("test_text.model");
 		text_va->unbind();
 
-		Engine::Ref_ptr<Engine::texture2d> spot_light_tex = Engine::texture2d::create("spotlight_bc.png");
-		Engine::Ref_ptr<Engine::texture2d> duck_tex = Engine::texture2d::create("09-Default_albedo.jpg");
+		Engine::Ref_ptr<Engine::texture2d> spot_light_tex = Engine::texture2d::create("spotlight_bc.png", true);
+		Engine::Ref_ptr<Engine::texture2d> duck_tex = Engine::texture2d::create("09-Default_albedo.jpg", true);
 
 		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_one_texture_shadow_additive_dir.shader");
 		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
@@ -545,7 +544,7 @@ public:
 		gun_va->load("gun_tb.model");
 		gun_va->unbind();
 
-		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga");
+		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga", true);
 		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
 
 		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
@@ -605,15 +604,18 @@ public:
 		Engine::Ref_ptr<Engine::vertexArray> deer_va = Engine::vertexArray::create();
 		deer_va->load("deer_tb.model");
 		deer_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> lightbulb_va = Engine::vertexArray::create();
+		lightbulb_va->load("lightbulb.model");
+		lightbulb_va->unbind();
 
 		//load textures
-		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_A_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_A_Alb.png");
-		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_B_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_B_Alb.png");
-		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_A_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_A_Alb.png");
-		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_C_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_C_Alb.png");
-		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_D_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_D_Alb.png");
-		Engine::Ref_ptr<Engine::texture2d> Boar_Alb = Engine::texture2d::create("Boar_Alb_1.png");
-		Engine::Ref_ptr<Engine::texture2d> Deer_Body_Alb = Engine::texture2d::create("Deer_Body_Alb.png");
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_A_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_B_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_B_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_A_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_C_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_C_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneWall_D_Alb = Engine::texture2d::create("bridge/Rock_RuinStoneWall_D_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Boar_Alb = Engine::texture2d::create("Boar_Alb_1.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Deer_Body_Alb = Engine::texture2d::create("Deer_Body_Alb.png", true);
 
 		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_A_Nrm = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_A_Nrm_fixed.png");
 		Engine::Ref_ptr<Engine::texture2d> Rock_RuinStoneBridge_B_Nrm = Engine::texture2d::create("bridge/Rock_RuinStoneBridge_B_Nrm_fixed.png");
@@ -651,6 +653,9 @@ public:
 		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		lightShader_spot->bindUniformBlock("spotLights", POINT_LIGHTS_BIND);
 		lightShader_spot->bindUniformBlock("spotLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
+		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		//create materials
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_A = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneBridge_A");
@@ -705,6 +710,12 @@ public:
 		Mat_Deer->setTexture("u_normalMap", Deer_Body_Nrm);
 		m_scene.addMaterial(Mat_Deer);
 
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test);
+		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 0.1f, 1.0f });
+		mat_emissive->setUniform1f("multiplier", 20.0f);
+		mat_emissive->flushAll();
+		m_scene.addMaterial(mat_emissive);
+
 		//create meshes
 		Engine::Ref_ptr<Engine::mesh> bridge_a = Engine::mesh::create(bridge_a_va, Mat_Rock_RuinStoneBridge_A, "bridge_a");
 		bridge_a->setPos({ 0.0f, 0.0f, 10.0f, 1.0f });
@@ -731,12 +742,16 @@ public:
 		Engine::Ref_ptr<Engine::mesh> deer = Engine::mesh::create(deer_va, Mat_Deer, "deer");
 		deer->setPos({ 0.0f, -0.1f, 5.0f, 1.0f });
 		m_scene.addMesh(deer);
+		Engine::Ref_ptr<Engine::mesh> lightbulb = Engine::mesh::create(lightbulb_va, mat_emissive, "lightbulb");
 
 		//add lights
-		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f) });
-		m_scene.addLight(sun);
 		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f), 1.0f, 0.01f, 0.01f });
+		lightbulb->attachLight(lamp);
+		m_scene.addMesh(lightbulb);
 		m_scene.addLight(lamp);
+
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
+		m_scene.addLight(sun);
 }
 
 	void nrm_map_spc_map()
@@ -745,20 +760,20 @@ public:
 		gun_va->load("gun_tb.model");
 		gun_va->unbind();
 
-		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga");
+		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga", true);
 		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
 		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_R.tga");
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/nrm_map_spec_map/basicPhong_one_texture_shadow_additive_dir.shader");
+		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/nrm_map_spec_map_bloom/basicPhong_one_texture_shadow_additive_dir.shader");
 		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
 		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/nrm_map_spec_map/basicPhong_one_texture_shadow_additive_point.shader");
+		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/nrm_map_spec_map_bloom/basicPhong_one_texture_shadow_additive_point.shader");
 		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/nrm_map_spec_map/basicPhong_one_texture_shadow_additive_spot.shader");
+		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/nrm_map_spec_map_bloom/basicPhong_one_texture_shadow_additive_spot.shader");
 		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
 		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
@@ -774,10 +789,69 @@ public:
 		Engine::Ref_ptr<Engine::mesh> gun = Engine::mesh::create(gun_va, gunMat, "gun");
 		m_scene.addMesh(gun);
 
-		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.8f, 0.8f, 0.8f), vec3(1.0f, 1.0f, 1.0f) });
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
-		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f), 1.0f, 0.01f, 0.01f });
+		//Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f), 1.0f, 0.00f, 1.0f });//because we use gamma-correction, only use the quadratic term
+		//m_scene.addLight(lamp);
+	}
+
+	void emissive()
+	{
+		Engine::Ref_ptr<Engine::vertexArray> environment_va = Engine::vertexArray::create();
+		environment_va->load("cube_solid.model");
+		environment_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> cube_lit_va = Engine::vertexArray::create();
+		cube_lit_va->load("lightbulb.model");
+		cube_lit_va->unbind();
+
+		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
+		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
+		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
+		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+			
+		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
+		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+
+		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(lightShader_dir, "light_grey");//just use the variant for directional lights for initialization
+		light_grey->addShader(lightShader_point);
+		light_grey->addShader(lightShader_spot);
+		light_grey->setUniform4f("amb", 0.1f, 0.1f, 0.1f, 1.0f);
+		light_grey->setUniform4f("diff", 0.6f, 0.6f, 0.6f, 1.0f);
+		light_grey->setUniform4f("spec", 0.6f, 0.6f, 0.6f, 1.0f);
+		light_grey->setUniform1f("shininess", 50.0f);
+		light_grey->flushAll();
+		m_scene.addMaterial(light_grey);
+
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test);
+		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
+		mat_emissive->setUniform1f("multiplier", 5.0f);
+		mat_emissive->flushAll();
+		m_scene.addMaterial(mat_emissive);
+
+		Engine::Ref_ptr<Engine::mesh> environment = Engine::mesh::create(environment_va, light_grey, "environment");
+		environment->setScale(11.1111111f);
+		m_scene.addMesh(environment);
+
+		Engine::PtrPtr<Engine::pointLight> lamp(Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), 1.0f, 0.01f, 0.01f }));
+		Engine::Ref_ptr<Engine::mesh> cube_lit = Engine::mesh::create(cube_lit_va, mat_emissive, "cube_lit");
+		cube_lit->attachLight(lamp);
+		m_scene.addMesh(cube_lit);
 		m_scene.addLight(lamp);
+		///////////////////////////////////////////////////////////////////////////////
+		// IDEA: Remove the whole "emissiveMesh"-thing and just make being "emissive" a property of a material, cuz this is what it ultimately should be
+		// ->this material get's "attached" to a light and updates it's color-values from there
+		// -> think about, where I would implement this operation -> somewhere in Scene.update() -> maybe implement "material.update()"? Or just do it manually in the update-loop?
+		// IDEA No2: I could implement an imgui-panel for material-editing -> the panel displays all of a material's values and properties and let's the user edit them
+		///////////////////////////////////////////////////////////////////////////////
 	}
 
 private:

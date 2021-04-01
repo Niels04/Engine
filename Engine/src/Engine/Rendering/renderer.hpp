@@ -14,7 +14,8 @@ namespace Engine
 	class Renderer
 	{
 	public:
-		static void init(const uint32_t viewportWidth, const uint32_t viewportHeight);//some things that need to be initiallized and need a graphics context, so they have to be initiallized after the graphics context has been created, thats why this function exists
+		static void init(const uint32_t viewportWidth, const uint32_t viewportHeight, const uint32_t maxViewportWidth, const uint32_t maxViewportHeight);//some things that need to be initiallized and need a graphics context, so they have to be initiallized after the graphics context has been created, thats why this function exists
+		static void shutdown();
 
 		static void beginScene(const perspectiveCamera& cam);//takes in a camera (viewprojMat) and the lights to update
 		static void beginScene(const OrthographicCamera& cam);
@@ -25,7 +26,8 @@ namespace Engine
 
 		inline static void setMainViewPort(const uint32_t viewportWidth, const uint32_t viewportHeight) { s_mainViewport[0] = viewportWidth; s_mainViewport[1] = viewportHeight; }
 
-		static void RenderDepthMaps();//temporarily make this accept a frameBuffer for the only light that produces shadows right now
+		static void RenderDepthMaps();
+		static void onImGuiRender();
 
 		inline static RendererAPI::API getAPI() { return RendererAPI::getAPI(); }
 		inline static shaderLib* getShaderLib() { return s_shaderLib; }
@@ -53,6 +55,18 @@ namespace Engine
 		static sceneData* s_sceneData;
 		static shaderLib* s_shaderLib;
 		static uint32_t s_mainViewport[2];
+		static uint32_t s_maxViewportSize[2];
+		static Ref_ptr<FrameBuffer> s_hdr_fbo;
+		static Ref_ptr<texture2d> s_hdr_tex;
+		static Ref_ptr<texture2d> s_bright_tex;//second attachment to the hdr_fbo for rendering with bloom
+		static Ref_ptr<texture2d> s_pingPongTex[2];
+		static Ref_ptr<FrameBuffer> s_pingPongFbo[2];
+		static Ref_ptr<RenderBuffer> s_hdr_depthStencil;
+		static Ref_ptr<vertexArray> s_hdr_quad_va;
+		static Ref_ptr<shader> s_hdr_quad_shader;
+		static Ref_ptr<shader> s_hdr_quad_shader_bloom;
+		static Ref_ptr<shader> s_blur_shader;
+		static bool s_bloom;
 		//static bool s_DebugDrawLights;
 	};
 }

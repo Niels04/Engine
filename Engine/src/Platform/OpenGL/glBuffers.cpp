@@ -227,12 +227,20 @@ namespace Engine
         GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     }
 
-    void GLFrameBuffer::initShadow()
+    void GLFrameBuffer::initShadow() const
     {
         bind();
         GLCALL(glDrawBuffer(GL_NONE));//tell openGl that we don't intend on drawing any colors
         GLCALL(glReadBuffer(GL_NONE));
         unbind();
+    }
+
+    void GLFrameBuffer::checkStatus() const
+    {
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+            ENG_CORE_INFO("Framebuffer object complete.");
+        else
+            ENG_CORE_ERROR("Framebuffer object incomplete.");
     }
 
     void GLFrameBuffer::attachTexture(const Ref_ptr<ShadowMap2d>& map) const
@@ -245,9 +253,14 @@ namespace Engine
         //GLCALL(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP, map->getRenderer_id(), 0, 0));//potential cause of errors, maybe use glFramebufferTexture() instead
         GLCALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, map->getRenderer_id(), 0));
     }
-   /* void GLFrameBuffer::attachRenderBuffer(Ref_ptr<RenderBuffer>& buffer)
+
+    void GLFrameBuffer::attachTexture(const Ref_ptr<texture2d>& tex, const uint32_t slot) const
     {
-        bind();
+        GLCALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, tex->getRenderer_id(), 0));
+    }
+
+   void GLFrameBuffer::attachRenderBuffer(const Ref_ptr<RenderBuffer>& buffer) const
+    {
         switch (buffer->usage)
         {
         case(RenderBufferUsage::COLOR):
@@ -273,8 +286,7 @@ namespace Engine
             ENG_CORE_ASSERT(false, "Error attaching renderBuffer. \"usage\" was none of the accepted values.");
         }break;
         }
-        unbind();
-    }*/
+    }
     //::::::::RenderBuffer::::::::
     GLRenderBuffer::GLRenderBuffer(RenderBufferUsage usage, uint32_t width, uint32_t height)
         : RenderBuffer(usage)

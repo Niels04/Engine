@@ -108,13 +108,13 @@ namespace Engine
 		}
 	}
 
-	Ref_ptr<RenderBuffer> RenderBuffer::create(const RenderBufferUsage usage)
+	Ref_ptr<RenderBuffer> RenderBuffer::create(const RenderBufferUsage usage, const uint32_t width, const uint32_t height)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return std::make_shared<GLRenderBuffer>(usage, Application::Get().getWindow().getWidth(), Application::Get().getWindow().getHeight());
+			return std::make_shared<GLRenderBuffer>(usage, width, height);
 		}break;
 		case RendererAPI::API::NONE:
 		{

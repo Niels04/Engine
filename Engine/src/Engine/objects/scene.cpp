@@ -12,7 +12,7 @@ namespace Engine
 
 	Scene::~Scene()
 	{
-		//add some code to delete all the light's from the light-manager(maybe initially give the scene a ptr to the lightManager or maybe do Renderer::removeLight())
+		
 	}
 
 	void Scene::initialize(const float fov, const float nearPlane, const float farPlane, const float aspectRatio)
@@ -107,10 +107,7 @@ namespace Engine
 				ImGui::TreePop();
 				Mesh->setScale(scale);
 				Mesh->setPos(pos);
-				//if (!Mesh->getRotationMode())
 				Mesh->setRot(rot);
-				//else
-					//Mesh->setLookAt(m_spotLights[0]->direction.xyz());
 			}
 		}
 		ImGui::End();

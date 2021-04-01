@@ -43,11 +43,12 @@ namespace Engine
 		void onImGuiRender();/*in this function automatically create a window that lists all of the scene's elements
 		one can then click on one of the objects to get more details as well as the option to modify the values*/
 
-		inline std::vector<Ref_ptr<mesh>>::const_iterator begin() const { return m_meshes.begin(); }
-		inline std::vector<Ref_ptr<mesh>>::const_iterator end() const { return m_meshes.end(); }
+		inline std::vector<Ref_ptr<mesh>>::const_iterator meshes_begin() const { return m_meshes.begin(); }
+		inline std::vector<Ref_ptr<mesh>>::const_iterator meshes_end() const { return m_meshes.end(); }
 	private:
 		materialLib m_matLib;
 		std::vector<Ref_ptr<mesh>> m_meshes;
+		
 		std::vector<PtrPtr<directionalLight>> m_dirLights;
 		std::vector<PtrPtr<pointLight>> m_pointLights;
 		std::vector<PtrPtr<spotLight>> m_spotLights;
