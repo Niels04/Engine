@@ -83,6 +83,7 @@ namespace Engine
 		{
 			animation->onUpdate();
 		}
+		m_matLib.updateDynamic();//update the dynamicMaterials
 	}
 
 	void Scene::onEvent(Event& e)
@@ -180,6 +181,11 @@ namespace Engine
 	void Scene::addMaterial(const Ref_ptr<material>& mat)
 	{
 		m_matLib.add(mat);
+	}
+
+	void Scene::addMaterial(const Ref_ptr<material>& mat, const std::function<void(const void* updateValues, material* mat)>& updateFunc, const void* updateValues)
+	{
+		m_matLib.addDynamic(mat, updateFunc, updateValues);
 	}
 
 	void Scene::addMesh(Ref_ptr<mesh>& Mesh)

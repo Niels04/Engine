@@ -290,6 +290,9 @@ public:
 		Engine::Ref_ptr<Engine::vertexArray> lighthouse_va = Engine::vertexArray::create();
 		lighthouse_va->load("lighthouse_textured.model");
 		lighthouse_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> lightbulb_va = Engine::vertexArray::create();
+		lightbulb_va->load("lightbulb.model");
+		lightbulb_va->unbind();
 
 		Engine::Ref_ptr<Engine::texture2d> duck_tex = Engine::texture2d::create("09-Default_albedo.jpg", true);
 		Engine::Ref_ptr<Engine::texture2d> lighthouse_tex = Engine::texture2d::create("lighthouse_tex.png", true);
@@ -322,6 +325,9 @@ public:
 		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
 		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
+		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(lightShader_dir, "light_grey");//just use the variant for directional lights for initialization
 		light_grey->addShader(lightShader_point);
@@ -359,6 +365,17 @@ public:
 		boat_mat->flushAll();
 		m_scene.addMaterial(boat_mat);
 
+		Engine::Ref_ptr<Engine::material> figureMat = Engine::material::create(lightTexShader_dir, "figureMat");//just use the variant for directional lights for initialization
+		figureMat->addShader(lightTexShader_point);
+		figureMat->addShader(lightTexShader_spot);
+		figureMat->setTexture("u_texture", headTex);
+		m_scene.addMaterial(figureMat);
+
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test);
+		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
+		mat_emissive->setUniform1f("multiplier", 5.0f);
+		mat_emissive->flushAll();
+
 		Engine::Ref_ptr<Engine::mesh> environment = Engine::mesh::create(environment_va, light_grey, "environment");
 		environment->setScale(11.1111111f);
 		m_scene.addMesh(environment);
@@ -369,12 +386,6 @@ public:
 		boat->attachMovement(Engine::CircularMeshMovement::create(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f), 0.0174533f * 60.0f));
 		boat->attachMovement(Engine::MeshRotation::create(0.0f, 1.05f, 0.0f));
 		m_scene.addMesh(boat);
-
-		Engine::Ref_ptr<Engine::material> figureMat = Engine::material::create(lightTexShader_dir, "figureMat");//just use the variant for directional lights for initialization
-		figureMat->addShader(lightTexShader_point);
-		figureMat->addShader(lightTexShader_spot);
-		figureMat->setTexture("u_texture", headTex);
-		m_scene.addMaterial(figureMat);
 
 		Engine::Ref_ptr<Engine::mesh> figure = Engine::mesh::create(figure_va, figureMat, "figure");
 		figure->setPos({ -7.6f, -8.0f, 1.0f, 1.0f });
@@ -391,6 +402,10 @@ public:
 		lighthouse->setPos({0.0f, 0.0f, 0.0f, 1.0f});
 		m_scene.addMesh(lighthouse);
 
+		Engine::Ref_ptr<Engine::mesh> lightbulb = Engine::mesh::create(lightbulb_va, mat_emissive, "lightbulb");
+		lightbulb->setScale(0.5f);
+		m_scene.addMesh(lightbulb);
+
 		Engine::PtrPtr<Engine::pointLight> lamp(Engine::Renderer::addDynamicPointLight({ vec3(6.0f, 5.0f, 3.0f), vec3(0.14f, 0.14f, 0.14f), vec3(0.14f, 0.14f, 0.14f), vec3(0.14f, 0.14f, 0.14f), 1.0f, 0.00f, 1.0f }));//only use the quadratic component
 		m_scene.addLight(lamp);
 		Engine::PtrPtr<Engine::spotLight> spot_0(Engine::Renderer::addDynamicSpotLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, -0.242542f, -0.970167f), vec3(0.45f, 0.45f, 0.3f), vec3(0.45f, 0.45f, 0.3f), vec3(0.45f, 0.45f, 0.3), cosf(15.0f * (PI / 180.0f)) }));
@@ -403,6 +418,12 @@ public:
 			vec3(0.315f, 0.315f, 0.21f), vec3(0.252f, 0.252f, 0.168f), vec3(0.0f, 0.0f, 0.0f));
 		flicker->attachToLight(spot_0);
 		m_scene.addLightAnimation(flicker);
+
+		//now add the material that is attached to the light
+		m_scene.addMaterial(mat_emissive, [](const void* light, Engine::material* mat) {
+			Engine::PtrPtr<Engine::spotLight> Light = (Engine::spotLight**)light;
+			mat->setUniform4fF("emissiveColor", Light->diffuse);
+			}, spot_0.get());
 	}
 
 	void experiment()
@@ -502,7 +523,7 @@ public:
 
 		Engine::Ref_ptr<Engine::mesh> stage = Engine::mesh::create(stage_va, black, "stage");
 		stage->setScale(0.9f);
-		stage->setRot({ 0.0f, 3.1415926f / 2.0f , 0.0f });//rotate 180 degrees(pi in radians)
+		stage->setRot({ 0.0f, 3.1415926f / 2.0f , 0.0f });
 		stage->setPos({0.0f, 0.0f, -6.0f, 1.0f});
 		m_scene.addMesh(stage);
 
@@ -519,7 +540,9 @@ public:
 
 		for (uint8_t i = 0; i < 8; i++)
 		{
-			Engine::Ref_ptr<Engine::mesh> spot_light_mesh = Engine::mesh::create(spot_light_va, spot_light_mat, "spot_light_0");
+			char name[] = "spot_light_X";
+			std::to_chars(name + 11, name + strlen(name), i);
+			Engine::Ref_ptr<Engine::mesh> spot_light_mesh = Engine::mesh::create(spot_light_va, spot_light_mat, name);
 			spot_light_mesh->setPos({ -5.0f + static_cast<float>(2*i), 9.5f, 0.0f, 1.0f });
 			spot_light_mesh->attachMovement(Engine::MeshRotation::create(0.6f, 0.6f, 0.0f));
 			m_scene.addMesh(spot_light_mesh);
@@ -714,7 +737,6 @@ public:
 		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 0.1f, 1.0f });
 		mat_emissive->setUniform1f("multiplier", 20.0f);
 		mat_emissive->flushAll();
-		m_scene.addMaterial(mat_emissive);
 
 		//create meshes
 		Engine::Ref_ptr<Engine::mesh> bridge_a = Engine::mesh::create(bridge_a_va, Mat_Rock_RuinStoneBridge_A, "bridge_a");
@@ -743,12 +765,18 @@ public:
 		deer->setPos({ 0.0f, -0.1f, 5.0f, 1.0f });
 		m_scene.addMesh(deer);
 		Engine::Ref_ptr<Engine::mesh> lightbulb = Engine::mesh::create(lightbulb_va, mat_emissive, "lightbulb");
+		lightbulb->setScale(0.1f);
 
 		//add lights
 		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f), 1.0f, 0.01f, 0.01f });
 		lightbulb->attachLight(lamp);
 		m_scene.addMesh(lightbulb);
 		m_scene.addLight(lamp);
+
+		m_scene.addMaterial(mat_emissive, [](const void* light, Engine::material* mat) {
+			Engine::PtrPtr<Engine::pointLight> Light = (Engine::pointLight**)light;
+			mat->setUniform4fF("emissiveColor", Light->diffuse);
+			}, lamp.get());
 
 		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
@@ -835,7 +863,7 @@ public:
 		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
 		mat_emissive->setUniform1f("multiplier", 5.0f);
 		mat_emissive->flushAll();
-		m_scene.addMaterial(mat_emissive);
+		//m_scene.addMaterial(mat_emissive);
 
 		Engine::Ref_ptr<Engine::mesh> environment = Engine::mesh::create(environment_va, light_grey, "environment");
 		environment->setScale(11.1111111f);
@@ -846,6 +874,11 @@ public:
 		cube_lit->attachLight(lamp);
 		m_scene.addMesh(cube_lit);
 		m_scene.addLight(lamp);
+
+		m_scene.addMaterial(mat_emissive, [] (const void* light, Engine::material* mat) {
+			Engine::PtrPtr<Engine::pointLight> Light = (Engine::pointLight**)light;
+			mat->setUniform4fF("emissiveColor", Light->diffuse);
+			}, lamp.get());//<- an update-function and a pointer to some update-data get's supplied -> various kinds of materials could be created like this
 		///////////////////////////////////////////////////////////////////////////////
 		// IDEA: Remove the whole "emissiveMesh"-thing and just make being "emissive" a property of a material, cuz this is what it ultimately should be
 		// ->this material get's "attached" to a light and updates it's color-values from there

@@ -90,6 +90,8 @@ namespace Engine
 		//____________________
 		void add(const Ref_ptr<material>& material);//take the smartPointer in as reference, because it will get copied when it is pushed into the map(so we don't make an extra ref-count for no reason)
 		void add(const Ref_ptr<material>& material, const std::string& name);//inserts the shader into the lib under keyVal "name"
+		void addDynamic(const Ref_ptr<material>& Material, const std::function<void(const void* updateValues, material* mat)>& updateFunc, const void* updateValues);
+		void updateDynamic();
 		Ref_ptr<material> get(const std::string& name);//get a material by keyVal "name"
 		void remove(const std::string& name);//remove the material with name "name"
 		void name(const std::string& nameOld, const std::string& nameNew);//save the material that is currently stored with keyVal "nameOld" with the new keyval "nameNew"
@@ -98,7 +100,14 @@ namespace Engine
 		
 		inline static const uint8_t getMaxTexSlots() { return s_maxTexSlots; }
 	private:
+		struct dynamicMat
+		{
+			WeakRef_ptr<material> mat;
+			const void* updateValues;
+			std::function<void(const void* updateValues, material* mat)> updateFunc;
+		};
 		std::unordered_map<std::string, Ref_ptr<material>> m_materials;//first is name, second is corresponding material
+		std::unordered_map<std::string, dynamicMat> m_dynamicMats;//holds references to the dynamic materials -> ownership is in "m_materials" regardless
 		//static members for "materialBindingPoint" management
 		static unsigned int s_maxMats;//maximum of globalBuffers(materials) that can be bound simultaneously
 		static uint8_t s_maxTexSlots;//maximum Number of texSlots the graphics card supports

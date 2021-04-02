@@ -238,6 +238,7 @@ namespace Engine
 
 	void materialLib::clear()
 	{
+		m_dynamicMats.clear();
 		m_materials.clear();
 	}
 
@@ -261,6 +262,27 @@ namespace Engine
 		ENG_CORE_WARN("Material \"{0}\" was already in the library.", name);
 	}
 
+	void materialLib::addDynamic(const Ref_ptr<material>& Material, const std::function<void(const void* updateValues, material* mat)>& updateFunc, const void* updateValues)
+	{
+		if (!m_materials.count(Material->getName()))//if no shader with this name is currently loaded
+		{
+			m_materials[Material->getName()] = Material;
+			m_dynamicMats[Material->getName()].mat = Material;
+			m_dynamicMats[Material->getName()].updateValues = updateValues;
+			m_dynamicMats[Material->getName()].updateFunc = updateFunc;
+			return;
+		}
+		ENG_CORE_WARN("Material \"{0}\" was already in the library.", Material->getName());
+	}
+
+	void materialLib::updateDynamic()
+	{
+		for (auto& mat : m_dynamicMats)
+		{
+			mat.second.updateFunc(mat.second.updateValues, mat.second.mat.get());
+		}
+	}
+
 	Ref_ptr<material> materialLib::get(const std::string& name)
 	{
 		ENG_CORE_ASSERT(m_materials.count(name), "Error when trying to get material \"{0}\". Was not loaded.", name);
@@ -269,10 +291,16 @@ namespace Engine
 
 	void materialLib::name(const std::string& nameOld, const std::string& nameNew)
 	{
-		ENG_CORE_ASSERT(m_materials.count(nameOld), "Tried to rename shader that was not present in the library.");
+		ENG_CORE_ASSERT(m_materials.count(nameOld), "Tried to rename material that was not present in the library.");
 		auto temp = m_materials.extract(nameOld);
 		temp.key() = nameNew;
 		m_materials.insert(std::move(temp));
+		if (m_dynamicMats.count(nameOld))
+		{
+			auto temp_2 = m_dynamicMats.extract(nameOld);
+			temp_2.key() = nameNew;
+			m_dynamicMats.insert(std::move(temp_2));
+		}
 	}
 
 	bool materialLib::exists(const std::string& name)
@@ -284,5 +312,7 @@ namespace Engine
 	{
 		ENG_CORE_ASSERT(m_materials.count(name), "Tried to remove a material that wasn't in the library.");
 		m_materials.erase(name);
+		if (m_dynamicMats.count(name))
+			m_dynamicMats.erase(name);
 	}
 }

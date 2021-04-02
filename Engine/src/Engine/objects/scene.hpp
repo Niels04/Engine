@@ -21,6 +21,7 @@ namespace Engine
 		inline const perspectiveCamera& getCamera() const { return m_camControl.getCam(); }
 
 		void addMaterial(const Ref_ptr<material>& mat);
+		void addMaterial(const Ref_ptr<material>& mat, const std::function<void(const void* updateValues, material* mat)>& updateFunc, const void* updateValues);
 		void addMesh(Ref_ptr<mesh>& Mesh);
 		void addLight(PtrPtr<directionalLight> light);
 		void addLight(PtrPtr<pointLight> light);
