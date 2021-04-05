@@ -7,8 +7,9 @@
 #include "Engine/ImGui/ImGuiLayer.hpp"
 #include "Engine/core/timeStep.hpp"
 #include "Engine/perspectiveCameraController.hpp"
+#include "Engine/nodeEditor/nodeEditorLayer.hpp"
 
-//___own datatypes such as mats and vectors____
+//___own datatypes such as matrices and vectors____
 #include "Engine/datatypes/include.hpp"
 //_____________________________________________
 

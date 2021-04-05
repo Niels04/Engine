@@ -23,6 +23,7 @@ namespace Engine
 	class texture//purely virtual, represents any kind of texture
 	{//mostly exist, because sometimes one might want to work with a texture, regardless wether it's 2d of 3d
 		friend class GLFrameBuffer;
+		friend class NodeEditorLayer;
 	public:
 		virtual ~texture() = default;
 
@@ -30,6 +31,7 @@ namespace Engine
 		virtual const uint32_t getWidth() const = 0;
 
 		virtual void bind(const uint8_t slot = 0) const = 0;
+		virtual void clear(const vec4& color) const = 0;
 
 	private:
 		virtual const uint32_t getRenderer_id() const = 0;

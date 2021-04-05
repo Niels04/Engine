@@ -151,6 +151,7 @@
     <ClInclude Include="src\Engine\Events\MouseEvent.hpp" />
     <ClInclude Include="src\Engine\ImGui\ImGuiLayer.hpp" />
     <ClInclude Include="src\Engine\Log.hpp" />
+    <ClInclude Include="src\Engine\nodeEditor\nodeEditorLayer.hpp" />
     <ClInclude Include="src\Engine\objects\light_effects.hpp" />
     <ClInclude Include="src\Engine\objects\movement.hpp" />
     <ClInclude Include="src\Engine\objects\scene.hpp" />
@@ -201,6 +202,7 @@
     <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp" />
     <ClCompile Include="src\Engine\Log.cpp" />
+    <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp" />
     <ClCompile Include="src\Engine\objects\light_effects.cpp" />
     <ClCompile Include="src\Engine\objects\movement.cpp" />
     <ClCompile Include="src\Engine\objects\scene.cpp" />

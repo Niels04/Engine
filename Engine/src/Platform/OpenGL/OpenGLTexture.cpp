@@ -69,6 +69,11 @@ namespace Engine
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));//binding textures at multiple slots is only usefull when rendering objects, that use multiple textures(because all of the object's textures have to be
 		//accessible in the shader at the same time
 	}
+
+	void GLtexture2d::clear(const vec4& color) const
+	{
+		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_FLOAT, &color));
+	}
 	
 	//SHADOW_MAP_2D::::::::::
 	GLShadowMap2d::GLShadowMap2d(const uint32_t width, const uint32_t height)
@@ -94,6 +99,11 @@ namespace Engine
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
 
+	void GLShadowMap2d::clear(const vec4& color) const
+	{
+		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_FLOAT, &color));
+	}
+
 	//SHADOW_MAP_3D:::::::
 	GLShadowMap3d::GLShadowMap3d(const uint32_t width, const uint32_t height)
 		: m_width(width), m_height(height)
@@ -116,6 +126,11 @@ namespace Engine
 	void GLShadowMap3d::bind(const uint8_t slot) const
 	{
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
+	}
+
+	void GLShadowMap3d::clear(const vec4& color) const
+	{
+		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_FLOAT, &color));
 	}
 	
 }

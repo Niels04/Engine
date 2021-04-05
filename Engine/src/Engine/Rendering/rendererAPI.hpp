@@ -9,6 +9,15 @@
 #define ENG_ONE 1
 #define ENG_ZERO 0
 
+//datatypes -> forked form gl
+#define ENG_FLOAT 0x1406
+#define ENG_INT 0x1404
+#define ENG_BOOL 0x8B56
+#define ENG_FLOAT_VEC2 0x8B50
+#define ENG_FLOAT_VEC3 0x8B51
+#define ENG_FLOAT_VEC4 0x8B52
+#define ENG_FLOAT_MAT4 0x8B5C
+
 //also forked from gl
 #define ENG_NEVER 0x0200
 #define ENG_LESS 0x0201
@@ -80,6 +89,7 @@ namespace Engine
 		virtual void enableBlend(const bool enabled) const = 0;
 		virtual void setDepth(const uint32_t method) const = 0;
 		virtual void enableDepth(const bool enabled) const = 0;
+		virtual void enableCullFace(const bool enabled) const = 0;
 		virtual void cullFace(const uint32_t face) const = 0;
 		virtual void drawToBuffers(const uint32_t count, va_list params) const = 0;
 		virtual const uint32_t getMaxGlobalBuffers() const = 0;

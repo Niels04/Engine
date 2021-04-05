@@ -15,6 +15,7 @@ namespace Engine
 		inline const uint32_t getWidth() const override { return m_width; }
 
 		inline void bind(const uint8_t slot = 0) const override;
+		inline void clear(const vec4& color) const override;
 	private:
 		std::string m_path;//usefull for debugging and development-> easy to reload a texture on the fly
 		uint32_t m_height;
@@ -32,6 +33,7 @@ namespace Engine
 		~GLShadowMap2d();
 
 		inline virtual void bind(const uint8_t slot = 0) const override;
+		inline void clear(const vec4& color) const override;
 
 		inline const uint32_t getWidth() const override { return m_width; }
 		inline const uint32_t getHeight() const override { return m_height; }
@@ -51,6 +53,7 @@ namespace Engine
 		~GLShadowMap3d();
 
 		inline virtual void bind(const uint8_t slot = 0) const override;
+		inline void clear(const vec4& color) const override;
 
 		inline const uint32_t getWidth() const override { return m_width; }
 		inline const uint32_t getHeight() const override { return m_height; }

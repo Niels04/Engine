@@ -2,6 +2,8 @@
 #include "material.hpp"
 #include "renderer.hpp"
 
+#include "imgui.h"
+
 namespace Engine
 {
 	Ref_ptr<material> material::create(Ref_ptr<shader>& shader, const std::string& name, uint32_t flags, uint32_t blend_src, uint32_t blend_dest)
@@ -314,5 +316,73 @@ namespace Engine
 		m_materials.erase(name);
 		if (m_dynamicMats.count(name))
 			m_dynamicMats.erase(name);
+	}
+
+	void materialLib::onImGuiRender()
+	{
+		ImGui::Begin("Materials");
+		ImVec2 p = ImGui::GetCursorScreenPos();
+		ImVec2 dest(p.x + 300, p.y + 150);
+		ImGui::GetWindowDrawList()->AddBezierCurve(p, ImVec2((5 * p.x + dest.x) / 6, (p.y + dest.y) / 2), ImVec2((p.x + 5 * dest.x) / 6, (p.y + dest.y) / 2), dest, IM_COL32(100, 100, 200, 255), 3.0f);
+		for (const auto& mat : m_materials)
+		{
+			bool isOpen = ImGui::TreeNode(mat.second->getName().c_str());
+			if (isOpen)
+			{
+				if (mat.second->getShader()->getMaterialUniformsSize())
+				{
+					const unsigned char* data = (unsigned char*)mat.second->getData();
+					const std::unordered_map<std::string, shader::uniformProps> uniforms = mat.second->getShader()->getMaterialUniforms();
+					for (const auto& uniform : uniforms)
+					{
+						renderComponent(uniform, data);
+					}
+					mat.second->flushAll();//update the material after all the values have been set in the rendering functions
+				}
+				uint32_t flags_packed = mat.second->getFlags();
+				ImGui::CheckboxFlags("light_infl", &flags_packed, flag_light_infl);
+				ImGui::CheckboxFlags("depth_test", &flags_packed, flag_depth_test);
+				ImGui::CheckboxFlags("cast_shadow", &flags_packed, flag_cast_shadow);
+				ImGui::CheckboxFlags("no_backface_cull", &flags_packed, flag_no_backface_cull);
+				mat.second->setFlags(flags_packed);
+				ImGui::TreePop();
+			}
+		}
+		ImGui::End();
+	}
+
+	void materialLib::renderComponent(const std::pair<std::string, shader::uniformProps>& props, const unsigned char* data)
+	{
+		switch (props.second.type)
+		{
+		case(ENG_FLOAT):
+		{
+			ImGui::DragFloat(props.first.c_str(), (float*)(data + props.second.offset), 2.0f, -100.0f, 100.0f);
+		}break;
+		case(ENG_INT):
+		{
+			ImGui::DragInt(props.first.c_str(), (int*)(data + props.second.offset), 2.0f, -100.0f, 100.0f);
+		}break;
+		case(ENG_BOOL):
+		{
+			ImGui::Checkbox(props.first.c_str(), (bool*)(data + props.second.offset));
+		}break;
+		case(ENG_FLOAT_VEC2):
+		{
+			ImGui::DragFloat2(props.first.c_str(), (float*)(data + props.second.offset), 2.0f, -100.0f, 100.0f);
+		}break;
+		case(ENG_FLOAT_VEC3):
+		{
+			ImGui::ColorEdit3(props.first.c_str(), (float*)(data + props.second.offset));
+		}break;
+		case(ENG_FLOAT_VEC4):
+		{
+			ImGui::ColorEdit4(props.first.c_str(), (float*)(data + props.second.offset));
+		}break;
+		default:
+		{
+			ImGui::Text("Unknown material property type.");
+		}break;
+		}
 	}
 }

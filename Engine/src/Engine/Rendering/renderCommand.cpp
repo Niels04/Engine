@@ -57,6 +57,11 @@ namespace Engine
 		s_RendererAPI->enableDepth(enabled);
 	}
 
+	void renderCommand::enableCullFace(const bool enabled)
+	{
+		s_RendererAPI->enableCullFace(enabled);
+	}
+
 	void renderCommand::cullFace(const uint32_t face)
 	{
 		s_RendererAPI->cullFace(face);

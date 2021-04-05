@@ -16,6 +16,7 @@ namespace Engine
 		virtual void enableBlend(const bool enabled) const override;
 		virtual void setDepth(const uint32_t method) const override;
 		virtual void enableDepth(const bool enabled) const override;
+		virtual void enableCullFace(const bool enabled) const override;
 		virtual void cullFace(const uint32_t face) const override;
 		virtual void drawToBuffers(const uint32_t count, va_list params) const override;
 		virtual const uint32_t getMaxGlobalBuffers() const override;

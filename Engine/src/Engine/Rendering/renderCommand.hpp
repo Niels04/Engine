@@ -16,6 +16,7 @@ namespace Engine
 		static void enableBlend(const bool enabled);
 		static void setDepth(const uint32_t method);
 		static void enableDepth(const bool enabled);
+		static void enableCullFace(const bool enabled);
 		static void cullFace(const uint32_t face);
 		static void drawToBuffers(const uint32_t count, ...);
 		static uint32_t getMaxGlobalBuffers() { return s_RendererAPI->getMaxGlobalBuffers(); }

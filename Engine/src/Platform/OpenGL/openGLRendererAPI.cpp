@@ -59,7 +59,26 @@ namespace Engine
 
 	void OpenGLRendererAPI::enableDepth(const bool enabled) const
 	{
-		GLCALL(glDisable(GL_DEPTH_TEST));
+		if (enabled)
+		{
+			GLCALL(glEnable(GL_DEPTH_TEST));
+		}
+		else
+		{
+			GLCALL(glDisable(GL_DEPTH_TEST));
+		}
+	}
+
+	void OpenGLRendererAPI::enableCullFace(const bool enabled) const
+	{
+		if (enabled)
+		{
+			GLCALL(glEnable(GL_CULL_FACE));
+		}
+		else
+		{
+			GLCALL(glDisable(GL_CULL_FACE));
+		}
 	}
 
 	void OpenGLRendererAPI::cullFace(uint32_t face) const

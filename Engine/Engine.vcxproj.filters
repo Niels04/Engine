@@ -191,6 +191,7 @@
     <ClInclude Include="src\Engine\objects\movement.hpp" />
     <ClInclude Include="src\Engine\objects\light_effects.hpp" />
     <ClInclude Include="src\Engine\datatypes\mat3.hpp" />
+    <ClInclude Include="src\Engine\nodeEditor\nodeEditorLayer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -291,5 +292,6 @@
     <ClCompile Include="src\Engine\objects\scene.cpp" />
     <ClCompile Include="src\Engine\objects\movement.cpp" />
     <ClCompile Include="src\Engine\objects\light_effects.cpp" />
+    <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp" />
   </ItemGroup>
 </Project>

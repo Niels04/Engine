@@ -11,6 +11,7 @@ namespace Engine
 {
 	class Scene
 	{
+		friend class NodeEditorLayer;
 	public:
 		Scene(const float fov, const float nearPlane, const float farPlane, const float aspectRatio);
 		~Scene();

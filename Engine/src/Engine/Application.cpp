@@ -2,6 +2,8 @@
 #include "Application.hpp"
 #include "input.hpp"
 
+#include "keyCodes.hpp"
+
 #include "Rendering/renderer.hpp"
 
 //temporary includes

@@ -40,7 +40,6 @@ namespace Engine
 		s_hdr_fbo->bind();
 		s_hdr_fbo->attachRenderBuffer(s_hdr_depthStencil);//attach a depth&stenicl-buffer
 		s_hdr_fbo->attachTexture(s_hdr_tex);//attach a color-buffer
-		//:::::::maybe make some kind of checkbox that controlls, whether bloom is enabled
 		s_hdr_fbo->attachTexture(s_bright_tex, 1);//attach the bloom-texture to the second color-buffer
 		renderCommand::drawToBuffers(2, ENG_COLOR_ATTACHMENT0, ENG_COLOR_ATTACHMENT1);
 		s_hdr_fbo->checkStatus();
@@ -148,19 +147,23 @@ namespace Engine
 		s_hdr_fbo->bind();
 		bool first_pass = true;//after the first pass, we want to enable additive blending
 		renderCommand::clear();
-		for (const auto& Mesh : s_renderQueue)
+		s_hdr_tex->clear({ 0.0171f, 0.0171f, 0.0171f, 1.0f });
+		for (auto it = s_renderQueue.begin(); it != s_renderQueue.end(); it++)
 		{
+			const auto Mesh = *it;
 			if (!(Mesh->getMaterial()->getFlags() & flag_light_infl))//only render meshes whose appearance isn't influenced by lighting
 			{
 				Ref_ptr<material> mat = Mesh->getMaterial();
+				/*if (mat->getFlags() & flag_depth_test) //::::::::::::::::::::IN ORDER TO ENABLE THIS FEATURE, WE WOULD HAVE TO DETECT THE FIRST DRAW OF A MESH -> implement this when no additive blending is used anymore
+					renderCommand::setDepth(ENG_LESS);
+				else
+					renderCommand::setDepth(ENG_ALWAYS);*/
+				renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
 				mat->bind(10);
 				mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
 				Ref_ptr<vertexArray> geometry = Mesh->getVa();
 				geometry->bind();
 				renderCommand::drawIndexed(geometry);
-				////////////////////////////
-				//    Guess one could remove a mesh with this flag from the RenderQueue, after it has been rendered
-				////////////////////////////
 			}
 		}
 		uint32_t index = 0;
@@ -173,6 +176,11 @@ namespace Engine
 				if (Mesh->getMaterial()->getFlags() & flag_light_infl)//only render meshes whose appearance isn influenced by lighting
 				{
 					Ref_ptr<material> mat = Mesh->getMaterial();
+					/*if (mat->getFlags() & flag_depth_test)
+						renderCommand::setDepth(ENG_LESS);
+					else
+						renderCommand::setDepth(ENG_ALWAYS);*/
+					renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
 					mat->bind(10);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
 					mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
 					mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
@@ -201,6 +209,11 @@ namespace Engine
 				if (Mesh->getMaterial()->getFlags() & flag_light_infl)//only render meshes whose appearance isn influenced by lighting
 				{
 					Ref_ptr<material> mat = Mesh->getMaterial();
+					/*if (mat->getFlags() & flag_depth_test)
+						renderCommand::setDepth(ENG_LESS);
+					else
+						renderCommand::setDepth(ENG_ALWAYS);*/
+					renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
 					mat->bind(10, 1);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
 					mat->getShader(1)->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
 					mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
@@ -229,6 +242,11 @@ namespace Engine
 				if (Mesh->getMaterial()->getFlags() & flag_light_infl)//only render meshes whose appearance isn influenced by lighting
 				{
 					Ref_ptr<material> mat = Mesh->getMaterial();
+					/*if (mat->getFlags() & flag_depth_test)
+						renderCommand::setDepth(ENG_LESS);
+					else
+						renderCommand::setDepth(ENG_ALWAYS);*/
+					renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
 					mat->bind(10, 2);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
 					mat->getShader(2)->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
 					mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
@@ -316,8 +334,9 @@ namespace Engine
 
 	void Renderer::RenderDepthMaps()
 	{
-		renderCommand::setViewport(Shadow_Width, Shadow_Height);
+		renderCommand::enableCullFace(true);
 		renderCommand::cullFace(ENG_FRONT);
+		renderCommand::setViewport(Shadow_Width, Shadow_Height);
 		WeakRef_ptr<FrameBuffer> frameBuffer = s_sceneData->lightManager.getDepthFB();
 		frameBuffer->bind();
 		WeakRef_ptr<shader> depthMapShader_dir = s_sceneData->lightManager.getDepthShader_dir();

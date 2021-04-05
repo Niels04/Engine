@@ -176,6 +176,9 @@ namespace Engine
 		ImGui::Text("rotation:");
 		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", camRot.x, camRot.y, camRot.z);
 		ImGui::End();
+
+		//Render Materials
+		m_matLib.onImGuiRender();
 	}
 
 	void Scene::addMaterial(const Ref_ptr<material>& mat)

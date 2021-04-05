@@ -4,6 +4,7 @@
 #include "texture.hpp"
 #include "rendererAPI.hpp"
 
+#define flag_count 4
 #define flag_light_infl 0x1 //whether the material's appearance is dependent on lighting
 #define flag_depth_test 0x2
 #define flag_no_backface_cull 0x4 //->whether an object, which has only one side should be rendered from both sides regardless
@@ -21,6 +22,8 @@ namespace Engine
 
 	class material
 	{
+		friend class materialLib;
+		friend class NodeEditorLayer;
 	public:
 		material(Ref_ptr<shader>& shader, const std::string& name, uint32_t flags, uint32_t blend_src, uint32_t blend_dest);//take by reference to avoid unnessecary incrementing the ref-count
 		~material();
@@ -39,6 +42,7 @@ namespace Engine
 		inline void enableFlags(const uint32_t flags) { m_properties.flags = m_properties.flags | flags; }
 		inline void dissableFlags(const uint32_t flags) { m_properties.flags = m_properties.flags & (~flags);/*inverts the flags, that are to be dissabled, and masks out with all the flags that stay untouched*/ }
 		inline uint32_t getFlags() const { return m_properties.flags; }
+		inline void setFlags(const uint32_t flags) { m_properties.flags = flags; }
 		inline uint32_t getBlendSrc() const { return m_properties.blend.first; }
 		inline uint32_t getBlendDest() const { return m_properties.blend.second; }
 		/*first is scr, second is dest*/
@@ -73,6 +77,7 @@ namespace Engine
 		void flushAll() const;//flush the whole data Stored on cpu-side onto the GPU(useful when loading the material)->add it so that a setUniform... -function also uploads that specific uniform on the GPU
 
 	private:
+		inline const void* getData() const { return m_data; }
 		const std::string m_name;
 		std::vector<WeakRef_ptr<shader>> m_shaderRefs;//store a weak_ptr because a material shouldn't take ownership over it's shader(if one would delete the shaderLib for some reason)
 		std::unordered_map<std::string, Ref_ptr<texture>> m_textures;
@@ -83,6 +88,7 @@ namespace Engine
 
 	class materialLib
 	{
+		friend class NodeEditorLayer;
 	public:
 		static void init();
 		//____________________
@@ -97,6 +103,9 @@ namespace Engine
 		void name(const std::string& nameOld, const std::string& nameNew);//save the material that is currently stored with keyVal "nameOld" with the new keyval "nameNew"
 		bool exists(const std::string& name);
 		void clear();//remove all materials from the library
+
+		void onImGuiRender();
+		void renderComponent(const std::pair<std::string, shader::uniformProps>& props, const unsigned char* data);
 		
 		inline static const uint8_t getMaxTexSlots() { return s_maxTexSlots; }
 	private:

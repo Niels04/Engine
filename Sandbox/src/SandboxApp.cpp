@@ -5,6 +5,7 @@
 
 class SandboxLayer : public Engine::layer
 {
+	friend class Sandbox;
 public:
 	SandboxLayer(const float hFov, const float zNear, const float zFar)
 		: layer("RenderLayer"), m_scene(hFov, zNear, zFar, static_cast<float>(Engine::Application::Get().getWindow().getWidth() / static_cast<float>(Engine::Application::Get().getWindow().getHeight())))
@@ -42,12 +43,15 @@ public:
 
 	void onImGuiRender() override
 	{
-		if (!m_sceneLoaded)
-			showSceneSelect();
-		else
+		if (!m_showNodeEditor)
 		{
-			m_scene.onImGuiRender();
-			Engine::Renderer::onImGuiRender();
+			if (!m_sceneLoaded)
+				showSceneSelect();
+			else
+			{
+				m_scene.onImGuiRender();
+				Engine::Renderer::onImGuiRender();
+			}
 		}
 	}
 
@@ -97,6 +101,10 @@ public:
 			Engine::Application::Get().getWindow().setDissableCursor(false);
 			m_sceneLoaded = false;
 		}break;
+		case(ENG_KEY_N):
+		{
+			m_showNodeEditor = !m_showNodeEditor;
+		}break;
 		}
 		return false;
 	}
@@ -139,9 +147,14 @@ public:
 			emissive();
 			m_sceneLoaded = true;
 		}
+		else if (ImGui::Button("test"))
+		{
+			test();
+			m_sceneLoaded = true;
+		}
 		ImGui::End();
 	}
-
+	//scenes
 	void plane_head_rotate()
 	{
 		Engine::Ref_ptr<Engine::vertexArray> head_va = Engine::vertexArray::create();
@@ -199,14 +212,12 @@ public:
 		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
 		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
 
-		//m_gunTex = Engine::texture2d::create("Cerberus_A.tga");
 		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("head.png", true);
 		Engine::Ref_ptr<Engine::texture2d> helmetTex = Engine::texture2d::create("armor_115_head_alb.png", true);
 		Engine::Ref_ptr<Engine::texture2d> helmetNormalTex = Engine::texture2d::create("armor_115_head_nrm.png");
-		//m_cubeTex = Engine::texture2d::create("chiseled_stone_bricks.png", FILTER_NEAREST);<-work on rgba-textures
 		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png", true);
 
-		Engine::Ref_ptr<Engine::material> red = Engine::material::create(lightShader_dir, "red");//just use the variant for directional lights for initialization
+		Engine::Ref_ptr<Engine::material> red = Engine::material::create(lightShader_dir, "red", flags_default | flag_no_backface_cull);//just use the variant for directional lights for initialization
 		red->addShader(lightShader_point);
 		red->addShader(lightShader_spot);
 		red->setUniform4f("amb", 0.2f, 0.025f, 0.025f, 1.0f);
@@ -349,7 +360,7 @@ public:
 		water_mat->flushAll();
 		m_scene.addMaterial(water_mat);
 
-		Engine::Ref_ptr<Engine::material> lighthouse_mat = Engine::material::create(lightTexShader_dir, "lighthouse");//just use the variant for directional lights for initialization
+		Engine::Ref_ptr<Engine::material> lighthouse_mat = Engine::material::create(lightTexShader_dir, "lighthouse_mat");//just use the variant for directional lights for initialization
 		lighthouse_mat->addShader(lightTexShader_point);
 		lighthouse_mat->addShader(lightTexShader_spot);
 		lighthouse_mat->setTexture("u_texture", lighthouse_tex);
@@ -887,9 +898,82 @@ public:
 		///////////////////////////////////////////////////////////////////////////////
 	}
 
+	void test()
+	{
+		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
+		plane_va->load("plane.model");
+		plane_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> cube_va = Engine::vertexArray::create();
+		cube_va->load("cube.model");
+		cube_va->unbind();
+
+		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png", true);
+
+		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
+		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
+		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
+		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_one_texture_shadow_additive_dir.shader");
+		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		lightTexShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_one_texture_shadow_additive_point.shader");
+		lightTexShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::shader> lightTexShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_one_texture_shadow_additive_spot.shader");
+		lightTexShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		lightTexShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		lightTexShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+
+		Engine::Ref_ptr<Engine::material> red = Engine::material::create(lightShader_dir, "red", flags_default | flag_no_backface_cull);//just use the variant for directional lights for initialization
+		red->addShader(lightShader_point);
+		red->addShader(lightShader_spot);
+		red->setUniform4f("amb", 0.2f, 0.025f, 0.025f, 1.0f);
+		red->setUniform4f("diff", 0.7f, 0.0875f, 0.0875f, 1.0f);
+		red->setUniform4f("spec", 0.8f, 0.1f, 0.1f, 1.0f);
+		red->setUniform1f("shininess", 100.0f);
+		red->flushAll();
+		m_scene.addMaterial(red);
+
+		Engine::Ref_ptr<Engine::material> cubeMat = Engine::material::create(lightTexShader_dir, "cubeMat");
+		cubeMat->addShader(lightTexShader_point);
+		cubeMat->addShader(lightTexShader_spot);
+		cubeMat->setTexture("u_texture", cubeTex);
+		m_scene.addMaterial(cubeMat);
+
+		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, red, "plane");
+		plane->setScale(10.0f);
+		plane->setPos({ 0.0f, 0.0f, 0.0f, 1.0f });
+		m_scene.addMesh(plane);
+
+		Engine::Ref_ptr<Engine::mesh> cube = Engine::mesh::create(cube_va, cubeMat, "cube");
+		cube->setScale(0.1f);
+		cube->setPos({ 0.0f, 1.0f, 8.0f, 1.0f });
+		m_scene.addMesh(cube);
+
+		Engine::PtrPtr<Engine::directionalLight> sun(Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f) }));
+		m_scene.addLight(sun);
+		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(2.0f, 1.0f, 0.0f), vec3(0.1f, 0.02f, 0.02f), vec3(0.5f, 0.1f, 0.1f), vec3(0.5f, 0.1f, 0.1f), 1.0f, 0.01f, 0.01f });
+		m_scene.addLight(lamp);
+	}
+
 private:
+	inline Engine::Scene* getScene() { return &m_scene; }
 	Engine::Scene m_scene;
 	bool m_sceneLoaded = false;
+	bool m_showNodeEditor = false;
 };
 
 class Sandbox : public Engine::Application
@@ -897,7 +981,9 @@ class Sandbox : public Engine::Application
 public:
 	Sandbox()
 	{
-		pushLayer(new SandboxLayer(90.0f, 0.1f, 1000.0f));
+		SandboxLayer* sandboxLayer = new SandboxLayer(90.f, 0.1f, 1000.0f);
+		pushLayer(sandboxLayer);
+		pushOverlay(new Engine::NodeEditorLayer(sandboxLayer->getScene()));
 	}
 	~Sandbox()
 	{
