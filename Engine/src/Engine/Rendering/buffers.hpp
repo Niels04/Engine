@@ -110,12 +110,17 @@ namespace Engine
 
 		inline virtual void bind() const = 0;
 		inline virtual void unbind() const = 0;
+		inline virtual void setReadBuffer() const = 0;
+		inline virtual void setDrawBuffer() const = 0;
 
 		virtual void initShadow() const = 0;//initializes the globalBuffer for usage with shadows
 		inline virtual void checkStatus() const = 0;
 
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap2d>& map) const = 0;
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap3d>& map) const = 0;
+		//maybe add that slot-thingy for these kinds of textures too
+		inline virtual void attachTexture(const Ref_ptr<ShadowMap2dArray>& map, const uint8_t layer) const = 0;
+		inline virtual void attachTexture(const Ref_ptr<ShadowMap3dArray>& map) const = 0;
 		inline virtual void attachTexture(const Ref_ptr<texture2d>& tex, const uint32_t slot = 0) const = 0;
 		inline virtual void attachRenderBuffer(const Ref_ptr<RenderBuffer>& buffer) const = 0;
 	};

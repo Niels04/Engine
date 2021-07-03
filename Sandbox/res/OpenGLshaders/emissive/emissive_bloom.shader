@@ -13,15 +13,14 @@ layout(location = 2) in vec3 a_normal;
 
 layout(std140) uniform ViewProjection
 {
-	mat4 viewMat;
-	mat4 projMat;
+	mat4 viewProjMat;
 };
 
 uniform mat4 u_modelMat;
 
 void main()
 {
-	gl_Position = projMat * viewMat * u_modelMat * vec4(a_pos, 1.0f);
+	gl_Position = viewProjMat * u_modelMat * vec4(a_pos, 1.0f);
 };
 
 #type fragment
@@ -40,7 +39,7 @@ void main()
 {
 	color = vec4(emissiveColor.xyz * multiplier, 1.0f);
 	//calculate the luminance and if it is above a certain threshold output to the second color attachment
-	float luminance = dot(color.xyz, vec3(0.2126f, 0.7152f, 0.0722f));
+	//float luminance = dot(color.xyz, vec3(0.2126f, 0.7152f, 0.0722f));
 	//if (luminance > 2.0f)
 		brightColor = color;
 	//else

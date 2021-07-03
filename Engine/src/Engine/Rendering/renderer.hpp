@@ -8,6 +8,7 @@
 #include "lights.hpp"
 
 #define VIEWPROJ_BIND 0
+#define SSAO_kernelSize 64U
 
 namespace Engine
 {
@@ -18,7 +19,6 @@ namespace Engine
 		static void shutdown();
 
 		static void beginScene(const perspectiveCamera& cam);//takes in a camera (viewprojMat) and the lights to update
-		static void beginScene(const OrthographicCamera& cam);
 		static void endScene();
 		static void Flush();//render all the elements currently in renderqueue and clear the renderqueue
 		static void sub(const Ref_ptr<vertexArray> va, const Ref_ptr<shader> shader, const mat4& transform = mat4::identity());//stands for submit, gonna overload this, so that we can submit different things //submit a vertexArray and a shader
@@ -45,12 +45,13 @@ namespace Engine
 		struct sceneData
 		{
 			void init();
-			mat4 viewMat;
-			mat4 projMat;
+			mat4 viewProjMat;
+			vec4 viewPos;
 			Ref_ptr<globalBuffer> viewProjBuffer;
 			Ref_ptr<globalBuffer> testBuffer;
 			LightManager lightManager;
 		};
+		static void setupCascadeDisplay();
 		static std::vector<Ref_ptr<mesh>> s_renderQueue;
 		static sceneData* s_sceneData;
 		static shaderLib* s_shaderLib;
@@ -61,12 +62,29 @@ namespace Engine
 		static Ref_ptr<texture2d> s_bright_tex;//second attachment to the hdr_fbo for rendering with bloom
 		static Ref_ptr<texture2d> s_pingPongTex[2];
 		static Ref_ptr<FrameBuffer> s_pingPongFbo[2];
-		static Ref_ptr<RenderBuffer> s_hdr_depthStencil;
+		static Ref_ptr<RenderBuffer> s_hdr_depth;
 		static Ref_ptr<vertexArray> s_hdr_quad_va;
 		static Ref_ptr<shader> s_hdr_quad_shader;
 		static Ref_ptr<shader> s_hdr_quad_shader_bloom;
 		static Ref_ptr<shader> s_blur_shader;
 		static bool s_bloom;
 		//static bool s_DebugDrawLights;
+		//G-BUFFER:::::
+		static Ref_ptr<FrameBuffer> s_gBuffer;
+		static Ref_ptr<texture2d> s_gPosition;
+		static Ref_ptr<texture2d> s_gNormal;
+		static Ref_ptr<texture2d> s_gAlbSpec;
+		static Ref_ptr<RenderBuffer> s_gDepth;
+		static Ref_ptr<shader> s_gLightingShader[2];//one with and one without bloom
+		//SSAO
+		static Ref_ptr<texture2d> s_SSAONoise;
+		static Ref_ptr<FrameBuffer> s_SSAO_FBO;
+		static Ref_ptr<texture2d> s_AO;//ambient occlusion texture that only has a red-component
+		static Ref_ptr<shader> s_SSAO_shader;
+		static Ref_ptr<shader> s_debug_display_ssao;
+		//other
+		static Ref_ptr<shader> s_debug_display_cascaded;//renders a cascaded shadowMap to screen
+		static Ref_ptr<vertexArray> s_debug_cascade_va;//vertexArray used to visualize a cascade
+		static Ref_ptr<shader> s_debug_renderCascade;//renders the debug_cascade vertexArray
 	};
 }

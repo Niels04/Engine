@@ -28,12 +28,12 @@ layout(location = 0) out vec4 color;
 
 in vec2 v_texCoord;
 
-uniform sampler2D u_texture;
+uniform sampler2D u_hdr;
 
 void main()
 {
 	const float gamma = 2.2f;
-	vec3 hdrColor = texture(u_texture, v_texCoord).rgb;
+	vec3 hdrColor = texture(u_hdr, v_texCoord).rgb;
 	//reinhard tone-mapping:
 	vec3 mappedColor = hdrColor / (hdrColor + vec3(1.0f));
 	color = vec4(pow(mappedColor, vec3(1.0f / gamma)), 1.0f);

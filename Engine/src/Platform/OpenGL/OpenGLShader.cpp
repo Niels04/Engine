@@ -357,10 +357,18 @@ namespace Engine
     {
         GLCALL(glUniform1i(getUniformLocation(name), value));
     }
+    void GLshader::setUniform3fArr(const std::string& name, const uint32_t count, const vec3 vecs[])
+    {
+        GLCALL(glUniform3fv(getUniformLocation(name), count, (GLfloat*)vecs));
+    }
     void GLshader::setUniformMat4(const std::string& name, const mat4& mat, const uint8_t transpose)
     {
         GLCALL(glUniformMatrix4fv(getUniformLocation(name), 1, transpose, &mat.mat[0][0]));//last param specifies a pointer to our array of numbers
         //third param set to true when our matrix needs to get transposed
+    }
+    void GLshader::setUniformMat4_3(const std::string& name, const cascadedDirLightMatrices& matrices, const uint8_t transpose)
+    {
+        GLCALL(glUniformMatrix4fv(getUniformLocation(name), 3, transpose, &matrices.nearCascade[0][0]));
     }
     void GLshader::setUniformMat4_6(const std::string& name, const pointLightMatrices& matrices, const uint8_t transpose)
     {

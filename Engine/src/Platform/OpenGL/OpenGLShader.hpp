@@ -48,8 +48,11 @@ namespace Engine
 			virtual void setUniform4f(const std::string& name, const float v0, const float v1, const float v2, const float v3) override;
 			virtual void setUniform4f(const std::string& name, const vec4& vec) override;
 
+			virtual void setUniform3fArr(const std::string& name, const uint32_t count, const vec3 vecs[]) override;
+
 			virtual void setUniformMat4(const std::string& name, const mat4& mat, const uint8_t transpose = 0) override;
-			virtual void setUniformMat4_6(const std::string& name, const pointLightMatrices& mat, const uint8_t transpose = 0) override;
+			virtual void setUniformMat4_3(const std::string& name, const cascadedDirLightMatrices& matrices, const uint8_t transpose = 0) override;
+			virtual void setUniformMat4_6(const std::string& name, const pointLightMatrices& matrices, const uint8_t transpose = 0) override;
 			virtual void setUniformMat3(const std::string& name, const mat3& mat, const uint8_t transpose = 0) override;
 
 			virtual void bindUniformBlock(const std::string& name, const uint32_t bindingPoint) override;

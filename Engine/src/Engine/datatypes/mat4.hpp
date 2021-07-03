@@ -448,6 +448,8 @@ struct mat4
 	static mat4 projMat(real left, real right, real bottom, real top, real Znear, real Zfar)
 	{
 		mat4 out;
+		Znear = -Znear;
+		Zfar = -Zfar;
 #ifdef DOUBLE
 		out[0][0] = 2.0 / (right - left);
 		out[0][3] = -((right + left) / (right - left));
@@ -467,8 +469,34 @@ struct mat4
 #endif
 		return out;
 	}
+	static mat4 projMatOrtho(real left, real right, real bottom, real top, real Znear, real Zfar)
+	{
+		mat4 out;
+		Znear = -Znear;
+		Zfar = -Zfar;
+#ifdef DOUBLE
+		out[0][0] = 2.0 / (right - left);
+		out[0][3] = -((right + left) / (right - left));
+		out[1][1] = 2.0 / (top - bottom);
+		out[1][3] = -((top + bottom) / (top - bottom));
+		out[2][2] = -2.0 / (Zfar - Znear);
+		out[2][3] = -((Zfar + Znear) / (Zfar - Znear));
+		out[3][3] = 1.0;
+#else
+		out[0][0] = 2.0f / (right - left);
+		out[0][3] = -((right + left) / (right - left));
+		out[1][1] = 2.0f / (top - bottom);
+		out[1][3] = -((top + bottom) / (top - bottom));
+		out[2][2] = -2.0f / (Zfar - Znear);
+		out[2][3] = -((Zfar + Znear) / (Zfar - Znear));
+		out[3][3] = 1.0f;
+#endif
+		return out;
+	}
 	void setProjMatOrtho(real left, real right, real bottom, real top, real Znear, real Zfar)//set an orthographic projection matrix
 	{
+		Znear = -Znear;
+		Zfar = -Zfar;
 #ifdef DOUBLE
 		mat[0][0] = 2.0 / (right - left);
 		mat[0][3] = -((right + left) / (right - left));

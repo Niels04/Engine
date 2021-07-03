@@ -17,13 +17,35 @@ namespace Engine
 	Ref_ptr<texture2d> Renderer::s_bright_tex = nullptr;
 	Ref_ptr<texture2d> Renderer::s_pingPongTex[2] = { nullptr, nullptr };
 	Ref_ptr<FrameBuffer> Renderer::s_pingPongFbo[2] = { nullptr, nullptr };
-	Ref_ptr<RenderBuffer> Renderer::s_hdr_depthStencil = nullptr;
+	Ref_ptr<RenderBuffer> Renderer::s_hdr_depth = nullptr;
 	Ref_ptr<vertexArray> Renderer::s_hdr_quad_va = nullptr;
 	Ref_ptr<shader> Renderer::s_hdr_quad_shader = nullptr;
 	Ref_ptr<shader> Renderer::s_hdr_quad_shader_bloom = nullptr;
 	Ref_ptr<shader> Renderer::s_blur_shader = nullptr;
 	bool Renderer::s_bloom = false;
 	//bool Renderer::s_drawLights = false;
+	//G-Buffer:::::::::::
+	Ref_ptr<FrameBuffer> Renderer::s_gBuffer = nullptr;
+	Ref_ptr<texture2d> Renderer::s_gPosition = nullptr;
+	Ref_ptr<texture2d> Renderer::s_gNormal = nullptr;
+	Ref_ptr<texture2d> Renderer::s_gAlbSpec = nullptr;
+	Ref_ptr<RenderBuffer> Renderer::s_gDepth = nullptr;
+	Ref_ptr<shader> Renderer::s_gLightingShader[2] = { nullptr, nullptr };
+	//SSAO
+	Ref_ptr<texture2d> Renderer::s_SSAONoise = nullptr;
+	Ref_ptr<FrameBuffer> Renderer::s_SSAO_FBO = nullptr;
+	Ref_ptr<texture2d> Renderer::s_AO = nullptr;
+	Ref_ptr<shader> Renderer::s_SSAO_shader = nullptr;
+	Ref_ptr<shader> Renderer::s_debug_display_ssao = nullptr;
+	//other
+	Ref_ptr<shader> Renderer::s_debug_display_cascaded = nullptr;
+	Ref_ptr<vertexArray> Renderer::s_debug_cascade_va = nullptr;
+	Ref_ptr<shader> Renderer::s_debug_renderCascade = nullptr;
+
+	float lerp(float a, float b, float f)
+	{
+		return a + f * (b - a);
+	}
 
 	void Renderer::init(uint32_t viewportWidth, uint32_t viewportHeight, uint32_t maxViewportWidth, uint32_t maxViewportHeight/*this is the resolution that everything is rendered at*/)
 	{
@@ -35,10 +57,10 @@ namespace Engine
 
 		s_hdr_tex = Engine::texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA16F);
 		s_bright_tex = Engine::texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA16F);
-		s_hdr_depthStencil = RenderBuffer::create(RenderBufferUsage::DEPTH_STENCIL, s_maxViewportSize[0], s_maxViewportSize[1]);
+		s_hdr_depth = RenderBuffer::create(RenderBufferUsage::DEPTH, s_maxViewportSize[0], s_maxViewportSize[1]);
 		s_hdr_fbo = FrameBuffer::create();
 		s_hdr_fbo->bind();
-		s_hdr_fbo->attachRenderBuffer(s_hdr_depthStencil);//attach a depth&stenicl-buffer
+		s_hdr_fbo->attachRenderBuffer(s_hdr_depth);//attach a depth-buffer
 		s_hdr_fbo->attachTexture(s_hdr_tex);//attach a color-buffer
 		s_hdr_fbo->attachTexture(s_bright_tex, 1);//attach the bloom-texture to the second color-buffer
 		renderCommand::drawToBuffers(2, ENG_COLOR_ATTACHMENT0, ENG_COLOR_ATTACHMENT1);
@@ -69,9 +91,177 @@ namespace Engine
 		s_hdr_quad_va = vertexArray::create();
 		s_hdr_quad_va->addBuffer(quad_vb);
 		s_hdr_quad_va->addBuffer(quad_ib);
+		s_hdr_quad_va->unbind();//this is only for testing
 		s_hdr_quad_shader = shader::create("hdr/hdr_quad_shader.shader");
+		s_hdr_quad_shader->bind();
+		s_hdr_quad_shader->setUniform1i("u_hdr", 0);
+		s_hdr_quad_shader->unbind();
 		s_hdr_quad_shader_bloom = shader::create("hdr/hdr_quad_shader_bloom.shader");
+		s_hdr_quad_shader_bloom->bind();
+		s_hdr_quad_shader_bloom->setUniform1i("u_hdr", 0);
+		s_hdr_quad_shader_bloom->setUniform1i("u_bloom_blur", 1);
+		s_hdr_quad_shader_bloom->unbind();
 		s_blur_shader = shader::create("blur/gaussian_blur.shader");
+		s_blur_shader->bind();
+		s_blur_shader->setUniform1i("u_texture", 0);
+		s_blur_shader->unbind();
+		
+		////////
+		//SETUP THE G-BUFFER
+		////////
+		s_gBuffer = FrameBuffer::create();
+		s_gBuffer->bind();
+		renderCommand::drawToBuffers(3, ENG_COLOR_ATTACHMENT0, ENG_COLOR_ATTACHMENT1, ENG_COLOR_ATTACHMENT2);
+		s_gPosition = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA32F);
+		s_gNormal = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA32F);
+		s_gAlbSpec = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA8);//<-maybe this needs to be changed to ENG_RGBA
+		s_gDepth = RenderBuffer::create(RenderBufferUsage::DEPTH, s_maxViewportSize[0], s_maxViewportSize[1]);
+		s_gBuffer->attachTexture(s_gPosition, 0);
+		s_gBuffer->attachTexture(s_gNormal, 1);
+		s_gBuffer->attachTexture(s_gAlbSpec, 2);
+		s_gBuffer->attachRenderBuffer(s_gDepth);
+		s_gBuffer->checkStatus();
+
+		s_gLightingShader[0] = shader::create("deferred/lighting_pass/shadow/cascaded/lighting.shader");
+		s_gLightingShader[0]->bind();
+		s_gLightingShader[0]->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		s_gLightingShader[0]->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		s_gLightingShader[0]->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		s_gLightingShader[0]->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		s_gLightingShader[0]->setUniform1i("u_gPosition", 0);
+		s_gLightingShader[0]->setUniform1i("u_gNormal", 1);
+		s_gLightingShader[0]->setUniform1i("u_gAlbSpec", 2);
+		s_gLightingShader[0]->unbind();
+		
+		s_gLightingShader[1] = shader::create("deferred/lighting_pass/shadow/cascaded/lighting_bloom.shader");
+		s_gLightingShader[1]->bind();
+		s_gLightingShader[1]->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		s_gLightingShader[1]->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
+		s_gLightingShader[1]->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		s_gLightingShader[1]->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
+		s_gLightingShader[1]->setUniform1i("u_gPosition", 0);
+		s_gLightingShader[1]->setUniform1i("u_gNormal", 1);
+		s_gLightingShader[1]->setUniform1i("u_gAlbSpec", 2);
+		s_gLightingShader[1]->unbind();
+
+		//setup SSAO
+		std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);//random Floats between 0 and 1
+		std::default_random_engine generator;
+		vec3 ssaoKernel[SSAO_kernelSize];
+		for (uint8_t i = 0; i < SSAO_kernelSize; i++)
+		{
+			vec3 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator));//we want the vector's z-component to always be oriented in the positive z-direction,
+			//because in tangent-space that is the same as the normal
+			sample.normalize();
+			sample *= randomFloats(generator);
+			float scale = static_cast<float>(i) / static_cast<float>(SSAO_kernelSize);
+			scale = lerp(0.1f, 1.0f, scale * scale);//we want most samples to be closer to the origin -> this function achieves exactly that
+			sample *= scale;
+			ssaoKernel[i] = sample;
+		}
+
+		vec3 ssaoNoise[16];
+		for (uint8_t i = 0; i < 16; i++)
+		{
+			vec3 noise = { randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, 0.0f };
+			noise.normalize();
+			ssaoNoise[i] = noise;
+		}
+		s_SSAONoise = texture2d::create(4U, 4U, ENG_RGBA16F, FILTER_NEAREST, FILTER_NEAREST, ENG_REPEAT, ssaoNoise);
+		s_SSAO_FBO = FrameBuffer::create();
+		s_AO = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_R8, FILTER_NEAREST, FILTER_NEAREST);
+		s_SSAO_FBO->bind();
+		s_SSAO_FBO->attachTexture(s_AO);
+		s_SSAO_FBO->checkStatus();
+		s_SSAO_FBO->unbind();
+		
+		s_SSAO_shader = shader::create("SSAO/SSAO.shader");
+		s_SSAO_shader->bind();
+		s_SSAO_shader->setUniform1i("u_gPosition", 0);
+		s_SSAO_shader->setUniform1i("u_gNormal", 1);
+		s_SSAO_shader->setUniform1i("u_ssaoNoise", 2);
+		s_SSAO_shader->setUniform3fArr("u_samples", SSAO_kernelSize, ssaoKernel);
+		s_SSAO_shader->unbind();
+
+		s_debug_display_ssao = shader::create("SSAO/debug_display.shader");
+		s_debug_display_ssao->bind();
+		s_debug_display_ssao->setUniform1i("u_texture", 0);
+		s_debug_display_ssao->unbind();
+
+		s_debug_display_cascaded = shader::create("shadow/depthMapRenderer_cascaded.shader");
+		s_debug_display_cascaded->bind();
+		s_debug_display_cascaded->setUniform1i("u_texture", 0);
+		s_debug_display_cascaded->unbind();
+
+		//setup of the display of one cascade:
+		//setupCascadeDisplay();
+	}
+
+	void Renderer::setupCascadeDisplay()
+	{
+		vec4 pos(0.0f, 0.0f, 0.0f, 1.0f);
+		vec4 rot(0.0f, 0.0f, 0.0f, 0.0f);
+		mat4 rotation = mat4::Rotx(-rot.x) * mat4::Roty(-rot.y) * mat4::Rotz(-rot.z);
+		mat4 translation = mat4::transMat(-pos);
+		mat4 viewMat = rotation * translation;
+		mat4 inverseViewMat = mat4::inverse3x3(viewMat) * mat4::transMat({ -viewMat.mat[0][3], -viewMat.mat[1][3], -viewMat.mat[2][3], 1.0f });
+
+		//initialize cascaded shadowMap boundingboxes
+		vec3 frustumPointsViewSpace[8];
+		float aspectRatio = 1.77777779f;
+		float hFov = 90.0f, vFov = std::atanf((1.0f / aspectRatio) * std::tanf(0.5f * RAD(hFov))) * 2.0f * (180.0f / 3.1415927);
+		float nearPlane = 0.1f, farPlane = 100.0f;
+		const float Nn = nearPlane;//the near cascade's nearPlane is the camera's nearPlane
+		const float Nf = farPlane * 0.3333333f;
+		const float tanFovH = tanf(RAD(hFov * 0.5f));
+		const float tanFovV = tanf(RAD(vFov * 0.5f));
+		frustumPointsViewSpace[0] = { Nn * tanFovH, 0.0f, -Nn };//near-cascade | nearPlane | positive x
+		frustumPointsViewSpace[1] = { -frustumPointsViewSpace[0].x, 0.0f, -Nn };//near-cascade | nearPlane | negative x
+		frustumPointsViewSpace[2] = { 0.0f, Nn * tanFovV, -Nn };//near-cascade | nearPlane | positive y
+		frustumPointsViewSpace[3] = { 0.0f, -frustumPointsViewSpace[2].y, -Nn };//near-cascade | nearPlane | negative y
+		frustumPointsViewSpace[4] = { Nf * tanFovH, 0.0f, -Nf };//near-cascade | farPlane | positive x
+		frustumPointsViewSpace[5] = { -frustumPointsViewSpace[4].x, 0.0f, -Nf };//near-cascade | farPlane | negative x
+		frustumPointsViewSpace[6] = { 0.0f, Nf * tanFovV, -Nf };//near-cascade | farPlane | positive y
+		frustumPointsViewSpace[7] = { 0.0f, -frustumPointsViewSpace[6].y, -Nf };//near-cascade | farPlane | negative y
+
+		vec3 frustumPointsWorldSpace[8];
+		for (uint8_t i = 0; i < 8; i++)
+		{
+			frustumPointsWorldSpace[i] = (inverseViewMat * vec4(frustumPointsViewSpace[i], 1.0f)).xyz();
+		}
+
+		const float vb[] = { frustumPointsWorldSpace[0].x, frustumPointsWorldSpace[0].y, frustumPointsWorldSpace[0].z,
+			frustumPointsWorldSpace[1].x, frustumPointsWorldSpace[1].y, frustumPointsWorldSpace[1].z,
+			frustumPointsWorldSpace[2].x, frustumPointsWorldSpace[2].y, frustumPointsWorldSpace[2].z,
+			frustumPointsWorldSpace[3].x, frustumPointsWorldSpace[3].y, frustumPointsWorldSpace[3].z,
+			frustumPointsWorldSpace[4].x, frustumPointsWorldSpace[4].y, frustumPointsWorldSpace[4].z,
+			frustumPointsWorldSpace[5].x, frustumPointsWorldSpace[5].y, frustumPointsWorldSpace[5].z,
+			frustumPointsWorldSpace[6].x, frustumPointsWorldSpace[6].y, frustumPointsWorldSpace[6].z,
+			frustumPointsWorldSpace[7].x, frustumPointsWorldSpace[7].y, frustumPointsWorldSpace[7].z, };
+		Ref_ptr<vertexBuffer> cascade_vb = vertexBuffer::create(sizeof(vb), (void*)vb);
+		Ref_ptr<vertexBufferLayout> cascade_layout = vertexBufferLayout::create();
+		cascade_layout->pushFloat(3U);//position
+		cascade_vb->setLayout(cascade_layout);
+		const uint32_t indices[] = { 4, 2, 0,
+			2, 7, 3,
+			6, 5, 7,
+			1, 7, 5,
+			0, 3, 1,
+			4, 1, 5,
+			4, 6, 2,
+			2, 6, 7,
+			6, 4, 5,
+			1, 3, 7,
+			0, 2, 3,
+			4, 0, 1 };
+		Ref_ptr<indexBuffer> cascade_ib = indexBuffer::create(sizeof(indices) / sizeof(uint32_t), indices);
+		s_debug_cascade_va = vertexArray::create();
+		s_debug_cascade_va->addBuffer(cascade_vb);
+		s_debug_cascade_va->addBuffer(cascade_ib);
+		s_debug_cascade_va->unbind();
+		s_debug_renderCascade = shader::create("forward/debug_cascaded.shader");
+		s_debug_renderCascade->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		s_debug_renderCascade->unbind();
 	}
 
 	void Renderer::shutdown()
@@ -83,44 +273,55 @@ namespace Engine
 		s_pingPongTex[1].reset();
 		s_pingPongFbo[0].reset();
 		s_pingPongFbo[1].reset();
-		s_hdr_depthStencil.reset();
+		s_hdr_depth.reset();
 		s_hdr_fbo.reset();
 		s_hdr_quad_va.reset();
 		s_hdr_quad_shader.reset();
 		s_hdr_quad_shader_bloom.reset();
 		s_blur_shader.reset();
+		s_gBuffer.reset();
+		s_gPosition.reset();
+		s_gNormal.reset();
+		s_gAlbSpec.reset();
+		s_gDepth.reset();
+		s_gLightingShader[0].reset();
+		s_gLightingShader[1].reset();
+		s_SSAONoise.reset();
+		s_SSAO_FBO.reset();
+		s_AO.reset();
+		s_SSAO_shader.reset();
+		s_debug_display_ssao.reset();
+		s_debug_display_cascaded.reset();
+		s_debug_cascade_va.reset();
+		s_debug_renderCascade.reset();
 	}
 
-	//maybe make this a templated function that eigther takes a perspective or an orthographic camera
 	void Renderer::beginScene(const perspectiveCamera& cam)
 	{
-		s_sceneData->viewMat = cam.getViewMat();
-		s_sceneData->projMat = cam.getProjMat();
+		s_sceneData->viewProjMat = cam.getViewProjMat();
+		s_sceneData->viewPos = { cam.getPos(), 1.0f };
+		lightMatrixCalculator::setViewMat(cam.getViewMat());
+		s_gLightingShader[0]->bind();
+		s_gLightingShader[0]->setUniformMat4("u_viewMat", cam.getViewMat(), 1);
+		s_gLightingShader[1]->bind();
+		s_gLightingShader[1]->setUniformMat4("u_viewMat", cam.getViewMat(), 1);
+		s_gLightingShader[1]->unbind();
 		//set uniformBuffers for view - and projection matrices here, they will be used by many shaders
 		s_sceneData->viewProjBuffer->bind();
-		s_sceneData->viewProjBuffer->updateElement(0, &mat4::transposed(s_sceneData->viewMat));//viewMat is at index 0
-		s_sceneData->viewProjBuffer->updateElement(1, &mat4::transposed(s_sceneData->projMat));//projMat is at index 1
+		s_sceneData->viewProjBuffer->updateElement(0, &mat4::transposed(s_sceneData->viewProjMat));//viewProjMat is at index 0
+		s_sceneData->viewProjBuffer->updateElement(1, &s_sceneData->viewPos);//viewPos is at index 1
 		s_sceneData->viewProjBuffer->unbind();
+		//update the ssao-shader with the new matrices
+		s_SSAO_shader->bind();
+		s_SSAO_shader->setUniformMat4("u_viewMat", cam.getViewMat(), 1);
+		s_SSAO_shader->setUniformMat4("u_projMat", cam.getProjMat(), 1);
+		s_SSAO_shader->unbind();
 		//update dynamic lights
-		s_sceneData->lightManager.updateLights();//updates lights for all shaders
-	}
-
-	void Renderer::beginScene(const OrthographicCamera& cam)
-	{
-		s_sceneData->viewMat = cam.getViewMat();
-		s_sceneData->projMat = cam.getProjMat();
-		//set uniformBuffers for view - and projection matrices here, they will be used by many shaders
-		s_sceneData->viewProjBuffer->bind();
-		s_sceneData->viewProjBuffer->updateElement(0, &mat4::transposed(s_sceneData->viewMat));//viewMat is at index 0
-		s_sceneData->viewProjBuffer->updateElement(1, &mat4::transposed(s_sceneData->projMat));//projMat is at index 1
-		s_sceneData->viewProjBuffer->unbind();
-		//update dynamic lights
-		s_sceneData->lightManager.updateLights();//updates lights for all shaders
+		s_sceneData->lightManager.updateLights();//update lights for all shaders
 	}
 
 	void Renderer::endScene()
 	{
-		
 	}
 
 	void Renderer::sub(const Ref_ptr<vertexArray> va, const Ref_ptr<shader> shader, const mat4& transform)
@@ -141,143 +342,110 @@ namespace Engine
 
 	void Renderer::Flush()
 	{
-		//there will be some kind of sorting algorythm, but for now just draw everything, that got submited
-		//dissable blending on the first pass
+		//geometry-pass:
 		renderCommand::setViewport(s_maxViewportSize[0], s_maxViewportSize[1]);
-		s_hdr_fbo->bind();
-		bool first_pass = true;//after the first pass, we want to enable additive blending
+		s_gBuffer->bind();
 		renderCommand::clear();
-		s_hdr_tex->clear({ 0.0171f, 0.0171f, 0.0171f, 1.0f });
-		for (auto it = s_renderQueue.begin(); it != s_renderQueue.end(); it++)
+		renderCommand::setBlend(ENG_ONE, ENG_ZERO);//->because the specular intensity value is interpreted as alpha, this has to be set manually
+		for (const auto& Mesh : s_renderQueue)
 		{
-			const auto Mesh = *it;
-			if (!(Mesh->getMaterial()->getFlags() & flag_light_infl))//only render meshes whose appearance isn't influenced by lighting
+			const auto mat = Mesh->getMaterial();
+			if (!(mat->getFlags() & flag_no_deferred))
 			{
-				Ref_ptr<material> mat = Mesh->getMaterial();
-				/*if (mat->getFlags() & flag_depth_test) //::::::::::::::::::::IN ORDER TO ENABLE THIS FEATURE, WE WOULD HAVE TO DETECT THE FIRST DRAW OF A MESH -> implement this when no additive blending is used anymore
+				if (mat->getFlags() & flag_depth_test)
 					renderCommand::setDepth(ENG_LESS);
 				else
-					renderCommand::setDepth(ENG_ALWAYS);*/
+					renderCommand::setDepth(ENG_ALWAYS);
 				renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
-				mat->bind(10);
+				mat->bind(10);//always use the 0th shader with deferred shading
 				mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-				Ref_ptr<vertexArray> geometry = Mesh->getVa();
+				mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
+				const auto geometry = Mesh->getVa();
 				geometry->bind();
 				renderCommand::drawIndexed(geometry);
 			}
 		}
-		uint32_t index = 0;
-		auto& dirLightMap = s_sceneData->lightManager.dirLightMaps();
-		for (uint8_t i = 0; i < s_sceneData->lightManager.getDirLightCount(); i++, dirLightMap++)
+		//s_renderQueue.clear();//______________________________remove this
+		//fill the ambient-occlusion texture:
+		/*s_SSAO_FBO->bind();
+		renderCommand::clear();
+		s_SSAO_shader->bind();
+		s_gPosition->bind(0);
+		s_gNormal->bind(1);
+		s_SSAONoise->bind(2);
+		s_hdr_quad_va->bind();
+		renderCommand::drawIndexed(s_hdr_quad_va);
+		s_SSAO_FBO->unbind();
+		//test-display of the ambient-occlusion texture
+		renderCommand::setViewport(s_mainViewport[0], s_mainViewport[1]);
+		renderCommand::clear();
+		s_debug_display_ssao->bind();
+		s_AO->bind(0);
+		renderCommand::drawIndexed(s_hdr_quad_va);
+		s_debug_display_ssao->unbind();*/
+		s_hdr_quad_va->unbind();
+		s_hdr_fbo->bind();
+		renderCommand::clear();
+		renderCommand::setViewport(s_maxViewportSize[0], s_maxViewportSize[1]);
+		//lighting-pass(into the hdr-texture):
+		s_gLightingShader[s_bloom]->bind();//depending on whether bloom is enabled, we use the bloom or the non-bloom shader
+		s_gPosition->bind(0);
+		s_gNormal->bind(1);
+		s_gAlbSpec->bind(2);
+		//bind the shadowMaps
+		s_sceneData->lightManager.getDirLightMapArray()->bind(3);
+		s_gLightingShader[s_bloom]->setUniform1i("u_dirShadowMaps", 3);
+		s_sceneData->lightManager.getPointLightMapArray()->bind(4);
+		s_gLightingShader[s_bloom]->setUniform1i("u_pointShadowMaps", 4);
+		s_sceneData->lightManager.getSpotLightMapArray()->bind(5);
+		s_gLightingShader[s_bloom]->setUniform1i("u_spotShadowMaps", 5);
+		//////
+		s_hdr_quad_va->bind();
+		renderCommand::drawIndexed(s_hdr_quad_va);
+		////////////now the forward-rendering part
+		s_gBuffer->setReadBuffer();//we want to copy some data from the gBuffer
+		s_hdr_fbo->setDrawBuffer();//we want to copy some data to the hdrBuffer
+		renderCommand::copyFrameBufferContents(s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT, FILTER_NEAREST);//copy over the geometry-pass depth-data to the hdr-buffer
+		s_hdr_fbo->bind();//bind the hdr_fbo to both read and draw again
+		for (const auto Mesh : s_renderQueue)
 		{
-			(*dirLightMap)->bind(8);
-			for (const auto& Mesh : s_renderQueue)
+			const auto mat = Mesh->getMaterial();
+			if (mat->getFlags() & flag_no_deferred)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_light_infl)//only render meshes whose appearance isn influenced by lighting
-				{
-					Ref_ptr<material> mat = Mesh->getMaterial();
-					/*if (mat->getFlags() & flag_depth_test)
-						renderCommand::setDepth(ENG_LESS);
-					else
-						renderCommand::setDepth(ENG_ALWAYS);*/
-					renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
-					mat->bind(10);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
-					mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-					mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
-					mat->getShader()->setUniform1i("u_shadowMap", 8);
-					mat->getShader()->setUniform1ui("u_lightIndex", index);
-					Ref_ptr<vertexArray> geometry = Mesh->getVa();
-					geometry->bind();
-					renderCommand::drawIndexed(geometry);
-				}
-			}
-			index++;
-			if (first_pass)
-			{
-				renderCommand::setBlend(ENG_ONE, ENG_ONE);//enable additive blending
-				renderCommand::setDepth(ENG_EQUAL);
-				first_pass = false;
+				if (mat->getFlags() & flag_depth_test)
+					renderCommand::setDepth(ENG_LESS);
+				else
+					renderCommand::setDepth(ENG_ALWAYS);
+				renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
+				mat->bind(10);
+				mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+				mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
+				const auto geometry = Mesh->getVa();
+				geometry->bind();
+				renderCommand::drawIndexed(geometry);
 			}
 		}
-		index = 0;
-		auto& pointLightMap = s_sceneData->lightManager.pointLightMaps();
-		for (uint8_t i = 0; i < s_sceneData->lightManager.getPointLightCount(); i++, pointLightMap++)
-		{
-			(*pointLightMap)->bind(8);
-			for (const auto& Mesh : s_renderQueue)
-			{
-				if (Mesh->getMaterial()->getFlags() & flag_light_infl)//only render meshes whose appearance isn influenced by lighting
-				{
-					Ref_ptr<material> mat = Mesh->getMaterial();
-					/*if (mat->getFlags() & flag_depth_test)
-						renderCommand::setDepth(ENG_LESS);
-					else
-						renderCommand::setDepth(ENG_ALWAYS);*/
-					renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
-					mat->bind(10, 1);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
-					mat->getShader(1)->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-					mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
-					mat->getShader(1)->setUniform1i("u_shadowMap", 8);
-					mat->getShader(1)->setUniform1ui("u_lightIndex", index);
-					Ref_ptr<vertexArray> geometry = Mesh->getVa();
-					geometry->bind();
-					renderCommand::drawIndexed(geometry);
-				}
-			}
-			index++;
-			if (first_pass)
-			{
-				renderCommand::setBlend(ENG_ONE, ENG_ONE);//enable additive blending
-				renderCommand::setDepth(ENG_EQUAL);
-				first_pass = false;
-			}
-		}
-		index = 0;
-		auto& spotLightMap = s_sceneData->lightManager.spotLightMaps();
-		for (uint8_t i = 0; i < s_sceneData->lightManager.getSpotLightCount(); i++, spotLightMap++)
-		{
-			(*spotLightMap)->bind(8);
-			for (const auto& Mesh : s_renderQueue)
-			{
-				if (Mesh->getMaterial()->getFlags() & flag_light_infl)//only render meshes whose appearance isn influenced by lighting
-				{
-					Ref_ptr<material> mat = Mesh->getMaterial();
-					/*if (mat->getFlags() & flag_depth_test)
-						renderCommand::setDepth(ENG_LESS);
-					else
-						renderCommand::setDepth(ENG_ALWAYS);*/
-					renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
-					mat->bind(10, 2);//start binding materials at globalBuffer-slot 10 and reserve all slots below that for matrices and lights
-					mat->getShader(2)->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-					mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
-					mat->getShader(2)->setUniform1i("u_shadowMap", 8);
-					mat->getShader(2)->setUniform1ui("u_lightIndex", index);
-					Ref_ptr<vertexArray> geometry = Mesh->getVa();
-					geometry->bind();
-					renderCommand::drawIndexed(geometry);
-				}
-			}
-			index++;
-			if (first_pass)
-			{
-				renderCommand::setBlend(ENG_ONE, ENG_ONE);//enable additive blending
-				renderCommand::setDepth(ENG_EQUAL);
-				first_pass = false;
-			}
-		}
+		/*{//uncomment this for debugging cascaded shadowMaps
+			renderCommand::enableCullFace(false);
+			s_debug_cascade_va->bind();
+			s_debug_renderCascade->bind();
+			renderCommand::drawIndexed(s_debug_cascade_va);
+			s_debug_cascade_va->unbind();
+			s_debug_renderCascade->unbind();
+		}*/
+		/////////////////end of forward-rendering part
 		s_renderQueue.clear();
-
-		s_hdr_fbo->unbind();
+		s_hdr_fbo->unbind();//don't remove this
+		//post-processing:
 		if (s_bloom)
 		{
 			s_blur_shader->bind();
-			s_blur_shader->setUniform1i("u_texture", 0);
 			s_pingPongFbo[0]->bind();
 			renderCommand::clear();
 			s_pingPongFbo[1]->bind();
 			renderCommand::clear();
 			bool horizontal = true, first_it = true;
-			uint8_t blurCount = 4;
+			constexpr uint8_t blurCount = 4;
 			for (uint8_t i = 0; i < blurCount; i++)
 			{
 				s_pingPongFbo[horizontal]->bind();
@@ -288,44 +456,41 @@ namespace Engine
 					s_pingPongTex[!horizontal]->bind(0);
 				s_hdr_quad_va->bind();
 				renderCommand::drawIndexed(s_hdr_quad_va);
-				s_hdr_quad_va->unbind();
 				horizontal = !horizontal;
 				if (first_it)
 					first_it = false;
 			}
 			s_pingPongFbo[1]->unbind();
 		}
-		//render to the screen-space quad:
+		//now render to screen-spaced quad:
 		renderCommand::setViewport(s_mainViewport[0], s_mainViewport[1]);
 		renderCommand::clear();
-		renderCommand::setDepth(ENG_ALWAYS);
-		renderCommand::setBlend(ENG_ONE, ENG_ZERO);
 		s_hdr_tex->bind(0);
+		s_hdr_quad_va->bind();
 		if (s_bloom)
 		{
 			s_hdr_quad_shader_bloom->bind();
-			s_hdr_quad_shader_bloom->setUniform1i("u_hdr", 0);
-			s_hdr_quad_shader_bloom->setUniform1i("u_bloom_blur", 1);
 			s_pingPongTex[1]->bind(1);
 		}
 		else
 		{
 			s_hdr_quad_shader->bind();
-			s_hdr_quad_shader->setUniform1i("u_texture", 0);
 		}
-		s_hdr_quad_va->bind();
 		renderCommand::drawIndexed(s_hdr_quad_va);
 		s_hdr_quad_va->unbind();
-		renderCommand::setDepth(ENG_LESS);
-		renderCommand::setBlend(ENG_SRC_ALPHA, ENG_ONE_MINUS_SRC_ALPHA);//set blending back to normal
+		/*s_hdr_quad_va->bind();
+		s_sceneData->lightManager.getDirLightMapArray()->bind(0);
+		s_debug_display_cascaded->bind();
+		renderCommand::drawIndexed(s_hdr_quad_va);
+		s_hdr_quad_va->unbind();*/
 	}
 
 	void Renderer::sceneData::init()
 	{
 		//initialize buffer for viewProjection
-		viewProjBuffer = globalBuffer::create(2 * sizeof(mat4), DYNAMIC_DRAW);
+		viewProjBuffer = globalBuffer::create(sizeof(mat4) + sizeof(vec4), DYNAMIC_DRAW);
 		viewProjBuffer->lAddMat4B();
-		viewProjBuffer->lAddMat4B();
+		viewProjBuffer->lAddVec4B();
 		viewProjBuffer->bindToPoint(VIEWPROJ_BIND);//binding point for viewProjectionBuffer always is 0
 		viewProjBuffer->unbind();
 		//initialize lights
@@ -337,74 +502,100 @@ namespace Engine
 		renderCommand::enableCullFace(true);
 		renderCommand::cullFace(ENG_FRONT);
 		renderCommand::setViewport(Shadow_Width, Shadow_Height);
-		WeakRef_ptr<FrameBuffer> frameBuffer = s_sceneData->lightManager.getDepthFB();
-		frameBuffer->bind();
-		WeakRef_ptr<shader> depthMapShader_dir = s_sceneData->lightManager.getDepthShader_dir();
-		depthMapShader_dir->bind();
-		//render to depthMaps:
-		auto& dirLightMap = s_sceneData->lightManager.dirLightMaps();//retrieve an iterator to the begin of the dirLightShadowMaps
-		for (auto& it = s_sceneData->lightManager.dirLightBegin(); it != s_sceneData->lightManager.dirLightEnd(); ++it, dirLightMap++)
+		WeakRef_ptr<FrameBuffer> depth_fbo = s_sceneData->lightManager.getDepthFB();
+		depth_fbo->bind();
+		WeakRef_ptr<shader> depthShader_dir = s_sceneData->lightManager.getDepthShader_dir();
+		depthShader_dir->bind();
+		for (auto& it = s_sceneData->lightManager.dirLightBegin(); it != s_sceneData->lightManager.dirLightEnd(); ++it)
 		{
-			frameBuffer->attachTexture(*dirLightMap);
-			renderCommand::clearDepth();
 			const auto& data = *it;
-			depthMapShader_dir->setUniformMat4("u_toLightSpace", data.it->second);
+			//near cascade
+			depthShader_dir->setUniformMat4("u_toLightSpace", data.it->second.nearCascade);
+			depth_fbo->attachTexture(s_sceneData->lightManager.getDirLightMapArray(), data.texIndex * 3 + 0);
+			renderCommand::clearDepth();
 			for (const auto& Mesh : s_renderQueue)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)//only render a mesh to a depth-map, if it's light_interaction-flag is set
+				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
 				{
-					depthMapShader_dir->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+					depthShader_dir->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+					Ref_ptr<vertexArray> geometry = Mesh->getVa();
+					geometry->bind();
+					renderCommand::drawIndexed(geometry);
+				}
+			}
+			//middle cascade
+			depthShader_dir->setUniformMat4("u_toLightSpace", data.it->second.middleCascade);
+			depth_fbo->attachTexture(s_sceneData->lightManager.getDirLightMapArray(), data.texIndex * 3 + 1);
+			renderCommand::clearDepth();
+			for (const auto& Mesh : s_renderQueue)
+			{
+				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
+				{
+					depthShader_dir->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+					Ref_ptr<vertexArray> geometry = Mesh->getVa();
+					geometry->bind();
+					renderCommand::drawIndexed(geometry);
+				}
+			}
+			//far cascade
+			depthShader_dir->setUniformMat4("u_toLightSpace", data.it->second.farCascade);
+			depth_fbo->attachTexture(s_sceneData->lightManager.getDirLightMapArray(), data.texIndex * 3 + 2);
+			renderCommand::clearDepth();
+			for (const auto& Mesh : s_renderQueue)
+			{
+				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
+				{
+					depthShader_dir->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
 					Ref_ptr<vertexArray> geometry = Mesh->getVa();
 					geometry->bind();
 					renderCommand::drawIndexed(geometry);
 				}
 			}
 		}
-		depthMapShader_dir->unbind();
-		WeakRef_ptr<shader> depthMapShader_point = s_sceneData->lightManager.getDepthShader_point();
-		depthMapShader_point->bind();
-		auto& pointLightMap = s_sceneData->lightManager.pointLightMaps();
-		for (auto& it = s_sceneData->lightManager.pointLightBegin(); it != s_sceneData->lightManager.pointLightEnd(); ++it, pointLightMap++)
+		depthShader_dir->unbind();
+		WeakRef_ptr<shader> depthShader_point = s_sceneData->lightManager.getDepthShader_point();
+		depthShader_point->bind();
+		depth_fbo->attachTexture(s_sceneData->lightManager.getPointLightMapArray());//->don't specify any layer here, because of weird opengl-api -> do that with a uniform
+		renderCommand::clearDepth();
+		for (auto& it = s_sceneData->lightManager.pointLightBegin(); it != s_sceneData->lightManager.pointLightEnd(); ++it)
 		{
-			frameBuffer->attachTexture(*pointLightMap);
-			renderCommand::clearDepth();
 			const auto& data = *it;
-			depthMapShader_point->setUniformMat4_6("u_toLightSpace", data.it->second);
-			depthMapShader_point->setUniform4f("u_lightPos", data.it->first.position);
+			depthShader_point->setUniformMat4_6("u_toLightSpace", data.it->second);
+			depthShader_point->setUniform4f("u_lightPos", data.it->first.position);
+			depthShader_point->setUniform1ui("u_layer", data.texIndex * 6);
 			for (const auto& Mesh : s_renderQueue)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)//only render a mesh to a depth-map, if it's light_interaction-flag is set
+				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
 				{
-					depthMapShader_point->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+					depthShader_point->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
 					Ref_ptr<vertexArray> geometry = Mesh->getVa();
 					geometry->bind();
 					renderCommand::drawIndexed(geometry);
 				}
 			}
 		}
-		depthMapShader_point->unbind();
-		WeakRef_ptr<shader> depthMapShader_spot = s_sceneData->lightManager.getDepthShader_spot();
-		depthMapShader_spot->bind();
-		auto& spotLightMap = s_sceneData->lightManager.spotLightMaps();
-		for (auto& it = s_sceneData->lightManager.spotLightBegin(); it != s_sceneData->lightManager.spotLightEnd(); ++it, spotLightMap++)
+		depthShader_point->unbind();
+		WeakRef_ptr<shader> depthShader_spot = s_sceneData->lightManager.getDepthShader_spot();
+		depthShader_spot->bind();
+		for (auto& it = s_sceneData->lightManager.spotLightBegin(); it != s_sceneData->lightManager.spotLightEnd(); ++it)
 		{
-			frameBuffer->attachTexture(*spotLightMap);
-			renderCommand::clearDepth();
 			const auto& data = *it;
-			depthMapShader_spot->setUniformMat4("u_toLightSpace", data.it->second);
+			depthShader_spot->setUniformMat4("u_toLightSpace", data.it->second);
+			depth_fbo->attachTexture(s_sceneData->lightManager.getSpotLightMapArray(), data.texIndex);
+			renderCommand::clearDepth();
 			for (const auto& Mesh : s_renderQueue)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)//only render a mesh to a depth-map, if it's light_interaction-flag is set
+				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
 				{
-					depthMapShader_spot->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
+					depthShader_spot->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
 					Ref_ptr<vertexArray> geometry = Mesh->getVa();
 					geometry->bind();
 					renderCommand::drawIndexed(geometry);
 				}
 			}
 		}
-		depthMapShader_spot->unbind();
-		frameBuffer->unbind();
+		depthShader_spot->bind();
+		depth_fbo->unbind();
 		renderCommand::cullFace(ENG_BACK);
 		renderCommand::setViewport(s_mainViewport[0], s_mainViewport[1]);
 	}
@@ -414,5 +605,13 @@ namespace Engine
 		ImGui::Begin("Rendering options");
 		ImGui::Checkbox("bloom", &s_bloom);
 		ImGui::End();
+		/*ImGui::Begin("Textures");
+		ImGui::Image((ImTextureID)s_gPosition->getRenderer_id(), { 128, 128 });
+		ImGui::Image((ImTextureID)s_gNormal->getRenderer_id(), { 128, 128 });
+		ImGui::Image((ImTextureID)s_gAlbSpec->getRenderer_id(), { 128, 118 });
+		ImGui::End();*/
+		/*ImGui::Begin("HDR_texture");
+		ImGui::Image((ImTextureID)s_hdr_tex->getRenderer_id(), { 512, 512 });
+		ImGui::End();*/
 	}
 }

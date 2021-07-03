@@ -74,4 +74,9 @@ namespace Engine
 		s_RendererAPI->drawToBuffers(count, params);
 		va_end(params);
 	}
+
+	void renderCommand::copyFrameBufferContents(const uint32_t width, const uint32_t height, const uint32_t buffer, const uint32_t interpolationMode)
+	{
+		s_RendererAPI->copyFrameBufferContents(width, height, buffer, interpolationMode);
+	}
 }

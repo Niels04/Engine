@@ -59,6 +59,21 @@ namespace Engine
 		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_MAG_FILTER, filterMag));
 	}
 
+	GLtexture2d::GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t textureWrap, const void* data)
+	{
+		GLenum internalFormat = format;
+		m_width = width; m_height = height;
+		GLCALL(glCreateTextures(GL_TEXTURE_2D, 1, &m_renderer_id));
+		GLCALL(glBindTexture(GL_TEXTURE_2D, m_renderer_id));
+		GLCALL(glTexStorage2D(GL_TEXTURE_2D, /*if we had mulitple mipmaps then we would put something other than 1 in for levels*/1, /*define how openGL internally
+		stores the texture*/internalFormat, m_width, m_height));
+		GLCALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGBA, GL_FLOAT, data));//test if this function actually behaves the way it should
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMin));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMag));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, textureWrap));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrap));
+	}
+
 	GLtexture2d::~GLtexture2d()
 	{
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
@@ -111,12 +126,14 @@ namespace Engine
 		GLCALL(glGenTextures(1, &m_renderer_id));
 		GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_renderer_id));
 		for (uint8_t i = 0; i < 6; i++)
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		{
+			GLCALL(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));
+		}
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
 	}
 	GLShadowMap3d::~GLShadowMap3d()
 	{
@@ -132,5 +149,47 @@ namespace Engine
 	{
 		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_FLOAT, &color));
 	}
-	
+	//ShadowMap2dArray::::::::::::
+	GLShadowMap2dArray::GLShadowMap2dArray(const uint32_t width, const uint32_t height, const uint8_t layerCount)
+	{
+		GLCALL(glGenTextures(1, &m_renderer_id));
+		GLCALL(glBindTexture(GL_TEXTURE_2D_ARRAY, m_renderer_id));
+		GLCALL(glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT32, width, height, static_cast<uint32_t>(layerCount)));//<-maybe use GL_DEPTH_COMPONENT without the 32, or with the F in the back
+		GLCALL(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER));
+		GLCALL(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER));
+		float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };//set border color, so that stuff outside the light's frustum is never in shadow
+		GLCALL(glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, borderColor));
+	}
+	GLShadowMap2dArray::~GLShadowMap2dArray()
+	{
+		GLCALL(glDeleteTextures(1, &m_renderer_id));
+	}
+
+	void GLShadowMap2dArray::bind(const uint8_t slot) const
+	{
+		GLCALL(glBindTextureUnit(slot, m_renderer_id));
+	}
+	//ShadowMap3dArray::::::::::::
+	GLShadowMap3dArray::GLShadowMap3dArray(const uint32_t size, const uint8_t layerCount)
+	{
+		GLCALL(glGenTextures(1, &m_renderer_id));
+		GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, m_renderer_id));
+		GLCALL(glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 1, GL_DEPTH_COMPONENT32, size, size, layerCount * 6));//<-maybe use GL_DEPTH_COMPONENT without the 32, or with the F in the back
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+		GLCALL(glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+	}
+	GLShadowMap3dArray::~GLShadowMap3dArray()
+	{
+		GLCALL(glDeleteTextures(1, &m_renderer_id));
+	}
+
+	void GLShadowMap3dArray::bind(const uint8_t slot) const
+	{
+		GLCALL(glBindTextureUnit(slot, m_renderer_id));
+	}
 }

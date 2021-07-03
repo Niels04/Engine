@@ -19,6 +19,7 @@ namespace Engine
 		static void enableCullFace(const bool enabled);
 		static void cullFace(const uint32_t face);
 		static void drawToBuffers(const uint32_t count, ...);
+		static void copyFrameBufferContents(const uint32_t width, const uint32_t height, const uint32_t buffer, const uint32_t interpolationMode);
 		static uint32_t getMaxGlobalBuffers() { return s_RendererAPI->getMaxGlobalBuffers(); }
 		static uint8_t getMaxTextureBinds() { return s_RendererAPI->getMaxTextureBinds(); }
 	private:

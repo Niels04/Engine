@@ -36,7 +36,7 @@ public:
 		}
 		Engine::Renderer::endScene();
 		//first render to the depth maps
-		Engine::Renderer::RenderDepthMaps();
+		Engine::Renderer::RenderDepthMaps();// <- no shadows for now with deferred shading
 		//then render the scene with the shadows applied
 		Engine::Renderer::Flush();
 	}
@@ -96,7 +96,7 @@ public:
 		case(ENG_KEY_ESCAPE):
 		{
 			m_scene.clear(Engine::Renderer::getLightManager());
-			m_scene.initialize(90.0f, 0.1f, 1000.0f, static_cast<float>(Engine::Application::Get().getWindow().getWidth() / static_cast<float>(Engine::Application::Get().getWindow().getHeight())));
+			m_scene.initialize(90.0f, 0.1f, 100.0f, static_cast<float>(Engine::Application::Get().getWindow().getWidth() / static_cast<float>(Engine::Application::Get().getWindow().getHeight())));
 			Engine::Renderer::getShaderLib()->clear();
 			Engine::Application::Get().getWindow().setDissableCursor(false);
 			m_sceneLoaded = false;
@@ -112,7 +112,7 @@ public:
 	void showSceneSelect()
 	{
 		ImGui::Begin("Select a scene.");
-		if(ImGui::Button("plane_head_rotate"))
+		if (ImGui::Button("plane_head_rotate"))
 		{
 			plane_head_rotate();
 			m_sceneLoaded = true;
@@ -147,9 +147,14 @@ public:
 			emissive();
 			m_sceneLoaded = true;
 		}
-		else if (ImGui::Button("test"))
+		else if (ImGui::Button("deferred_test"))
 		{
-			test();
+			deferred_test();
+			m_sceneLoaded = true;
+		}
+		else if (ImGui::Button("hylia_bridge"))
+		{
+			hylia_bridge();
 			m_sceneLoaded = true;
 		}
 		ImGui::End();
@@ -157,9 +162,9 @@ public:
 	//scenes
 	void plane_head_rotate()
 	{
-		Engine::Ref_ptr<Engine::vertexArray> head_va = Engine::vertexArray::create();
+		/*Engine::Ref_ptr<Engine::vertexArray> head_va = Engine::vertexArray::create();
 		head_va->load("head.model");
-		head_va->unbind();//make sure to unbind the vertexArray before loading the next one, otherwise we would get interfearences with layout & indexBuffer(I assume)
+		head_va->unbind();//make sure to unbind the vertexArray before loading the next one, otherwise we would get interfearences with layout & indexBuffer(I assume)*/
 		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
 		plane_va->load("plane.model");
 		plane_va->unbind();
@@ -170,118 +175,93 @@ public:
 		cube_va->load("cube.model");
 		cube_va->unbind();
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> alb_map_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map.shader");
+		alb_map_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> alb_nrm_map_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map.shader");
+		alb_nrm_map_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
-		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
-		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
-		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/normal_mapping/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/normal_mapping/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("head.png", true);
+		//Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("head.png", true);
 		Engine::Ref_ptr<Engine::texture2d> helmetTex = Engine::texture2d::create("armor_115_head_alb.png", true);
 		Engine::Ref_ptr<Engine::texture2d> helmetNormalTex = Engine::texture2d::create("armor_115_head_nrm.png");
 		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png", true);
 
-		Engine::Ref_ptr<Engine::material> red = Engine::material::create(lightShader_dir, "red", flags_default | flag_no_backface_cull);//just use the variant for directional lights for initialization
-		red->addShader(lightShader_point);
-		red->addShader(lightShader_spot);
-		red->setUniform4f("amb", 0.2f, 0.025f, 0.025f, 1.0f);
-		red->setUniform4f("diff", 0.7f, 0.0875f, 0.0875f, 1.0f);
-		red->setUniform4f("spec", 0.8f, 0.1f, 0.1f, 1.0f);
+		Engine::Ref_ptr<Engine::material> red = Engine::material::create(color_shader, "red", flags_default | flag_no_backface_cull);
+		red->setUniform4f("alb", 0.7f, 0.0875f, 0.0875f, 1.0f);
+		red->setUniform1f("ambCoefficient", 0.285f);
+		red->setUniform1f("specCoefficient", 0.5f);
 		red->setUniform1f("shininess", 100.0f);
 		red->flushAll();
 		m_scene.addMaterial(red);
 
-		Engine::Ref_ptr<Engine::material> headMat = Engine::material::create(lightTexShader_dir, "headMat");//just use the variant for directional lights for initialization
-		headMat->addShader(lightTexShader_point);
-		headMat->addShader(lightTexShader_spot);
+		/*Engine::Ref_ptr<Engine::material> headMat = Engine::material::create(alb_map_shader, "headMat");
 		headMat->setTexture("u_texture", headTex);
-		m_scene.addMaterial(headMat);
+		headMat->setUniform1f("ambCoefficient", 0.1f);
+		headMat->setUniform1f("specCoefficient", 0.1f);
+		headMat->setUniform1f("shininess", 10.0f);
+		headMat->flushAll();
+		m_scene.addMaterial(headMat);*/
 
-		Engine::Ref_ptr<Engine::material> helmetMat = Engine::material::create(lightTexShader_dir_normalMap, "helmetMat");
-		helmetMat->addShader(lightTexShader_point_normalMap);
-		helmetMat->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> helmetMat = Engine::material::create(alb_nrm_map_shader, "helmetMat");
 		helmetMat->setTexture("u_texture", helmetTex);
 		helmetMat->setTexture("u_normalMap", helmetNormalTex);
+		helmetMat->setUniform1f("ambCoefficient", 0.1f);
+		helmetMat->setUniform1f("specCoefficient", 1.0f);
+		helmetMat->setUniform1f("shininess", 100.0f);
+		helmetMat->flushAll();
 		m_scene.addMaterial(helmetMat);
 
-		Engine::Ref_ptr<Engine::material> cubeMat = Engine::material::create(lightTexShader_dir, "cubeMat");
-		cubeMat->addShader(lightTexShader_point);
-		cubeMat->addShader(lightTexShader_spot);
+		Engine::Ref_ptr<Engine::material> cubeMat = Engine::material::create(alb_map_shader, "cubeMat");
 		cubeMat->setTexture("u_texture", cubeTex);
+		cubeMat->setUniform1f("ambCoefficient", 0.1f);
+		cubeMat->setUniform1f("specCoefficient", 1.0f),
+		cubeMat->setUniform1f("shininess", 80.0f);
+		cubeMat->flushAll();
 		m_scene.addMaterial(cubeMat);
 
-		Engine::Ref_ptr<Engine::mesh> head = Engine::mesh::create(head_va, headMat, "head");
-		head->setPos({ 0.0f, 3.0f, 0.0f, 1.0f });
+		/*Engine::Ref_ptr<Engine::mesh> head = Engine::mesh::create(head_va, headMat, "head");
+		head->setPos({ 0.0f, 3.0f, -20.0f, 1.0f });
 		head->setRot({ 0.0f, 3.1415926f, 0.0f });//rotate 180 degrees(pi in radians)
 		head->setScale(0.1f);
-		head->attachMovement(std::static_pointer_cast<Engine::MeshMovement, Engine::CircularMeshMovement>(std::make_shared<Engine::CircularMeshMovement>(vec3(1.0f, 1.0f, 1.0f), vec3(0.5773502f, 0.5773502f, 0.5773502f), 0.0174533f * 60.0f)));
-		m_scene.addMesh(head);
+		//head->attachMovement(std::static_pointer_cast<Engine::MeshMovement, Engine::CircularMeshMovement>(std::make_shared<Engine::CircularMeshMovement>(vec3(1.0f, 1.0f, 1.0f), vec3(0.5773502f, 0.5773502f, 0.5773502f), 0.0174533f * 60.0f)));
+		m_scene.addMesh(head);*/
 
 		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, red, "plane");
 		plane->setScale(10.0f);
-		plane->setPos({ 0.0f, 0.0f, 0.0f, 1.0f });
+		plane->setPos({ 0.0f, 0.0f, -15.0f, 1.0f });
+		plane->setRot({ 3.1415926f / 2.0f, 0.0f, 0.0f });
 		m_scene.addMesh(plane);
 
 		Engine::Ref_ptr<Engine::mesh> helmet = Engine::mesh::create(helmet_va, helmetMat, "helmet");
-		helmet->setPos({ -6.0f, 3.0f, 5.0f, 1.0f });
+		helmet->setPos({ 0.0f, 0.0f, -10.0f, 1.0f });
 		helmet->setScale(5.0f);
 		m_scene.addMesh(helmet);
 
 		Engine::Ref_ptr<Engine::mesh> cube = Engine::mesh::create(cube_va, cubeMat, "cube");
 		cube->setScale(0.1f);
-		cube->setPos({0.0f, 1.0f, 8.0f, 1.0f});
+		cube->setPos({-60.0f, -30.0f, -10.0f, 1.0f});
 		m_scene.addMesh(cube);
 
-		Engine::PtrPtr<Engine::directionalLight> sun(Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f) } ));
-		m_scene.addLight(sun);
-		Engine::Ref_ptr<Engine::DirLightMovement> rotate = Engine::DirLightMovement::create(0.0174533f * 60.0f * 0.25f, 0.0f, 0.0f);
-		rotate->attachToLight(sun);
-		m_scene.addLightMovement(rotate);
+		//Engine::PtrPtr<Engine::directionalLight> sun(Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f) } ));
+		//m_scene.addLight(sun);
+		//Engine::Ref_ptr<Engine::DirLightMovement> rotate = Engine::DirLightMovement::create(0.0174533f * 60.0f * 0.25f, 0.0f, 0.0f);
+		//rotate->attachToLight(sun);
+		//m_scene.addLightMovement(rotate);
+		Engine::PtrPtr<Engine::directionalLight> testSun(Engine::Renderer::addDynamicDirLight({ vec3(0.0f, 0.0f, -1.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f) }));
+		m_scene.addLight(testSun);
+		
 		//m_moon = Engine::Renderer::addStaticDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f) } ); <-doesn't work because of the lookAt-function edge-case
 		//m_sun_2 = Engine::Renderer::addStaticDirLight({ vec3(-0.5773502f, -0.5773502, -0.5773502f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f) });
-		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(2.0f, 1.0f, 0.0f), vec3(0.1f, 0.02f, 0.02f), vec3(0.5f, 0.1f, 0.1f), vec3(0.5f, 0.1f, 0.1f), 1.0f, 0.01f, 0.01f });
+		/*Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(2.0f, 1.0f, 0.0f), vec3(0.1f, 0.02f, 0.02f), vec3(0.5f, 0.1f, 0.1f), vec3(0.5f, 0.1f, 0.1f), 1.0f, 0.01f, 0.01f });
 		m_scene.addLight(lamp);
 		Engine::Ref_ptr<Engine::PointLightMovement> move_circular = Engine::CircularPointLightMovement::create(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f), 0.0174533f * 60.0f);
 		move_circular->attachToLight(lamp);
 		m_scene.addLightMovement(move_circular);
 		Engine::PtrPtr<Engine::spotLight> spotLight =  Engine::Renderer::addDynamicSpotLight({ vec3(-6.0f, 8.0f, 4.75f), vec3(0.0f, -1.0f, 0.0f), vec3(0.05f, 0.05f, 0.5f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), cosf(15.0f * (PI / 180.0f)) });
-		m_scene.addLight(spotLight);
+		m_scene.addLight(spotLight);*/
 	}
 
 	void boat_water()
@@ -309,80 +289,54 @@ public:
 		Engine::Ref_ptr<Engine::texture2d> lighthouse_tex = Engine::texture2d::create("lighthouse_tex.png", true);
 		Engine::Ref_ptr<Engine::texture2d> headTex = Engine::texture2d::create("figure_tex.png", true);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> alb_map_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map.shader");
+		alb_map_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
-		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
-		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
-		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
 		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(lightShader_dir, "light_grey");//just use the variant for directional lights for initialization
-		light_grey->addShader(lightShader_point);
-		light_grey->addShader(lightShader_spot);
-		light_grey->setUniform4f("amb", 0.1f, 0.1f, 0.1f, 1.0f);
-		light_grey->setUniform4f("diff", 0.6f, 0.6f, 0.6f, 1.0f);
-		light_grey->setUniform4f("spec", 0.6f, 0.6f, 0.6f, 1.0f);
+		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(color_shader, "light_grey");
+		light_grey->setUniform4f("alb", 0.6f, 0.6f, 0.6f, 1.0f);
+		light_grey->setUniform1f("ambCoefficient", 0.1666f);
 		light_grey->setUniform1f("shininess", 50.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
-		Engine::Ref_ptr<Engine::material> water_mat = Engine::material::create(lightShader_dir, "water_blue");//just use the variant for directional lights for initialization
-		water_mat->addShader(lightShader_point);
-		water_mat->addShader(lightShader_spot);
-		water_mat->setUniform4f("amb", 0.1f, 0.1f, 0.8f, 1.0f);
-		water_mat->setUniform4f("diff", 0.1f, 0.1f, 0.8f, 1.0f);
-		water_mat->setUniform4f("spec", 0.1f, 0.1f, 0.8f, 1.0f);
+		Engine::Ref_ptr<Engine::material> water_mat = Engine::material::create(color_shader, "water_blue");
+		water_mat->setUniform4f("alb", 0.1f, 0.1f, 0.8f, 1.0f);
+		water_mat->setUniform1f("ambCoefficient", 0.1f);
+		water_mat->setUniform1f("specCoefficient", 1.0f);
 		water_mat->setUniform1f("shininess", 25.0f);
 		water_mat->flushAll();
 		m_scene.addMaterial(water_mat);
 
-		Engine::Ref_ptr<Engine::material> lighthouse_mat = Engine::material::create(lightTexShader_dir, "lighthouse_mat");//just use the variant for directional lights for initialization
-		lighthouse_mat->addShader(lightTexShader_point);
-		lighthouse_mat->addShader(lightTexShader_spot);
+		Engine::Ref_ptr<Engine::material> lighthouse_mat = Engine::material::create(alb_map_shader, "lighthouse_mat");
 		lighthouse_mat->setTexture("u_texture", lighthouse_tex);
+		lighthouse_mat->setUniform1f("ambCoefficient", 0.1f);
+		lighthouse_mat->setUniform1f("specCoefficient", 1.0f);
+		lighthouse_mat->setUniform1f("shininess", 100.0f);
+		lighthouse_mat->flushAll();
 		m_scene.addMaterial(lighthouse_mat);
 
-		Engine::Ref_ptr<Engine::material> boat_mat = Engine::material::create(lightShader_dir, "boat_brown");//just use the variant for directional lights for initialization
-		boat_mat->addShader(lightShader_point);
-		boat_mat->addShader(lightShader_spot);
-		boat_mat->setUniform4f("amb", 0.5451f, 0.2706f, 0.07451f, 1.0f);
-		boat_mat->setUniform4f("diff", 0.5451f, 0.2706f, 0.07451f, 1.0f);
-		boat_mat->setUniform4f("spec", 0.5451f, 0.2760f, 0.07451f, 1.0f);
+		Engine::Ref_ptr<Engine::material> boat_mat = Engine::material::create(color_shader, "boat_brown");
+		boat_mat->setUniform4f("alb", 0.5451f, 0.2706f, 0.07451f, 1.0f);
+		boat_mat->setUniform1f("ambCoefficient", 0.25f);
 		boat_mat->setUniform1f("shininess", 45.0f);
 		boat_mat->flushAll();
 		m_scene.addMaterial(boat_mat);
 
-		Engine::Ref_ptr<Engine::material> figureMat = Engine::material::create(lightTexShader_dir, "figureMat");//just use the variant for directional lights for initialization
-		figureMat->addShader(lightTexShader_point);
-		figureMat->addShader(lightTexShader_spot);
+		Engine::Ref_ptr<Engine::material> figureMat = Engine::material::create(alb_map_shader, "figureMat");
 		figureMat->setTexture("u_texture", headTex);
+		figureMat->setUniform1f("ambCoefficient", 0.1f);
+		figureMat->setUniform1f("specCoefficient", 1.0f);
+		figureMat->setUniform1f("shininess", 50.0f);
+		figureMat->flushAll();
 		m_scene.addMaterial(figureMat);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
 		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
 		mat_emissive->setUniform1f("multiplier", 5.0f);
 		mat_emissive->flushAll();
@@ -458,74 +412,50 @@ public:
 		Engine::Ref_ptr<Engine::texture2d> spot_light_tex = Engine::texture2d::create("spotlight_bc.png", true);
 		Engine::Ref_ptr<Engine::texture2d> duck_tex = Engine::texture2d::create("09-Default_albedo.jpg", true);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> alb_map_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map.shader");
+		alb_map_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
-		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
-		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
-		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(lightShader_dir, "light_grey");//just use the variant for directional lights for initialization
-		light_grey->addShader(lightShader_point);
-		light_grey->addShader(lightShader_spot);
-		light_grey->setUniform4f("amb", 0.1f, 0.1f, 0.1f, 1.0f);
-		light_grey->setUniform4f("diff", 0.6f, 0.6f, 0.6f, 1.0f);
-		light_grey->setUniform4f("spec", 0.6f, 0.6f, 0.6f, 1.0f);
+		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(color_shader, "light_grey");
+		light_grey->setUniform4f("alb", 0.6f, 0.6f, 0.6f, 1.0f);
+		light_grey->setUniform1f("ambCoefficient", 0.1666f);
+		light_grey->setUniform1f("specCoefficient", 1.0f);
 		light_grey->setUniform1f("shininess", 50.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
-		Engine::Ref_ptr<Engine::material> black = Engine::material::create(lightShader_dir, "black");//just use the variant for directional lights for initialization
-		black->addShader(lightShader_point);
-		black->addShader(lightShader_spot);
-		black->setUniform4f("amb", 0.01f, 0.01f, 0.01f, 1.0f);
-		black->setUniform4f("diff", 0.06f, 0.06f, 0.06f, 1.0f);
-		black->setUniform4f("spec", 0.1f, 0.1f, 0.1f, 1.0f);
+		Engine::Ref_ptr<Engine::material> black = Engine::material::create(color_shader, "black");
+		black->setUniform4f("alb", 0.06f, 0.06f, 0.06f, 1.0f);
+		black->setUniform1f("ambCoefficient", 0.1666f);
+		black->setUniform1f("specCoefficient", 1.0f);
 		black->setUniform1f("shininess", 100.0f);
 		black->flushAll();
 		m_scene.addMaterial(black);
 
-		Engine::Ref_ptr<Engine::material> yellow = Engine::material::create(lightShader_dir, "yellow");//just use the variant for directional lights for initialization
-		yellow->addShader(lightShader_point);
-		yellow->addShader(lightShader_spot);
-		yellow->setUniform4f("amb", 0.08f, 0.08f, 0.01f, 1.0f);
-		yellow->setUniform4f("diff", 0.8f, 0.8f, 0.1f, 1.0f);
-		yellow->setUniform4f("spec", 1.0f, 1.0f, 0.1f, 1.0f);
+		Engine::Ref_ptr<Engine::material> yellow = Engine::material::create(color_shader, "yellow");
+		yellow->setUniform4f("alb", 0.8f, 0.8f, 0.1f, 1.0f);
+		yellow->setUniform1f("ambCoefficient", 0.1f);
+		yellow->setUniform1f("specCoefficient", 1.0f);
 		yellow->setUniform1f("shininess", 80.0f);
 		yellow->flushAll();
 		m_scene.addMaterial(yellow);
 
-		Engine::Ref_ptr<Engine::material> spot_light_mat = Engine::material::create(lightTexShader_dir, "spot_light_mat");
-		spot_light_mat->addShader(lightTexShader_point);
-		spot_light_mat->addShader(lightTexShader_spot);
+		Engine::Ref_ptr<Engine::material> spot_light_mat = Engine::material::create(alb_map_shader, "spot_light_mat");
 		spot_light_mat->setTexture("u_texture", spot_light_tex);
+		spot_light_mat->setUniform1f("ambCoefficient", 0.1f);
+		spot_light_mat->setUniform1f("specCoefficient", 1.0f);
+		spot_light_mat->setUniform1f("shininess", 100.0f);
+		spot_light_mat->flushAll();
 		m_scene.addMaterial(spot_light_mat);
 
-		Engine::Ref_ptr<Engine::material> duck_mat = Engine::material::create(lightTexShader_dir, "duck_mat");
-		duck_mat->addShader(lightTexShader_point);
-		duck_mat->addShader(lightTexShader_spot);
+		Engine::Ref_ptr<Engine::material> duck_mat = Engine::material::create(alb_map_shader, "duck_mat");
 		duck_mat->setTexture("u_texture", duck_tex);
+		duck_mat->setUniform1f("ambCoefficient", 0.1f);
+		duck_mat->setUniform1f("specCoefficient", 1.0f);
+		duck_mat->setUniform1f("shininess", 80.0f);
+		duck_mat->flushAll();
 		m_scene.addMaterial(duck_mat);
 
 		Engine::Ref_ptr<Engine::mesh> environment = Engine::mesh::create(environment_va, light_grey, "environment");
@@ -581,25 +511,16 @@ public:
 		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga", true);
 		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> alb_nrm_map_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map.shader");
+		alb_nrm_map_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/normal_mapping/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/normal_mapping/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(lightTexShader_dir_normalMap, "gun_mat");//just use the variant for directional lights for initialization
-		gunMat->addShader(lightTexShader_point_normalMap);
-		gunMat->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(alb_nrm_map_shader, "gun_mat");
 		gunMat->setTexture("u_texture", gunDiffTex);
 		gunMat->setTexture("u_normalMap", gunNormalTex);
+		gunMat->setUniform1f("ambCoefficient", 0.1f);
+		gunMat->setUniform1f("specCoefficient", 1.0f);
+		gunMat->setUniform1f("shininess", 100.0f);
+		gunMat->flushAll();
 		m_scene.addMaterial(gunMat);
 
 		Engine::Ref_ptr<Engine::mesh> gun = Engine::mesh::create(gun_va, gunMat, "gun");
@@ -660,91 +581,81 @@ public:
 		Engine::Ref_ptr<Engine::texture2d> Deer_Body_Nrm = Engine::texture2d::create("Deer_Body_Nrm.png");
 
 		//load shaders
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/normal_mapping/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> alb_nrm_map_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map.shader");
+		alb_nrm_map_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/normal_mapping/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/normal_mapping/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
-		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
-		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
-		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_spot->bindUniformBlock("spotLights", POINT_LIGHTS_BIND);
-		lightShader_spot->bindUniformBlock("spotLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
 		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		//create materials
-		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_A = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneBridge_A");
-		Mat_Rock_RuinStoneBridge_A->addShader(lightTexShader_point_normalMap);
-		Mat_Rock_RuinStoneBridge_A->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_A = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneBridge_A");
 		Mat_Rock_RuinStoneBridge_A->setTexture("u_texture", Rock_RuinStoneBridge_A_Alb);
 		Mat_Rock_RuinStoneBridge_A->setTexture("u_normalMap", Rock_RuinStoneBridge_A_Nrm);
+		Mat_Rock_RuinStoneBridge_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Rock_RuinStoneBridge_A->setUniform1f("specCoefficient", 0.5f);
+		Mat_Rock_RuinStoneBridge_A->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneBridge_A->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneBridge_A);
-		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_B = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneBridge_B");
-		Mat_Rock_RuinStoneBridge_B->addShader(lightTexShader_point_normalMap);
-		Mat_Rock_RuinStoneBridge_B->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_B = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneBridge_B");
 		Mat_Rock_RuinStoneBridge_B->setTexture("u_texture", Rock_RuinStoneBridge_B_Alb);
 		Mat_Rock_RuinStoneBridge_B->setTexture("u_normalMap", Rock_RuinStoneBridge_B_Nrm);
+		Mat_Rock_RuinStoneBridge_B->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Rock_RuinStoneBridge_B->setUniform1f("specCoefficient", 0.5f);
+		Mat_Rock_RuinStoneBridge_B->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneBridge_B->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneBridge_B);
-		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_A = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneWall_A");
-		Mat_Rock_RuinStoneWall_A->addShader(lightTexShader_point_normalMap);
-		Mat_Rock_RuinStoneWall_A->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_A = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_A");
 		Mat_Rock_RuinStoneWall_A->setTexture("u_texture", Rock_RuinStoneWall_A_Alb);
 		Mat_Rock_RuinStoneWall_A->setTexture("u_normalMap", Rock_RuinStoneWall_A_Nrm);
+		Mat_Rock_RuinStoneWall_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Rock_RuinStoneWall_A->setUniform1f("specCoefficient", 0.5f);
+		Mat_Rock_RuinStoneWall_A->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneWall_A->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_A);
-		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_C = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneWall_C");
-		Mat_Rock_RuinStoneWall_C->addShader(lightTexShader_point_normalMap);
-		Mat_Rock_RuinStoneWall_C->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_C = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_C");
 		Mat_Rock_RuinStoneWall_C->setTexture("u_texture", Rock_RuinStoneWall_C_Alb);
 		Mat_Rock_RuinStoneWall_C->setTexture("u_normalMap", Rock_RuinStoneWall_C_Nrm);
+		Mat_Rock_RuinStoneWall_C->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Rock_RuinStoneWall_C->setUniform1f("specCoefficient", 0.5f);
+		Mat_Rock_RuinStoneWall_C->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneWall_C->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_C);
-		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_D = Engine::material::create(lightTexShader_dir_normalMap, "Rock_RuinStoneWall_D");
-		Mat_Rock_RuinStoneWall_D->addShader(lightTexShader_point_normalMap);
-		Mat_Rock_RuinStoneWall_D->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_D = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_D");
 		Mat_Rock_RuinStoneWall_D->setTexture("u_texture", Rock_RuinStoneWall_D_Alb);
 		Mat_Rock_RuinStoneWall_D->setTexture("u_normalMap", Rock_RuinStoneWall_D_Nrm);
+		Mat_Rock_RuinStoneWall_D->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Rock_RuinStoneWall_D->setUniform1f("specCoefficient", 0.5f);
+		Mat_Rock_RuinStoneWall_D->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneWall_D->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_D);
-		Engine::Ref_ptr<Engine::material> green = Engine::material::create(lightShader_dir, "green");
-		green->addShader(lightShader_point);
-		green->addShader(lightShader_spot);
-		green->setUniform4f("amb", 0.05f, 0.2f, 0.05f, 1.0f);
-		green->setUniform4f("diff", 0.2f, 0.8f, 0.2f, 1.0f);
-		green->setUniform4f("spec", 0.2f, 0.8f, 0.2f, 1.0f);
+		Engine::Ref_ptr<Engine::material> green = Engine::material::create(color_shader, "green");
+		green->setUniform4f("alb", 0.2f, 0.8f, 0.2f, 1.0f);
+		green->setUniform1f("ambCoefficient", 0.25f);
+		green->setUniform1f("specCoefficient", 0.1f);
 		green->setUniform1f("shininess", 100.0f);
 		green->flushAll();
 		m_scene.addMaterial(green);
-		Engine::Ref_ptr<Engine::material> Mat_Boar = Engine::material::create(lightTexShader_dir_normalMap, "Boar");
-		Mat_Boar->addShader(lightTexShader_point_normalMap);
-		Mat_Boar->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> Mat_Boar = Engine::material::create(alb_nrm_map_shader, "Boar");
 		Mat_Boar->setTexture("u_texture", Boar_Alb);
 		Mat_Boar->setTexture("u_normalMap", Boar_Nrm);
+		Mat_Boar->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Boar->setUniform1f("specCoefficient", 0.01f);
+		Mat_Boar->setUniform1f("shininess", 20.0f);
+		Mat_Boar->flushAll();
 		m_scene.addMaterial(Mat_Boar);
-		Engine::Ref_ptr<Engine::material> Mat_Deer = Engine::material::create(lightTexShader_dir_normalMap, "Deer");
-		Mat_Deer->addShader(lightTexShader_point_normalMap);
-		Mat_Deer->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> Mat_Deer = Engine::material::create(alb_nrm_map_shader, "Deer");
 		Mat_Deer->setTexture("u_texture", Deer_Body_Alb);
 		Mat_Deer->setTexture("u_normalMap", Deer_Body_Nrm);
+		Mat_Deer->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Deer->setUniform1f("specCoefficient", 0.01f);
+		Mat_Deer->setUniform1f("shininess", 20.0f);
+		Mat_Deer->flushAll();
 		m_scene.addMaterial(Mat_Deer);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
 		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 0.1f, 1.0f });
 		mat_emissive->setUniform1f("multiplier", 20.0f);
 		mat_emissive->flushAll();
@@ -803,26 +714,16 @@ public:
 		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
 		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_R.tga");
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/nrm_map_spec_map_bloom/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir_normalMap->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> shader_alb_nrm_spec = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map_spc_map.shader");
+		shader_alb_nrm_spec->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/nrm_map_spec_map_bloom/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point_normalMap->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot_normalMap = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/nrm_map_spec_map_bloom/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot_normalMap->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot_normalMap->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot_normalMap->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(lightTexShader_dir_normalMap, "gun_mat");//just use the variant for directional lights for initialization
-		gunMat->addShader(lightTexShader_point_normalMap);
-		gunMat->addShader(lightTexShader_spot_normalMap);
+		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(shader_alb_nrm_spec, "gun_mat");//just use the variant for directional lights for initialization
 		gunMat->setTexture("u_texture", gunDiffTex);
 		gunMat->setTexture("u_normalMap", gunNormalTex);
 		gunMat->setTexture("u_specMap", gunSpecTex);
+		gunMat->setUniform1f("ambCoefficient", 0.1f);
+		gunMat->setUniform1f("shininess", 100.0f);
+		gunMat->flushAll();
 		m_scene.addMaterial(gunMat);
 
 		Engine::Ref_ptr<Engine::mesh> gun = Engine::mesh::create(gun_va, gunMat, "gun");
@@ -830,8 +731,6 @@ public:
 
 		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
-		//Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(0.6f, 0.6f, 0.6f), vec3(0.9f, 0.9f, 0.9f), 1.0f, 0.00f, 1.0f });//because we use gamma-correction, only use the quadratic term
-		//m_scene.addLight(lamp);
 	}
 
 	void emissive()
@@ -839,134 +738,382 @@ public:
 		Engine::Ref_ptr<Engine::vertexArray> environment_va = Engine::vertexArray::create();
 		environment_va->load("cube_solid.model");
 		environment_va->unbind();
-		Engine::Ref_ptr<Engine::vertexArray> cube_lit_va = Engine::vertexArray::create();
-		cube_lit_va->load("lightbulb.model");
-		cube_lit_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> lightbulb_va = Engine::vertexArray::create();
+		lightbulb_va->load("lightbulb.model");
+		lightbulb_va->unbind();
 
-		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
-		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
-		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
-		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 			
 		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
 		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(lightShader_dir, "light_grey");//just use the variant for directional lights for initialization
-		light_grey->addShader(lightShader_point);
-		light_grey->addShader(lightShader_spot);
-		light_grey->setUniform4f("amb", 0.1f, 0.1f, 0.1f, 1.0f);
-		light_grey->setUniform4f("diff", 0.6f, 0.6f, 0.6f, 1.0f);
-		light_grey->setUniform4f("spec", 0.6f, 0.6f, 0.6f, 1.0f);
+		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(color_shader, "light_grey");
+		light_grey->setUniform4f("alb", 0.6f, 0.6f, 0.6f, 1.0f);
+		light_grey->setUniform1f("ambCoefficient", 0.2f);
+		light_grey->setUniform1f("specCoefficient", 1.0f);
 		light_grey->setUniform1f("shininess", 50.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
 		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
 		mat_emissive->setUniform1f("multiplier", 5.0f);
 		mat_emissive->flushAll();
-		//m_scene.addMaterial(mat_emissive);
 
 		Engine::Ref_ptr<Engine::mesh> environment = Engine::mesh::create(environment_va, light_grey, "environment");
 		environment->setScale(11.1111111f);
 		m_scene.addMesh(environment);
 
 		Engine::PtrPtr<Engine::pointLight> lamp(Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), 1.0f, 0.01f, 0.01f }));
-		Engine::Ref_ptr<Engine::mesh> cube_lit = Engine::mesh::create(cube_lit_va, mat_emissive, "cube_lit");
-		cube_lit->attachLight(lamp);
-		m_scene.addMesh(cube_lit);
+		Engine::Ref_ptr<Engine::mesh> lightbulb = Engine::mesh::create(lightbulb_va, mat_emissive, "lightbulb");
+		lightbulb->attachLight(lamp);
+		m_scene.addMesh(lightbulb);
 		m_scene.addLight(lamp);
 
 		m_scene.addMaterial(mat_emissive, [] (const void* light, Engine::material* mat) {
 			Engine::PtrPtr<Engine::pointLight> Light = (Engine::pointLight**)light;
 			mat->setUniform4fF("emissiveColor", Light->diffuse);
 			}, lamp.get());//<- an update-function and a pointer to some update-data get's supplied -> various kinds of materials could be created like this
-		///////////////////////////////////////////////////////////////////////////////
-		// IDEA: Remove the whole "emissiveMesh"-thing and just make being "emissive" a property of a material, cuz this is what it ultimately should be
-		// ->this material get's "attached" to a light and updates it's color-values from there
-		// -> think about, where I would implement this operation -> somewhere in Scene.update() -> maybe implement "material.update()"? Or just do it manually in the update-loop?
-		// IDEA No2: I could implement an imgui-panel for material-editing -> the panel displays all of a material's values and properties and let's the user edit them
-		///////////////////////////////////////////////////////////////////////////////
 	}
 
-	void test()
+	void deferred_test()
 	{
-		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
-		plane_va->load("plane.model");
-		plane_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> gun_va = Engine::vertexArray::create();
+		gun_va->load("gun_tb.model");
+		gun_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> lightbulb_va = Engine::vertexArray::create();
+		lightbulb_va->load("lightbulb.model");
+		lightbulb_va->unbind();
 		Engine::Ref_ptr<Engine::vertexArray> cube_va = Engine::vertexArray::create();
 		cube_va->load("cube.model");
 		cube_va->unbind();
 
-		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png", true);
+		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga", true);
+		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
+		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_R.tga");
+		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png");
 
-		Engine::Ref_ptr<Engine::shader> lightShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_color_shadow_additive_dir.shader");
-		lightShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> shader_alb_nrm_spec = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map_spc_map.shader");
+		shader_alb_nrm_spec->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_color_shadow_additive_point.shader");
-		lightShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
+		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_color_shadow_additive_spot.shader");
-		lightShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::shader> shader_alb_map = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map.shader");
+		shader_alb_map->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_dir = Engine::Renderer::getShaderLib()->load("additive_w_shadow/dir/basicPhong_one_texture_shadow_additive_dir.shader");
-		lightTexShader_dir->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
-		lightTexShader_dir->bindUniformBlock("directionalLights_v", DIRECTIONAL_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(shader_alb_nrm_spec, "gun_mat");
+		gunMat->setUniform1f("ambCoefficient", 0.1f);
+		gunMat->setUniform1f("shininess", 100.0f);
+		gunMat->flushAll();
+		gunMat->setTexture("u_texture", gunDiffTex);
+		gunMat->setTexture("u_normalMap", gunNormalTex);
+		gunMat->setTexture("u_specMap", gunSpecTex);
+		m_scene.addMaterial(gunMat);
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_point = Engine::Renderer::getShaderLib()->load("additive_w_shadow/point/basicPhong_one_texture_shadow_additive_point.shader");
-		lightTexShader_point->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_point->bindUniformBlock("pointLights", POINT_LIGHTS_BIND);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
+		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
+		mat_emissive->setUniform1f("multiplier", 5.0f);
+		mat_emissive->flushAll();
 
-		Engine::Ref_ptr<Engine::shader> lightTexShader_spot = Engine::Renderer::getShaderLib()->load("additive_w_shadow/spot/basicPhong_one_texture_shadow_additive_spot.shader");
-		lightTexShader_spot->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights", SPOT_LIGHTS_BIND);
-		lightTexShader_spot->bindUniformBlock("spotLights_v", SPOT_LIGHTS_BIND);
-
-		Engine::Ref_ptr<Engine::material> red = Engine::material::create(lightShader_dir, "red", flags_default | flag_no_backface_cull);//just use the variant for directional lights for initialization
-		red->addShader(lightShader_point);
-		red->addShader(lightShader_spot);
-		red->setUniform4f("amb", 0.2f, 0.025f, 0.025f, 1.0f);
-		red->setUniform4f("diff", 0.7f, 0.0875f, 0.0875f, 1.0f);
-		red->setUniform4f("spec", 0.8f, 0.1f, 0.1f, 1.0f);
-		red->setUniform1f("shininess", 100.0f);
-		red->flushAll();
-		m_scene.addMaterial(red);
-
-		Engine::Ref_ptr<Engine::material> cubeMat = Engine::material::create(lightTexShader_dir, "cubeMat");
-		cubeMat->addShader(lightTexShader_point);
-		cubeMat->addShader(lightTexShader_spot);
+		Engine::Ref_ptr<Engine::material> cubeMat = Engine::material::create(shader_alb_map, "cube_mat");
+		cubeMat->setUniform1f("ambCoefficient", 0.1f);
+		cubeMat->setUniform1f("specCoefficient", 1.0f);
+		cubeMat->setUniform1f("shininess", 100.0f);
+		cubeMat->flushAll();
 		cubeMat->setTexture("u_texture", cubeTex);
 		m_scene.addMaterial(cubeMat);
 
-		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, red, "plane");
-		plane->setScale(10.0f);
-		plane->setPos({ 0.0f, 0.0f, 0.0f, 1.0f });
-		m_scene.addMesh(plane);
+		Engine::Ref_ptr<Engine::mesh> gun = Engine::mesh::create(gun_va, gunMat, "gun");
+		m_scene.addMesh(gun);
+
+		Engine::PtrPtr<Engine::pointLight> lamp(Engine::Renderer::addDynamicPointLight({ vec3(0.0f, 0.0f, 0.0f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), vec3(0.1f, 0.1f, 1.0f), 1.0f, 0.01f, 0.01f }));
+		Engine::Ref_ptr<Engine::mesh> lightbulb = Engine::mesh::create(lightbulb_va, mat_emissive, "lightbulb");
+		lightbulb->setScale(0.1f);
+		lightbulb->setPos({ 0.0f, -2.0f, 0.0f, 1.0f });
+		lightbulb->attachLight(lamp);
+		m_scene.addMesh(lightbulb);
+		m_scene.addLight(lamp);
 
 		Engine::Ref_ptr<Engine::mesh> cube = Engine::mesh::create(cube_va, cubeMat, "cube");
-		cube->setScale(0.1f);
-		cube->setPos({ 0.0f, 1.0f, 8.0f, 1.0f });
 		m_scene.addMesh(cube);
 
-		Engine::PtrPtr<Engine::directionalLight> sun(Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, 0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f) }));
+		m_scene.addMaterial(mat_emissive, [](const void* light, Engine::material* mat) {
+			Engine::PtrPtr<Engine::pointLight> Light = (Engine::pointLight**)light;
+			mat->setUniform4fF("emissiveColor", Light->diffuse);
+			}, lamp.get());//<- an update-function and a pointer to some update-data get's supplied -> various kinds of materials could be created like this
+
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
-		Engine::PtrPtr<Engine::pointLight> lamp = Engine::Renderer::addDynamicPointLight({ vec3(2.0f, 1.0f, 0.0f), vec3(0.1f, 0.02f, 0.02f), vec3(0.5f, 0.1f, 0.1f), vec3(0.5f, 0.1f, 0.1f), 1.0f, 0.01f, 0.01f });
-		m_scene.addLight(lamp);
+	}
+
+	void hylia_bridge()
+	{
+		//load geometry
+		Engine::Ref_ptr<Engine::vertexArray> Arch_0_Mt_Wall_HyliaStucco_A_Va = Engine::vertexArray::create();
+		Arch_0_Mt_Wall_HyliaStucco_A_Va->load("hylia_bridge/Arch_0_Mt_Wall_HyliaStucco_A_tb.model");
+		Arch_0_Mt_Wall_HyliaStucco_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Arch_0_Mt_Wall_SmallBrick_A_Va = Engine::vertexArray::create();
+		Arch_0_Mt_Wall_SmallBrick_A_Va->load("hylia_bridge/Arch_0_Mt_Wall_SmallBrick_A_tb.model");
+		Arch_0_Mt_Wall_SmallBrick_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Basis_0_Mt_Builparts_HyliaOrnament_C_Va = Engine::vertexArray::create();
+		Basis_0_Mt_Builparts_HyliaOrnament_C_Va->load("hylia_bridge/Basis_0_Mt_Builparts_HyliaOrnament_C_tb.model");
+		Basis_0_Mt_Builparts_HyliaOrnament_C_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Center_Deco_0_Mt_Builparts_HyliaOrnament_B_Va = Engine::vertexArray::create();
+		Center_Deco_0_Mt_Builparts_HyliaOrnament_B_Va->load("hylia_bridge/Center_Deco_0_Mt_Builparts_HyliaOrnament_B_tb.model");
+		Center_Deco_0_Mt_Builparts_HyliaOrnament_B_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Center_Deco_3_Mt_Wall_TOTTile01_G_Va = Engine::vertexArray::create();
+		Center_Deco_3_Mt_Wall_TOTTile01_G_Va->load("hylia_bridge/Center_Deco_3_Mt_Wall_TOTTile01_G_tb.model");
+		Center_Deco_3_Mt_Wall_TOTTile01_G_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Center_Floor_0_Mt_Builparts_HyliaStoneBrick_A_Va = Engine::vertexArray::create();
+		Center_Floor_0_Mt_Builparts_HyliaStoneBrick_A_Va->load("hylia_bridge/Center_Floor_0_Mt_Builparts_HyliaStoneBrick_A_tb.model");
+		Center_Floor_0_Mt_Builparts_HyliaStoneBrick_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Circle_Paving_1_Mt_Wall_FloorBrick_A_Va = Engine::vertexArray::create();
+		Circle_Paving_1_Mt_Wall_FloorBrick_A_Va->load("hylia_bridge/Circle_Paving_1_Mt_Wall_FloorBrick_A_tb.model");
+		Circle_Paving_1_Mt_Wall_FloorBrick_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Circle_Paving_2_Mt_Wall_ReliefStone_D_Va = Engine::vertexArray::create();
+		Circle_Paving_2_Mt_Wall_ReliefStone_D_Va->load("hylia_bridge/Circle_Paving_2_Mt_Wall_ReliefStone_D_tb.model");
+		Circle_Paving_2_Mt_Wall_ReliefStone_D_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Circle_Paving_3_Mt_Plant_GreenGrassField_B_Va = Engine::vertexArray::create();//<- the one without texture
+		Circle_Paving_3_Mt_Plant_GreenGrassField_B_Va->load("hylia_bridge/Circle_Paving_3_Mt_Plant_GreenGrassField_B.model");
+		Circle_Paving_3_Mt_Plant_GreenGrassField_B_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Circle_Paving_4_10_Mt_Wall_FloorBrick_B_Va = Engine::vertexArray::create();
+		Circle_Paving_4_10_Mt_Wall_FloorBrick_B_Va->load("hylia_bridge/Circle_Paving_4_10_Mt_Wall_FloorBrick_B_tb.model");
+		Circle_Paving_4_10_Mt_Wall_FloorBrick_B_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Crack_10_Mt_Wall_Crack_A_Va = Engine::vertexArray::create();
+		Crack_10_Mt_Wall_Crack_A_Va->load("hylia_bridge/Crack_10_Mt_Wall_Crack_A_tb.model");
+		Crack_10_Mt_Wall_Crack_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Decoration_1_4_Mt_Wall_TOTTileCutsurface_Va = Engine::vertexArray::create();
+		Decoration_1_4_Mt_Wall_TOTTileCutsurface_Va->load("hylia_bridge/Decoration_1_4_Mt_Wall_TOTTileCutsurface_tb.model");
+		Decoration_1_4_Mt_Wall_TOTTileCutsurface_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Fence_0_Mt_Stone_HyliaBridgeBreak_A_Va = Engine::vertexArray::create();
+		Fence_0_Mt_Stone_HyliaBridgeBreak_A_Va->load("hylia_bridge/Fence_0_Mt_Stone_HyliaBridgeBreak_A_tb.model");
+		Fence_0_Mt_Stone_HyliaBridgeBreak_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Main_Body_1_Mt_Wall_LargeBrick_A_Va = Engine::vertexArray::create();
+		Main_Body_1_Mt_Wall_LargeBrick_A_Va->load("hylia_bridge/Main_Body_1_Mt_Wall_LargeBrick_A_tb.model");
+		Main_Body_1_Mt_Wall_LargeBrick_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Ornament_3_Mt_Builparts_Ornament_A_Va = Engine::vertexArray::create();
+		Ornament_3_Mt_Builparts_Ornament_A_Va->load("hylia_bridge/Ornament_3_Mt_Builparts_Ornament_A_tb.model");
+		Ornament_3_Mt_Builparts_Ornament_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Pedestral_Center_2_Mt_Wall_TempleOfTime_A_Va = Engine::vertexArray::create();
+		Pedestral_Center_2_Mt_Wall_TempleOfTime_A_Va->load("hylia_bridge/Pedestral_Center_2_Mt_Wall_TempleOfTime_A_tb.model");
+		Pedestral_Center_2_Mt_Wall_TempleOfTime_A_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> Stone_Paving_1_Mt_Wall_StoneRoad_D_Va = Engine::vertexArray::create();
+		Stone_Paving_1_Mt_Wall_StoneRoad_D_Va->load("hylia_bridge/Stone_Paving_1_Mt_Wall_StoneRoad_D_tb.model");
+		Stone_Paving_1_Mt_Wall_StoneRoad_D_Va->unbind();
+		//load textures:
+		//::::::::ALB::::::::::
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_HyliaStucco_A_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_HyliaStucco_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_SmallBrick_A_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_SmallBrick_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Builparts_HyliaOrnament_C_Alb = Engine::texture2d::create("hylia_bridge/Builparts_HyliaOrnament_C_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Builparts_HyliaOrnament_B_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Builparts_HyliaOrnament_B_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_TOTTile01_G_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_TOTTile01_G_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Builparts_HyliaStoneBrick_A_Alb = Engine::texture2d::create("hylia_bridge/Builparts_HyliaStoneBrick_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Wall_FloorBrick_A_Alb = Engine::texture2d::create("hylia_bridge/Wall_FloorBrick_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_ReliefStone_D_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_ReliefStone_D_Alb.png", true);
+		//here would be the one without texture atm
+		//next one uses the texture "Wall_FloorBrick_A_Alb" which is already loaded
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_Crack_A_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_Crack_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_TOTTileCutsurface_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_TOTTileCutsurface_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Stone_HyliaBridgeBreak_A_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Stone_HyliaBridgeBreak_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_LargeBrick_A_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_LargeBrick_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> Builparts_Ornament_A_Alb = Engine::texture2d::create("hylia_bridge/Builparts_Ornament_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_TempleOfTime_A_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_TempleOfTime_A_Alb.png", true);
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_StoneRoad_D_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_StoneRoad_D_Alb.png", true);
+		//:::::::::NRM:::::::::::
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_HyliaStucco_A_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_HyliaStucco_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_SmallBrick_A_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_SmallBrick_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> Builparts_HyliaOrnament_C_Nrm = Engine::texture2d::create("hylia_bridge/Builparts_HyliaOrnament_C_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Builparts_HyliaOrnament_B_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Builparts_HyliaOrnament_B_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_TOTTile01_G_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_TOTTile01_G_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> Builparts_HyliaStoneBrick_A_Nrm = Engine::texture2d::create("hylia_bridge/Builparts_HyliaStoneBrick_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> Wall_FloorBrick_A_Nrm = Engine::texture2d::create("hylia_bridge/Wall_FloorBrick_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_ReliefStone_D_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_ReliefStone_D_Nrm.png");
+		//here would be the one without texture atm
+		//next one uses the texture "Wall_FloorBrick_A_Nrm" which is already loaded
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_Crack_A_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_Crack_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_TOTTileCutsurface_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_TOTTileCutsurface_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Stone_HyliaBridgeBreak_A_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Stone_HyliaBridgeBreak_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_LargeBrick_A_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_LargeBrick_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> Builparts_Ornament_A_Nrm = Engine::texture2d::create("hylia_bridge/Builparts_Ornament_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_TempleOfTime_A_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_TempleOfTime_A_Nrm.png");
+		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_StoneRoad_D_Nrm = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_StoneRoad_D_Nrm.png");
+
+		//load shaders
+		Engine::Ref_ptr<Engine::shader> alb_nrm_map_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map.shader");
+		alb_nrm_map_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+
+		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+
+		//create materials(named after their textures, not after the models that they are assigned to)
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_HyliaStucco_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_HyliaStucco_A");
+		Mat_CmnTex_Wall_HyliaStucco_A->setTexture("u_texture", CmnTex_Wall_HyliaStucco_A_Alb);
+		Mat_CmnTex_Wall_HyliaStucco_A->setTexture("u_normalMap", CmnTex_Wall_HyliaStucco_A_Nrm);
+		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_HyliaStucco_A->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_HyliaStucco_A);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_SmallBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_SmallBrick_A");
+		Mat_CmnTex_Wall_SmallBrick_A->setTexture("u_texture", CmnTex_Wall_SmallBrick_A_Alb);
+		Mat_CmnTex_Wall_SmallBrick_A->setTexture("u_normalMap", CmnTex_Wall_SmallBrick_A_Nrm);
+		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_SmallBrick_A->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_SmallBrick_A);
+		Engine::Ref_ptr<Engine::material> Mat_Builparts_HyliaOrnament_C = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_HyliaOrnament_C");
+		Mat_Builparts_HyliaOrnament_C->setTexture("u_texture", Builparts_HyliaOrnament_C_Alb);
+		Mat_Builparts_HyliaOrnament_C->setTexture("u_normalMap", Builparts_HyliaOrnament_C_Nrm);
+		Mat_Builparts_HyliaOrnament_C->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Builparts_HyliaOrnament_C->setUniform1f("specCoefficient", 0.05f);
+		Mat_Builparts_HyliaOrnament_C->setUniform1f("shininess", 80.0f);
+		Mat_Builparts_HyliaOrnament_C->flushAll();
+		m_scene.addMaterial(Mat_Builparts_HyliaOrnament_C);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Builparts_HyliaOrnament_B = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Builparts_HyliaOrnament_B");
+		Mat_CmnTex_Builparts_HyliaOrnament_B->setTexture("u_texture", CmnTex_Builparts_HyliaOrnament_B_Alb);
+		Mat_CmnTex_Builparts_HyliaOrnament_B->setTexture("u_normalMap", CmnTex_Builparts_HyliaOrnament_B_Nrm);
+		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Builparts_HyliaOrnament_B->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Builparts_HyliaOrnament_B);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TOTTile01_G = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TOTTile01_G");
+		Mat_CmnTex_Wall_TOTTile01_G->setTexture("u_texture", CmnTex_Wall_TOTTile01_G_Alb);
+		Mat_CmnTex_Wall_TOTTile01_G->setTexture("u_normalMap", CmnTex_Wall_TOTTile01_G_Nrm);
+		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_TOTTile01_G->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_TOTTile01_G);
+		Engine::Ref_ptr<Engine::material> Mat_Builparts_HyliaStoneBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_HyliaStoneBrick_A");
+		Mat_Builparts_HyliaStoneBrick_A->setTexture("u_texture", Builparts_HyliaStoneBrick_A_Alb);
+		Mat_Builparts_HyliaStoneBrick_A->setTexture("u_normalMap", Builparts_HyliaStoneBrick_A_Nrm);
+		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("shininess", 80.0f);
+		Mat_Builparts_HyliaStoneBrick_A->flushAll();
+		m_scene.addMaterial(Mat_Builparts_HyliaStoneBrick_A);
+		Engine::Ref_ptr<Engine::material> Mat_Wall_FloorBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_Mat_Wall_FloorBrick_A");
+		Mat_Wall_FloorBrick_A->setTexture("u_texture", Wall_FloorBrick_A_Alb);
+		Mat_Wall_FloorBrick_A->setTexture("u_normalMap", Wall_FloorBrick_A_Nrm);
+		Mat_Wall_FloorBrick_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Wall_FloorBrick_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_Wall_FloorBrick_A->setUniform1f("shininess", 80.0f);
+		Mat_Wall_FloorBrick_A->flushAll();
+		m_scene.addMaterial(Mat_Wall_FloorBrick_A);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_ReliefStone_D = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_ReliefStone_D");
+		Mat_CmnTex_Wall_ReliefStone_D->setTexture("u_texture", CmnTex_Wall_ReliefStone_D_Alb);
+		Mat_CmnTex_Wall_ReliefStone_D->setTexture("u_normalMap", CmnTex_Wall_ReliefStone_D_Nrm);
+		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_ReliefStone_D->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_ReliefStone_D);
+		Engine::Ref_ptr<Engine::material> green = Engine::material::create(color_shader, "green");
+		green->setUniform4f("alb", 0.2f, 0.8f, 0.2f, 1.0f);
+		green->setUniform1f("ambCoefficient", 0.25f);
+		green->setUniform1f("specCoefficient", 0.1f);
+		green->setUniform1f("shininess", 80.0f);
+		green->flushAll();
+		m_scene.addMaterial(green);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_Crack_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_Crack_A");
+		Mat_CmnTex_Wall_Crack_A->dissableFlags(flag_cast_shadow);
+		Mat_CmnTex_Wall_Crack_A->setTexture("u_texture", CmnTex_Wall_Crack_A_Alb);
+		Mat_CmnTex_Wall_Crack_A->setTexture("u_normalMap", CmnTex_Wall_Crack_A_Nrm);
+		Mat_CmnTex_Wall_Crack_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_Crack_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_Crack_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_Crack_A->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_Crack_A);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TOTTileCutsurface = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TOTTileCutsurface");
+		Mat_CmnTex_Wall_TOTTileCutsurface->setTexture("u_texture", CmnTex_Wall_TOTTileCutsurface_Alb);
+		Mat_CmnTex_Wall_TOTTileCutsurface->setTexture("u_normalMap", CmnTex_Wall_TOTTileCutsurface_Nrm);
+		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_TOTTileCutsurface->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_TOTTileCutsurface);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Stone_HyliaBridgeBreak_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Stone_HyliaBridgeBreak_A");
+		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setTexture("u_texture", CmnTex_Stone_HyliaBridgeBreak_A_Alb);
+		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setTexture("u_normalMap", CmnTex_Stone_HyliaBridgeBreak_A_Nrm);
+		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Stone_HyliaBridgeBreak_A->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Stone_HyliaBridgeBreak_A);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_LargeBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_LargeBrick_A");
+		Mat_CmnTex_Wall_LargeBrick_A->setTexture("u_texture", CmnTex_Wall_LargeBrick_A_Alb);
+		Mat_CmnTex_Wall_LargeBrick_A->setTexture("u_normalMap", CmnTex_Wall_LargeBrick_A_Nrm);
+		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_LargeBrick_A->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_LargeBrick_A);
+		Engine::Ref_ptr<Engine::material> Mat_Builparts_Ornament_A = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_Ornament_A");
+		Mat_Builparts_Ornament_A->setTexture("u_texture", Builparts_Ornament_A_Alb);
+		Mat_Builparts_Ornament_A->setTexture("u_normalMap", Builparts_Ornament_A_Nrm);
+		Mat_Builparts_Ornament_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_Builparts_Ornament_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_Builparts_Ornament_A->setUniform1f("shininess", 80.0f);
+		Mat_Builparts_Ornament_A->flushAll();
+		m_scene.addMaterial(Mat_Builparts_Ornament_A);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TempleOfTime_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TempleOfTime_A");
+		Mat_CmnTex_Wall_TempleOfTime_A->setTexture("u_texture", CmnTex_Wall_TempleOfTime_A_Alb);
+		Mat_CmnTex_Wall_TempleOfTime_A->setTexture("u_normalMap", CmnTex_Wall_TempleOfTime_A_Nrm);
+		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_TempleOfTime_A->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_TempleOfTime_A);
+		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_StoneRoad_D = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_StoneRoad_D");
+		Mat_CmnTex_Wall_StoneRoad_D->setTexture("u_texture", CmnTex_Wall_StoneRoad_D_Alb);
+		Mat_CmnTex_Wall_StoneRoad_D->setTexture("u_normalMap", CmnTex_Wall_StoneRoad_D_Nrm);
+		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("ambCoefficient", 0.1f);
+		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("specCoefficient", 0.05f);
+		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_StoneRoad_D->flushAll();
+		m_scene.addMaterial(Mat_CmnTex_Wall_StoneRoad_D);
+
+		Engine::Ref_ptr<Engine::mesh> Arch_0_Mt_Wall_HyliaStucco_A = Engine::mesh::create(Arch_0_Mt_Wall_HyliaStucco_A_Va, Mat_CmnTex_Wall_HyliaStucco_A, "Arch_0_Mt_Wall_HyliaStucco_A");
+		m_scene.addMesh(Arch_0_Mt_Wall_HyliaStucco_A);
+		Engine::Ref_ptr<Engine::mesh> Arch_0_Mt_Wall_SmallBrick_A = Engine::mesh::create(Arch_0_Mt_Wall_SmallBrick_A_Va, Mat_CmnTex_Wall_SmallBrick_A, "Arch_0_Mt_Wall_SmallBrick_A");
+		m_scene.addMesh(Arch_0_Mt_Wall_SmallBrick_A);
+		Engine::Ref_ptr<Engine::mesh> Basis_0_Mt_Builparts_HyliaOrnament_C = Engine::mesh::create(Basis_0_Mt_Builparts_HyliaOrnament_C_Va, Mat_Builparts_HyliaOrnament_C, "Basis_0_Mt_Builparts_HyliaOrnament_C");
+		m_scene.addMesh(Basis_0_Mt_Builparts_HyliaOrnament_C);
+		Engine::Ref_ptr<Engine::mesh> Center_Deco_0_Mt_Builparts_HyliaOrnament_B = Engine::mesh::create(Center_Deco_0_Mt_Builparts_HyliaOrnament_B_Va, Mat_CmnTex_Builparts_HyliaOrnament_B, "Center_Deco_0_Mt_Builparts_HyliaOrnament_B");
+		m_scene.addMesh(Center_Deco_0_Mt_Builparts_HyliaOrnament_B);
+		Engine::Ref_ptr<Engine::mesh> Center_Deco_3_Mt_Wall_TOTTile01_G = Engine::mesh::create(Center_Deco_3_Mt_Wall_TOTTile01_G_Va, Mat_CmnTex_Wall_TOTTile01_G, "Center_Deco_3_Mt_Wall_TOTTile01_G");
+		m_scene.addMesh(Center_Deco_3_Mt_Wall_TOTTile01_G);
+		Engine::Ref_ptr<Engine::mesh> Center_Floor_0_Mt_Builparts_HyliaStoneBrick_A = Engine::mesh::create(Center_Floor_0_Mt_Builparts_HyliaStoneBrick_A_Va, Mat_Builparts_HyliaStoneBrick_A, "Center_Floor_0_Mt_Builparts_HyliaStoneBrick_A");
+		m_scene.addMesh(Center_Floor_0_Mt_Builparts_HyliaStoneBrick_A);
+		Engine::Ref_ptr<Engine::mesh> Circle_Paving_1_Mt_Wall_FloorBrick_A = Engine::mesh::create(Circle_Paving_1_Mt_Wall_FloorBrick_A_Va, Mat_Wall_FloorBrick_A, "Circle_Paving_1_Mt_Wall_FloorBrick_A");
+		m_scene.addMesh(Circle_Paving_1_Mt_Wall_FloorBrick_A);
+		Engine::Ref_ptr<Engine::mesh> Circle_Paving_2_Mt_Wall_ReliefStone_D = Engine::mesh::create(Circle_Paving_2_Mt_Wall_ReliefStone_D_Va, Mat_CmnTex_Wall_ReliefStone_D, "Circle_Paving_2_Mt_Wall_ReliefStone_D");
+		m_scene.addMesh(Circle_Paving_2_Mt_Wall_ReliefStone_D);
+		Engine::Ref_ptr<Engine::mesh> Circle_Paving_3_Mt_Plant_GreenGrassField_B = Engine::mesh::create(Circle_Paving_3_Mt_Plant_GreenGrassField_B_Va, green, "Circle_Paving_3_Mt_Plant_GreenGrassField_B");
+		m_scene.addMesh(Circle_Paving_3_Mt_Plant_GreenGrassField_B);
+		Engine::Ref_ptr<Engine::mesh> Circle_Paving_4_10_Mt_Wall_FloorBrick_B = Engine::mesh::create(Circle_Paving_4_10_Mt_Wall_FloorBrick_B_Va, Mat_Wall_FloorBrick_A, "Circle_Paving_4_10_Mt_Wall_FloorBrick_B");
+		m_scene.addMesh(Circle_Paving_4_10_Mt_Wall_FloorBrick_B);
+		Engine::Ref_ptr<Engine::mesh> Crack_10_Mt_Wall_Crack_A = Engine::mesh::create(Crack_10_Mt_Wall_Crack_A_Va, Mat_CmnTex_Wall_Crack_A, "Crack_10_Mt_Wall_Crack_A");
+		m_scene.addMesh(Crack_10_Mt_Wall_Crack_A);
+		Engine::Ref_ptr<Engine::mesh> Decoration_1_4_Mt_Wall_TOTTileCutsurface = Engine::mesh::create(Decoration_1_4_Mt_Wall_TOTTileCutsurface_Va, Mat_CmnTex_Wall_TOTTileCutsurface , "Decoration_1_4_Mt_Wall_TOTTileCutsurface");
+		m_scene.addMesh(Decoration_1_4_Mt_Wall_TOTTileCutsurface);
+		Engine::Ref_ptr<Engine::mesh> Fence_0_Mt_Stone_HyliaBridgeBreak_A = Engine::mesh::create(Fence_0_Mt_Stone_HyliaBridgeBreak_A_Va, Mat_CmnTex_Stone_HyliaBridgeBreak_A, "Fence_0_Mt_Stone_HyiaBridgeBreak_A");
+		m_scene.addMesh(Fence_0_Mt_Stone_HyliaBridgeBreak_A);
+		Engine::Ref_ptr<Engine::mesh> Main_Body_1_Mt_Wall_LargeBrick_A = Engine::mesh::create(Main_Body_1_Mt_Wall_LargeBrick_A_Va, Mat_CmnTex_Wall_LargeBrick_A, "Main_Body_1_Mt_Wall_LargeBrick_A");
+		m_scene.addMesh(Main_Body_1_Mt_Wall_LargeBrick_A);
+		Engine::Ref_ptr<Engine::mesh> Ornament_3_Mt_Builparts_Ornament_A = Engine::mesh::create(Ornament_3_Mt_Builparts_Ornament_A_Va, Mat_Builparts_Ornament_A, "Ornament_3_Mt_Builparts_Ornament_A");
+		m_scene.addMesh(Ornament_3_Mt_Builparts_Ornament_A);
+		Engine::Ref_ptr<Engine::mesh> Pedestral_Center_2_Mt_Wall_TempleOfTime_A = Engine::mesh::create(Pedestral_Center_2_Mt_Wall_TempleOfTime_A_Va, Mat_CmnTex_Wall_TempleOfTime_A, "Pedestral_Center_2_Mt_Wall_TempleOfTime_A");
+		m_scene.addMesh(Pedestral_Center_2_Mt_Wall_TempleOfTime_A);
+		Engine::Ref_ptr<Engine::mesh> Stone_Paving_1_Mt_Wall_StoneRoad_D = Engine::mesh::create(Stone_Paving_1_Mt_Wall_StoneRoad_D_Va, Mat_CmnTex_Wall_StoneRoad_D, "Stone_Paving_1_Mt_Wall_StoneRoad_D");
+		m_scene.addMesh(Stone_Paving_1_Mt_Wall_StoneRoad_D);
+
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
+		m_scene.addLight(sun);
 	}
 
 private:
@@ -981,7 +1128,7 @@ class Sandbox : public Engine::Application
 public:
 	Sandbox()
 	{
-		SandboxLayer* sandboxLayer = new SandboxLayer(90.f, 0.1f, 1000.0f);
+		SandboxLayer* sandboxLayer = new SandboxLayer(90.f, 0.1f, 100.0f);
 		pushLayer(sandboxLayer);
 		pushOverlay(new Engine::NodeEditorLayer(sandboxLayer->getScene()));
 	}

@@ -21,14 +21,15 @@ layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 
 uniform mat4 u_toLightSpace[6];
+uniform uint u_layer;//<-layer of the cubemap's positive x face
 
 out vec4 fragPos;//gets outputed per EmitVertex();
 
 void main()
 {
-	for (int face = 0; face < 6; ++face)
+	for (uint face = 0; face < 6; ++face)
 	{
-		gl_Layer = face;//specify to which face of the cubemap we render
+		gl_Layer = int(face + u_layer);//specify to which face of the cubemap we render
 		for (int i = 0; i < 3; ++i)
 		{
 			fragPos = gl_in[i].gl_Position;//fragPos remains in world-space to calculate depth, but we still need to transform into the appropriate lightSpace to be able to do projection

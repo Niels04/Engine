@@ -2,7 +2,7 @@
 
 #include "lights.hpp"
 
-#define DirLightIndexToElementIndex(x) x * (4 + 1)//with 4 being the number of elements that make up a directional light
+#define DirLightIndexToElementIndex(x) x * (7 + 1)//with 7 being the number of elements that make up a directional light
 #define PointLightIndexToElementIndex(x) x * (5 + 6/*cuz a pointLight has 6 transformation-matrices*/)
 #define SpotLightIndexToElementIndex(x) x * (6 + 1)//+1 cuz of the toLightSpaceMatrix
 
@@ -15,9 +15,59 @@
 
 namespace Engine
 {
-	mat4 lightMatrixCalculator::s_projDir = mat4::projMat(DIR_LIGHT_CAM);
 	mat4 lightMatrixCalculator::s_projPoint = mat4::projMat(POINT_LIGHT_CAM);
 	mat4 lightMatrixCalculator::s_projSpot = mat4::projMat(SPOT_LIGHT_CAM);
+	float lightMatrixCalculator::s_fovs[2] = { 0.0f };
+	mat4 lightMatrixCalculator::s_INV_viewMat = mat4::identity();
+	vec3 lightMatrixCalculator::frustaPoints_viewSpace[3][8] = { {} };
+	vec3 lightMatrixCalculator::frustaPoints_worldSpace[3][8] = { {} };
+
+	void lightMatrixCalculator::init(const float hFov, const float vFov, const float nearPlane, const float farPlane)
+	{
+		//initialize cascaded shadowMap boundingboxes
+		s_fovs[0] = hFov; s_fovs[1] = vFov;
+		const float Nn = nearPlane;//the near cascade's nearPlanes is the camera's nearPlane
+		const float Nf = farPlane * 0.3333333f;
+		const float Mn = Nf;//middle cascade's nearPlane
+		const float Mf = farPlane * 0.6666666f;
+		const float Fn = Mf;
+		const float Ff = farPlane;
+		const float tanFovH = tanf(RAD(hFov * 0.5f));
+		const float tanFovV = tanf(RAD(vFov * 0.5f));
+		frustaPoints_viewSpace[0][0] = { Nn * tanFovH, 0.0f, -Nn };//near-cascade | nearPlane | positive x
+		frustaPoints_viewSpace[0][1] = { -frustaPoints_viewSpace[0][0].x, 0.0f, -Nn };//near-cascade | nearPlane | negative x
+		frustaPoints_viewSpace[0][2] = { 0.0f, Nn * tanFovV, -Nn };//near-cascade | nearPlane | positive y
+		frustaPoints_viewSpace[0][3] = { 0.0f, -frustaPoints_viewSpace[0][2].y, -Nn };//near-cascade | nearPlane | negative y
+		frustaPoints_viewSpace[0][4] = { Nf * tanFovH, 0.0f, -Nf };//near-cascade | farPlane | positive x
+		frustaPoints_viewSpace[0][5] = { -frustaPoints_viewSpace[0][4].x, 0.0f, -Nf };//near-cascade | farPlane | negative x
+		frustaPoints_viewSpace[0][6] = { 0.0f, Nf * tanFovV, -Nf };//near-cascade | farPlane | positive y
+		frustaPoints_viewSpace[0][7] = { 0.0f, -frustaPoints_viewSpace[0][6].y, -Nf };//near-cascade | farPlane | negative y
+		frustaPoints_viewSpace[1][0] = { Mn * tanFovH, 0.0f, -Mn };//middle-cascade | nearPlane | positive x
+		frustaPoints_viewSpace[1][1] = { -frustaPoints_viewSpace[1][0].x, 0.0f, -Mn };//middle-cascade | nearPlane | negative x
+		frustaPoints_viewSpace[1][2] = { 0.0f, Mn * tanFovV, -Mn };//middle-cascade | nearPlane | positive y
+		frustaPoints_viewSpace[1][3] = { 0.0f, -frustaPoints_viewSpace[1][2].y, -Mn };//middle-cascade | nearPlane | negative y
+		frustaPoints_viewSpace[1][4] = { Mf * tanFovH, 0.0f, -Mf };//middle-cascade | farPlane | positive x
+		frustaPoints_viewSpace[1][5] = { -frustaPoints_viewSpace[1][4].x, 0.0f, -Mf };//middle-cascade | farPlane | negative x
+		frustaPoints_viewSpace[1][6] = { 0.0f, Mf * tanFovV, -Mf };//middle-cascade | farPlane | positive y
+		frustaPoints_viewSpace[1][7] = { 0.0f, -frustaPoints_viewSpace[1][6].y, -Mf };//middle-cascade | farPlane | negative y
+		frustaPoints_viewSpace[2][0] = { Fn * tanFovH, 0.0f, -Fn };//far-cascade | nearPlane | positive x
+		frustaPoints_viewSpace[2][1] = { -frustaPoints_viewSpace[2][0].x, 0.0f, -Fn };//far-cascade | nearPlane | negative x
+		frustaPoints_viewSpace[2][2] = { 0.0f, Fn * tanFovV, -Fn };//far-cascade | nearPlane | positive y
+		frustaPoints_viewSpace[2][3] = { 0.0f, -frustaPoints_viewSpace[2][2].y, -Fn };//far-cascade | nearPlane | negative y
+		frustaPoints_viewSpace[2][4] = { Ff * tanFovH, 0.0f, -Ff };//far-cascade | farPlane | positive x
+		frustaPoints_viewSpace[2][5] = { -frustaPoints_viewSpace[2][4].x, 0.0f, -Ff };//far-cascade | farPlane | negative x
+		frustaPoints_viewSpace[2][6] = { 0.0f, Ff * tanFovV, -Ff };//far-cascade | farPlane | positive y
+		frustaPoints_viewSpace[2][7] = { 0.0f, -frustaPoints_viewSpace[2][6].y, -Ff };//far-cascade | farPlane | negative y
+		/*mat4 reflect;
+		reflect.setReflectMat(mat4::reflectType::z);
+		for (uint8_t i = 0; i < 3; i++)
+		{
+			for (uint8_t j = 0; j < 8; j++)
+			{
+				frustaPoints_viewSpace[i][j] = (reflect * vec4(frustaPoints_viewSpace[i][j], 1.0f)).xyz();
+			}
+		}*/
+	}
 
 	void LightManager::init()
 	{
@@ -28,22 +78,25 @@ namespace Engine
 		m_depthShader_spot = shader::create("shadow/toDepthMap_spot.shader");
 
 		const int32_t initialLightCount = 0;//by default there is no light source
-		directionalLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(std::pair<directionalLight, mat4>), STATIC_DRAW);//add an int at the beginning for the count
+		directionalLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4/*x4 because of padding*/ + MAX_DIR_LIGHTS * sizeof(std::pair<directionalLight, cascadedDirLightMatrices>), DYNAMIC_DRAW);//add an int at the beginning for the count
 		directionalLightBuffer->lAddIntB();//integer for count
-		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
+		for (uint8_t i = 0; i < MAX_DIR_LIGHTS; i++)
 		{
 			directionalLightBuffer->lAddVec4B();
 			directionalLightBuffer->lAddVec4B();
 			directionalLightBuffer->lAddVec4B();
 			directionalLightBuffer->lAddVec4B();
-			directionalLightBuffer->lAddMat4B();//toLightSpaceMatrix
+			//cascaded toLightSpace Matrices
+			directionalLightBuffer->lAddMat4B();
+			directionalLightBuffer->lAddMat4B();
+			directionalLightBuffer->lAddMat4B();
 		}
 		directionalLightBuffer->bindToPoint(DIRECTIONAL_LIGHTS_BIND);
 		directionalLightBuffer->updateElement(0, &initialLightCount);
 		directionalLightBuffer->unbind();
-		pointLightBuffer = globalBuffer::createUnique(sizeof(int) * 4/*x4 because of padding*/ + MAX_LIGHTS_PER_TYPE * sizeof(std::pair<pointLight, pointLightMatrices>), DYNAMIC_DRAW);
+		pointLightBuffer = globalBuffer::createUnique(sizeof(int) * 4/*x4 because of padding*/ + MAX_POINT_LIGHTS * sizeof(std::pair<pointLight, pointLightMatrices>), DYNAMIC_DRAW);
 		pointLightBuffer->lAddIntB();//integer for count
-		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
+		for (uint8_t i = 0; i < MAX_POINT_LIGHTS; i++)
 		{
 			pointLightBuffer->lAddVec4B();
 			pointLightBuffer->lAddVec4B();
@@ -61,9 +114,9 @@ namespace Engine
 		pointLightBuffer->bindToPoint(POINT_LIGHTS_BIND);
 		pointLightBuffer->updateElement(0, &initialLightCount);
 		pointLightBuffer->unbind();
-		spotLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4 /*x4 because of padding*/+ (MAX_LIGHTS_PER_TYPE * sizeof(std::pair<spotLight, mat4>)), DYNAMIC_DRAW);
+		spotLightBuffer = globalBuffer::createUnique(sizeof(int)  * 4 /*x4 because of padding*/+ (MAX_SPOT_LIGHTS * sizeof(std::pair<spotLight, mat4>)), DYNAMIC_DRAW);
 		spotLightBuffer->lAddIntB();
-		for (uint8_t i = 0; i < MAX_LIGHTS_PER_TYPE; i++)
+		for (uint8_t i = 0; i < MAX_SPOT_LIGHTS; i++)
 		{
 			spotLightBuffer->lAddVec4B();
 			spotLightBuffer->lAddVec4B();
@@ -76,10 +129,22 @@ namespace Engine
 		spotLightBuffer->bindToPoint(SPOT_LIGHTS_BIND);
 		spotLightBuffer->updateElement(0, &initialLightCount);
 		spotLightBuffer->unbind();
+		//now allocate memory for the shadow maps:::
+		m_dirLightMapArray = ShadowMap2dArray::create(Shadow_Width, Shadow_Height, MAX_DIR_LIGHTS * 3/*with 3 being the number of cascades*/);//<- will have to be carefull to not over-allocate here, cuz this takes a whole lot of memory
+		m_pointLightMapArray = ShadowMap3dArray::create(Shadow_Width, MAX_POINT_LIGHTS);
+		m_spotLightMapArray = ShadowMap2dArray::create(Shadow_Width, Shadow_Height, MAX_SPOT_LIGHTS);
 	}
 
 	void LightManager::clear()
 	{
+		const int32_t light_count = 0;
+		directionalLightBuffer->bind();
+		directionalLightBuffer->updateElement(0, &light_count);
+		pointLightBuffer->bind();
+		pointLightBuffer->updateElement(0, &light_count);
+		spotLightBuffer->bind();
+		spotLightBuffer->updateElement(0, &light_count);
+		spotLightBuffer->unbind();
 		m_staticDirLights.clear();
 		m_staticPointLights.clear();
 		m_staticSpotLights.clear();
@@ -92,9 +157,6 @@ namespace Engine
 		m_dynamicDirLightPtrs.clear();
 		m_dynamicPointLightPtrs.clear();
 		m_dynamicSpotLightPtrs.clear();
-		m_dirLightTextures.clear();
-		m_pointLightTextures.clear();
-		m_spotLightTextures.clear();
 		//could initialize all gpu-memory to 0 here, but im not goin to bother with that, since there is no reason, the old data will just be overwritten
 	}
 
@@ -117,7 +179,6 @@ namespace Engine
 		updateStaticDirLights(it);
 		updateDynamicDirLights();
 		toRemove = NULL;
-		m_dirLightTextures.pop_back();
 		return;
 	}
 
@@ -141,7 +202,6 @@ namespace Engine
 		updateStaticPointLights(it);
 		updateDynamicPointLights();
 		toRemove = NULL;
-		m_pointLightTextures.pop_back();
 		return;
 	}
 
@@ -165,7 +225,6 @@ namespace Engine
 		updateStaticSpotLights(it);
 		updateDynamicSpotLights();
 		toRemove = NULL;
-		m_spotLightTextures.pop_back();
 		return;
 	}
 
@@ -188,7 +247,6 @@ namespace Engine
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
 		updateDynamicDirLights(it);
 		toRemove = NULL;
-		m_dirLightTextures.pop_back();
 		return;
 	}
 
@@ -211,7 +269,6 @@ namespace Engine
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
 		updateDynamicPointLights(it);
 		toRemove = NULL;
-		m_pointLightTextures.pop_back();
 		return;
 	}
 
@@ -234,7 +291,6 @@ namespace Engine
 		//:::::::UPDATE ALL DYNAMIC ELEMENTS
 		updateDynamicSpotLights(it);
 		toRemove = NULL;
-		m_spotLightTextures.pop_back();
 		return;
 	}
 
@@ -263,7 +319,7 @@ namespace Engine
 		directionalLightBuffer->unbind();
 	}
 
-	void LightManager::updateStaticDirLights(std::vector<std::pair<directionalLight, mat4>>::iterator it)
+	void LightManager::updateStaticDirLights(std::vector<std::pair<directionalLight, cascadedDirLightMatrices>>::iterator it)
 	{
 		uint8_t index = it - m_staticDirLights.begin();
 		directionalLightBuffer->bind();
@@ -271,7 +327,7 @@ namespace Engine
 		directionalLightBuffer->unbind();
 	}
 
-	void LightManager::updateDynamicDirLights(std::vector<std::pair<directionalLight, mat4>>::iterator it)
+	void LightManager::updateDynamicDirLights(std::vector<std::pair<directionalLight, cascadedDirLightMatrices>>::iterator it)
 	{
 		uint8_t index = it - m_dynamicDirLights.begin();
 		directionalLightBuffer->bind();
@@ -366,7 +422,7 @@ namespace Engine
 	{
 		for (auto& light : m_dynamicDirLights)
 		{
-			light.second = mat4::transposed(lightMatrixCalculator::getMatrix(light.first));
+			light.second = lightMatrixCalculator::getMatrix(light.first);
 		}
 		for (auto& light : m_dynamicPointLights)
 		{

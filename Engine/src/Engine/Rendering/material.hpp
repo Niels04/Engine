@@ -5,11 +5,11 @@
 #include "rendererAPI.hpp"
 
 #define flag_count 4
-#define flag_light_infl 0x1 //whether the material's appearance is dependent on lighting
-#define flag_depth_test 0x2
-#define flag_no_backface_cull 0x4 //->whether an object, which has only one side should be rendered from both sides regardless
-#define flag_cast_shadow 0x8
-#define flags_default flag_light_infl | flag_depth_test | flag_cast_shadow
+#define flag_depth_test 0x1
+#define flag_no_backface_cull 0x2 //->whether an object, which has only one side should be rendered from both sides regardless
+#define flag_cast_shadow 0x4
+#define flag_no_deferred 0x8
+#define flags_default flag_depth_test | flag_cast_shadow
 
 namespace Engine
 {
@@ -30,14 +30,13 @@ namespace Engine
 
 		static Ref_ptr<material> create(Ref_ptr<shader>& shader, const std::string& name, uint32_t flags = flags_default, uint32_t blend_src = ENG_SRC_ALPHA, uint32_t blend_dest =  ENG_ONE_MINUS_SRC_ALPHA );
 
-		inline void addShader(Ref_ptr<shader>& shader) { m_shaderRefs.push_back(shader); }
-		void bind(const uint16_t slot = 10, const uint8_t shader = 0);//reserve the first 10 slots for stuff like matrices and lights
+		void bind(const uint16_t slot = 10);//reserve the first 10 slots for stuff like matrices and lights
 
 		/*REMEMBER: THE FIRST SHADER ALWAYS IS THE INITIALIZATION SHADER, THAT DEFINES THE MATERIAL'S PROPERTIES. The Rest of the shaders are just for rendering the material a different way(but they should
 		the same uniforms nonetheless)*/
 
 		inline const std::string& getName() const { return m_name; }
-		inline const WeakRef_ptr<shader> getShader(const uint8_t index = 0) const { return m_shaderRefs[index]; }
+		inline const WeakRef_ptr<shader> getShader() const { return m_shaderRef; }
 
 		inline void enableFlags(const uint32_t flags) { m_properties.flags = m_properties.flags | flags; }
 		inline void dissableFlags(const uint32_t flags) { m_properties.flags = m_properties.flags & (~flags);/*inverts the flags, that are to be dissabled, and masks out with all the flags that stay untouched*/ }
@@ -79,7 +78,7 @@ namespace Engine
 	private:
 		inline const void* getData() const { return m_data; }
 		const std::string m_name;
-		std::vector<WeakRef_ptr<shader>> m_shaderRefs;//store a weak_ptr because a material shouldn't take ownership over it's shader(if one would delete the shaderLib for some reason)
+		WeakRef_ptr<shader> m_shaderRef;//store a weak_ptr because a material shouldn't take ownership over it's shader(if one would delete the shaderLib for some reason)
 		std::unordered_map<std::string, Ref_ptr<texture>> m_textures;
 		Scope_ptr<globalBuffer> m_globalBuffer;//this pointer inherits the material's lifetime, because it only belongs to this material
 		MaterialProperties m_properties;//pipeline state when the material is rendered

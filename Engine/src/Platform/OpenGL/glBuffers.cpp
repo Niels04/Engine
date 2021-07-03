@@ -227,6 +227,16 @@ namespace Engine
         GLCALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     }
 
+    void GLFrameBuffer::setReadBuffer() const
+    {
+        GLCALL(glBindFramebuffer(GL_READ_FRAMEBUFFER, m_renderer_id));
+    }
+
+    void GLFrameBuffer::setDrawBuffer() const
+    {
+        GLCALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_renderer_id));
+    }
+
     void GLFrameBuffer::initShadow() const
     {
         bind();
@@ -247,11 +257,18 @@ namespace Engine
     {
         GLCALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, map->getRenderer_id(), 0));
     }
-
     void GLFrameBuffer::attachTexture(const Ref_ptr<ShadowMap3d>& map) const
     {
         //GLCALL(glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP, map->getRenderer_id(), 0, 0));//potential cause of errors, maybe use glFramebufferTexture() instead
         GLCALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, map->getRenderer_id(), 0));
+    }
+    void GLFrameBuffer::attachTexture(const Ref_ptr<ShadowMap2dArray> & map, const uint8_t layer) const
+    {
+        GLCALL(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, map->getRenderer_id(), 0, layer));//->maybe this 0 should be a 1
+    }
+    void GLFrameBuffer::attachTexture(const Ref_ptr<ShadowMap3dArray>& map) const
+    {
+        GLCALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, map->getRenderer_id(), 0));//->maybe this 0 should be a 1
     }
 
     void GLFrameBuffer::attachTexture(const Ref_ptr<texture2d>& tex, const uint32_t slot) const

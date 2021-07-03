@@ -39,7 +39,6 @@ namespace Engine
 		else if (input::isKeyDown(ENG_KEY_S))
 			m_camPos -= (m_forward * m_speed * ts);
 		m_cam.setPos(m_camPos.xyz());
-
 	}
 
 	void PerspectiveCameraController::initialize(const float zNear, const float zFar, const float Fov, const float aspectRatio)

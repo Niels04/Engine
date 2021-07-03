@@ -213,7 +213,6 @@ namespace Engine
             ImGui::Image((void*)texture.second->getRenderer_id(), { 128, 128 });
         }
         uint32_t flags_packed = mat.second->getFlags();
-        ImGui::CheckboxFlags("light_infl", &flags_packed, flag_light_infl);
         ImGui::CheckboxFlags("depth_test", &flags_packed, flag_depth_test);
         ImGui::CheckboxFlags("cast_shadow", &flags_packed, flag_cast_shadow);
         ImGui::CheckboxFlags("no_backface_cull", &flags_packed, flag_no_backface_cull);

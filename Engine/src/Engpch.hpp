@@ -14,6 +14,7 @@
 #include <fstream>
 #include <charconv>
 #include <stdarg.h>
+#include <random>
 
 #include "Engine/Log.hpp"
 #include "Engine/datatypes/include.hpp"

@@ -22,6 +22,9 @@
     <Filter Include="src\Engine\datatypes">
       <UniqueIdentifier>{F05CD232-DCEB-5BFC-850A-70F771786CA2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Engine\nodeEditor">
+      <UniqueIdentifier>{2E6AFF14-9AD6-BA0F-63CA-526DCFF5DC77}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Engine\objects">
       <UniqueIdentifier>{EBC9EA40-D7AD-AB96-400E-A6E92C119618}</UniqueIdentifier>
     </Filter>
@@ -81,6 +84,12 @@
     <ClInclude Include="src\Engine\Rendering\material.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\LightMatrixStructs.hpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\Rendering\perspCam.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
@@ -114,7 +123,13 @@
     <ClInclude Include="src\Engine\datatypes\include.hpp">
       <Filter>src\Engine\datatypes</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\datatypes\mat3.hpp">
+      <Filter>src\Engine\datatypes</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\datatypes\mat4.hpp">
+      <Filter>src\Engine\datatypes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp">
       <Filter>src\Engine\datatypes</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\datatypes\types.hpp">
@@ -141,8 +156,23 @@
     <ClInclude Include="src\Engine\mouseButtonCodes.hpp">
       <Filter>src\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\nodeEditor\nodeEditorLayer.hpp">
+      <Filter>src\Engine\nodeEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\objects\light_effects.hpp">
+      <Filter>src\Engine\objects</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\objects\mesh.hpp">
       <Filter>src\Engine\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\objects\movement.hpp">
+      <Filter>src\Engine\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\objects\scene.hpp">
+      <Filter>src\Engine\objects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\perspectiveCameraController.hpp">
+      <Filter>src\Engine</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\window.hpp">
       <Filter>src\Engine</Filter>
@@ -183,15 +213,6 @@
     <ClInclude Include="vendor\stb_image\stb_image.hpp">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp" />
-    <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
-    <ClInclude Include="src\Engine\Rendering\pLightMatrices.hpp" />
-    <ClInclude Include="src\Engine\perspectiveCameraController.hpp" />
-    <ClInclude Include="src\Engine\objects\scene.hpp" />
-    <ClInclude Include="src\Engine\objects\movement.hpp" />
-    <ClInclude Include="src\Engine\objects\light_effects.hpp" />
-    <ClInclude Include="src\Engine\datatypes\mat3.hpp" />
-    <ClInclude Include="src\Engine\nodeEditor\nodeEditorLayer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -216,6 +237,9 @@
       <Filter>src\Engine\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\material.cpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\Rendering\orthographicCam.cpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\perspCam.cpp">
@@ -248,8 +272,23 @@
     <ClCompile Include="src\Engine\layerStack.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp">
+      <Filter>src\Engine\nodeEditor</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\objects\light_effects.cpp">
+      <Filter>src\Engine\objects</Filter>
+    </ClCompile>
     <ClCompile Include="src\Engine\objects\mesh.cpp">
       <Filter>src\Engine\objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\objects\movement.cpp">
+      <Filter>src\Engine\objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\objects\scene.cpp">
+      <Filter>src\Engine\objects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\perspectiveCameraController.cpp">
+      <Filter>src\Engine</Filter>
     </ClCompile>
     <ClCompile Include="src\Engpch.cpp">
       <Filter>src</Filter>
@@ -287,11 +326,5 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\Rendering\orthographicCam.cpp" />
-    <ClCompile Include="src\Engine\perspectiveCameraController.cpp" />
-    <ClCompile Include="src\Engine\objects\scene.cpp" />
-    <ClCompile Include="src\Engine\objects\movement.cpp" />
-    <ClCompile Include="src\Engine\objects\light_effects.cpp" />
-    <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp" />
   </ItemGroup>
 </Project>

@@ -160,12 +160,16 @@ namespace Engine
 		~GLFrameBuffer();
 		inline virtual void bind() const override;
 		inline virtual void unbind() const override;
+		inline virtual void setReadBuffer() const override;
+		inline virtual void setDrawBuffer() const override;
 
 		virtual void initShadow() const override;
 		virtual void checkStatus() const override;
 
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap2d>& map) const override;
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap3d>& map) const override;
+		inline virtual void attachTexture(const Ref_ptr<ShadowMap2dArray>& map, const uint8_t layer) const override;
+		inline virtual void attachTexture(const Ref_ptr<ShadowMap3dArray>& map) const override;
 		inline virtual void attachTexture(const Ref_ptr<texture2d>& tex, const uint32_t slot = 0) const override;
 		inline virtual void attachRenderBuffer(const Ref_ptr<RenderBuffer>& buffer) const override;
 	private:

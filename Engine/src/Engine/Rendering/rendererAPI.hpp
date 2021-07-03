@@ -1,7 +1,7 @@
 #pragma once
 #include "Engpch.hpp"
 
-#include "Platform/OpenGL/OpenGLVertexArray.hpp"
+#include "Platform/OpenGL/OpenGLVertexArray.hpp"//remove this?
 
 //blending -> forked from gl
 #define ENG_SRC_ALPHA 0x0302
@@ -17,6 +17,10 @@
 #define ENG_FLOAT_VEC3 0x8B51
 #define ENG_FLOAT_VEC4 0x8B52
 #define ENG_FLOAT_MAT4 0x8B5C
+
+#define ENG_DEPTH_BUFFER_BIT 0x00000100
+#define ENG_STENCIL_BUFFER_BIT 0x00000400
+#define ENG_COLOR_BUFFER_BIT 0x00004000
 
 //also forked from gl
 #define ENG_NEVER 0x0200
@@ -92,6 +96,7 @@ namespace Engine
 		virtual void enableCullFace(const bool enabled) const = 0;
 		virtual void cullFace(const uint32_t face) const = 0;
 		virtual void drawToBuffers(const uint32_t count, va_list params) const = 0;
+		virtual void copyFrameBufferContents(uint32_t width, uint32_t height, uint32_t buffer, uint32_t interpolationMode) const = 0;
 		virtual const uint32_t getMaxGlobalBuffers() const = 0;
 		virtual const uint8_t getMaxTextureBinds() const = 0;
 		inline static API getAPI() { return s_api; }

@@ -142,8 +142,6 @@
   <ItemGroup>
     <ClInclude Include="src\Engine.hpp" />
     <ClInclude Include="src\Engine\Application.hpp" />
-    <ClInclude Include="src\Engine\datatypes\mat3.hpp" />
-    <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
     <ClInclude Include="src\Engine\EntryPoint.hpp" />
     <ClInclude Include="src\Engine\Events\ApplicationEvent.hpp" />
     <ClInclude Include="src\Engine\Events\Event.hpp" />
@@ -151,18 +149,13 @@
     <ClInclude Include="src\Engine\Events\MouseEvent.hpp" />
     <ClInclude Include="src\Engine\ImGui\ImGuiLayer.hpp" />
     <ClInclude Include="src\Engine\Log.hpp" />
-    <ClInclude Include="src\Engine\nodeEditor\nodeEditorLayer.hpp" />
-    <ClInclude Include="src\Engine\objects\light_effects.hpp" />
-    <ClInclude Include="src\Engine\objects\movement.hpp" />
-    <ClInclude Include="src\Engine\objects\scene.hpp" />
-    <ClInclude Include="src\Engine\perspectiveCameraController.hpp" />
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp" />
     <ClInclude Include="src\Engine\Rendering\buffers.hpp" />
     <ClInclude Include="src\Engine\Rendering\lights.hpp" />
     <ClInclude Include="src\Engine\Rendering\material.hpp" />
     <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp" />
+    <ClInclude Include="src\Engine\Rendering\LightMatrixStructs.hpp" />
     <ClInclude Include="src\Engine\Rendering\perspCam.hpp" />
-    <ClInclude Include="src\Engine\Rendering\pLightMatrices.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderer.hpp" />
     <ClInclude Include="src\Engine\Rendering\rendererAPI.hpp" />
@@ -173,7 +166,9 @@
     <ClInclude Include="src\Engine\core.hpp" />
     <ClInclude Include="src\Engine\core\timeStep.hpp" />
     <ClInclude Include="src\Engine\datatypes\include.hpp" />
+    <ClInclude Include="src\Engine\datatypes\mat3.hpp" />
     <ClInclude Include="src\Engine\datatypes\mat4.hpp" />
+    <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
     <ClInclude Include="src\Engine\datatypes\types.hpp" />
     <ClInclude Include="src\Engine\datatypes\vec3.hpp" />
     <ClInclude Include="src\Engine\datatypes\vec4.hpp" />
@@ -182,7 +177,12 @@
     <ClInclude Include="src\Engine\layer.hpp" />
     <ClInclude Include="src\Engine\layerStack.hpp" />
     <ClInclude Include="src\Engine\mouseButtonCodes.hpp" />
+    <ClInclude Include="src\Engine\nodeEditor\nodeEditorLayer.hpp" />
+    <ClInclude Include="src\Engine\objects\light_effects.hpp" />
     <ClInclude Include="src\Engine\objects\mesh.hpp" />
+    <ClInclude Include="src\Engine\objects\movement.hpp" />
+    <ClInclude Include="src\Engine\objects\scene.hpp" />
+    <ClInclude Include="src\Engine\perspectiveCameraController.hpp" />
     <ClInclude Include="src\Engine\window.hpp" />
     <ClInclude Include="src\Engpch.hpp" />
     <ClInclude Include="src\Platform\OpenGL\GLbuffers.hpp" />
@@ -202,11 +202,6 @@
     <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp" />
     <ClCompile Include="src\Engine\Log.cpp" />
-    <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp" />
-    <ClCompile Include="src\Engine\objects\light_effects.cpp" />
-    <ClCompile Include="src\Engine\objects\movement.cpp" />
-    <ClCompile Include="src\Engine\objects\scene.cpp" />
-    <ClCompile Include="src\Engine\perspectiveCameraController.cpp" />
     <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp" />
     <ClCompile Include="src\Engine\Rendering\buffers.cpp" />
     <ClCompile Include="src\Engine\Rendering\lights.cpp" />
@@ -222,7 +217,12 @@
     <ClCompile Include="src\Engine\Rendering\vertexBufferLayout.cpp" />
     <ClCompile Include="src\Engine\layer.cpp" />
     <ClCompile Include="src\Engine\layerStack.cpp" />
+    <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp" />
+    <ClCompile Include="src\Engine\objects\light_effects.cpp" />
     <ClCompile Include="src\Engine\objects\mesh.cpp" />
+    <ClCompile Include="src\Engine\objects\movement.cpp" />
+    <ClCompile Include="src\Engine\objects\scene.cpp" />
+    <ClCompile Include="src\Engine\perspectiveCameraController.cpp" />
     <ClCompile Include="src\Engpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
