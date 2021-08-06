@@ -28,13 +28,13 @@ namespace Engine
 		}
 	}
 
-	Ref_ptr<texture2d> texture2d::create(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag)
+	Ref_ptr<texture2d> texture2d::create(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t texWrap)
 	{
 		switch (Renderer::getAPI())
 		{
 		case RendererAPI::API::OpenGL:
 		{
-			return std::make_shared<GLtexture2d>(width, height, format, filterMin, filterMag);
+			return std::make_shared<GLtexture2d>(width, height, format, filterMin, filterMag, texWrap);
 		}break;
 		case RendererAPI::API::NONE:
 		{

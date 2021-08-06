@@ -9,6 +9,7 @@
 #define FILTER_LINEAR 0x2601
 
 #define ENG_REPEAT 0x2901
+#define ENG_CLAMP_TO_EDGE 0x812F
 //formats
 #define ENG_R8 0x8229
 #define ENG_R16 0x822A
@@ -48,7 +49,7 @@ namespace Engine
 	public:
 		virtual ~texture2d() = default;
 		static Ref_ptr<texture2d> create(const std::string& path, const bool sRGB = false, const uint32_t filterMin = FILTER_LINEAR, const uint32_t filterMag = FILTER_LINEAR);
-		static Ref_ptr<texture2d> create(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin = FILTER_LINEAR, const uint32_t filterMag = FILTER_LINEAR);
+		static Ref_ptr<texture2d> create(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin = FILTER_LINEAR, const uint32_t filterMag = FILTER_LINEAR, const uint32_t texWrap = ENG_REPEAT);
 		static Ref_ptr<texture2d> create(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t textureWrap, const void* data);
 	};
 

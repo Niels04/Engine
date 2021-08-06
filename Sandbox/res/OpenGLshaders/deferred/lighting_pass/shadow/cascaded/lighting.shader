@@ -163,7 +163,7 @@ float calcDirShadow(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir, float di
 	clipSpaceCoords = clipSpaceCoords * 0.5f + 0.5f;
 	if (clipSpaceCoords.z > 1.0f)
 		return 0.0f;//no shadow if we are past the far-plane of the light's camera
-	//float shadowBias = max(0.01 * (1.0f - dot(normal, lightDir)), shadowBias_min);
+	//float shadowBias = max(0.01 * (1.0f - dot(normal, lightDir)), 0.005f);
 	float shadowBias = 0.0f;
 	//pcf:
 	float shadow = 0.0f;

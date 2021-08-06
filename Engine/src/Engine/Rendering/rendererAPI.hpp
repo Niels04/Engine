@@ -96,7 +96,8 @@ namespace Engine
 		virtual void enableCullFace(const bool enabled) const = 0;
 		virtual void cullFace(const uint32_t face) const = 0;
 		virtual void drawToBuffers(const uint32_t count, va_list params) const = 0;
-		virtual void copyFrameBufferContents(uint32_t width, uint32_t height, uint32_t buffer, uint32_t interpolationMode) const = 0;
+		virtual void copyFrameBufferContents(const uint32_t width, const uint32_t height, const uint32_t buffer, const uint32_t interpolationMode) const = 0;
+		virtual void copyFrameBufferContents(const uint32_t width_src, const uint32_t height_src, const uint32_t width_dest, const uint32_t height_dest, const uint32_t buffer, const uint32_t interpolationMode) const = 0;
 		virtual const uint32_t getMaxGlobalBuffers() const = 0;
 		virtual const uint8_t getMaxTextureBinds() const = 0;
 		inline static API getAPI() { return s_api; }

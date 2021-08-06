@@ -31,7 +31,8 @@ in vec2 v_texCoord;
 uniform sampler2D u_texture;
 uniform bool horizontal;
 
-float weight[5] = float[] (0.227027f, 0.1945946f, 0.1216216f, 0.054054f, 0.016216f);
+//float weight[5] = float[] (0.227027f, 0.1945946f, 0.1216216f, 0.054054f, 0.016216f);
+float weight[7] = float[](0.00992f, 0.03012f, 0.05867f, 0.07327f, 0.05867f, 0.03012f, 0.00992f);
 
 void main()
 {
@@ -39,7 +40,7 @@ void main()
 	vec3 result = texture(u_texture, v_texCoord).rgb * weight[0];//store the actual texel weighed with the 0th weight
 	if (horizontal)
 	{
-		for (int i = 1; i < 5; i++)
+		for (int i = 1; i < 7; i++)
 		{
 			result += texture(u_texture, v_texCoord + vec2(texOffset.x * i, 0.0f)).rgb * weight[i];
 			result += texture(u_texture, v_texCoord - vec2(texOffset.x * i, 0.0f)).rgb * weight[i];
@@ -47,7 +48,7 @@ void main()
 	}
 	else
 	{
-		for (int i = 1; i < 5; i++)
+		for (int i = 1; i < 7; i++)
 		{
 			result += texture(u_texture, v_texCoord + vec2(0.0f, texOffset.y * i)).rgb * weight[i];
 			result += texture(u_texture, v_texCoord - vec2(0.0f, texOffset.y * i)).rgb * weight[i];

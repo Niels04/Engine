@@ -21,8 +21,10 @@ namespace Engine
 	Ref_ptr<vertexArray> Renderer::s_hdr_quad_va = nullptr;
 	Ref_ptr<shader> Renderer::s_hdr_quad_shader = nullptr;
 	Ref_ptr<shader> Renderer::s_hdr_quad_shader_bloom = nullptr;
-	Ref_ptr<shader> Renderer::s_blur_shader = nullptr;
+	Ref_ptr<shader> Renderer::s_blur_shader[2] = { nullptr, nullptr };
 	bool Renderer::s_bloom = false;
+	Ref_ptr<FrameBuffer> Renderer::s_testFrameBuffer = nullptr;
+	Ref_ptr<texture2d> Renderer::s_testTexture = nullptr;
 	//bool Renderer::s_drawLights = false;
 	//G-Buffer:::::::::::
 	Ref_ptr<FrameBuffer> Renderer::s_gBuffer = nullptr;
@@ -56,7 +58,7 @@ namespace Engine
 		s_sceneData->init();//setup stuff like the globalBuffer for the view- and projection matrices and lights
 
 		s_hdr_tex = Engine::texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA16F);
-		s_bright_tex = Engine::texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA16F);
+		s_bright_tex = Engine::texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA16F, FILTER_LINEAR, FILTER_LINEAR, ENG_CLAMP_TO_EDGE);//bloom texture should not repeat!
 		s_hdr_depth = RenderBuffer::create(RenderBufferUsage::DEPTH, s_maxViewportSize[0], s_maxViewportSize[1]);
 		s_hdr_fbo = FrameBuffer::create();
 		s_hdr_fbo->bind();
@@ -101,10 +103,15 @@ namespace Engine
 		s_hdr_quad_shader_bloom->setUniform1i("u_hdr", 0);
 		s_hdr_quad_shader_bloom->setUniform1i("u_bloom_blur", 1);
 		s_hdr_quad_shader_bloom->unbind();
-		s_blur_shader = shader::create("blur/gaussian_blur.shader");
-		s_blur_shader->bind();
-		s_blur_shader->setUniform1i("u_texture", 0);
-		s_blur_shader->unbind();
+		//horizontal is at index 1 and vertical is at index 0
+		s_blur_shader[1] = shader::create("blur/gaussian_blur_bilinear_hor.shader");
+		s_blur_shader[1]->bind();
+		s_blur_shader[1]->setUniform1i("u_texture", 0);
+		s_blur_shader[1]->unbind();
+		s_blur_shader[0] = shader::create("blur/gaussian_blur_bilinear_ver.shader");
+		s_blur_shader[0]->bind();
+		s_blur_shader[0]->setUniform1i("u_texture", 0);
+		s_blur_shader[0]->unbind();
 		
 		////////
 		//SETUP THE G-BUFFER
@@ -193,6 +200,12 @@ namespace Engine
 		s_debug_display_cascaded->setUniform1i("u_texture", 0);
 		s_debug_display_cascaded->unbind();
 
+		s_testTexture = texture2d::create(s_maxViewportSize[0] / 2, s_maxViewportSize[1] / 2, ENG_RGBA16F, FILTER_LINEAR, FILTER_LINEAR, ENG_CLAMP_TO_EDGE);
+		s_testFrameBuffer = FrameBuffer::create();
+		s_testFrameBuffer->bind();
+		s_testFrameBuffer->attachTexture(s_testTexture);
+		s_testFrameBuffer->checkStatus();
+		s_testFrameBuffer->unbind();
 		//setup of the display of one cascade:
 		//setupCascadeDisplay();
 	}
@@ -278,7 +291,10 @@ namespace Engine
 		s_hdr_quad_va.reset();
 		s_hdr_quad_shader.reset();
 		s_hdr_quad_shader_bloom.reset();
-		s_blur_shader.reset();
+		s_blur_shader[0].reset();
+		s_blur_shader[1].reset();
+		s_testFrameBuffer.reset();
+		s_testTexture.reset();
 		s_gBuffer.reset();
 		s_gPosition.reset();
 		s_gNormal.reset();
@@ -365,7 +381,6 @@ namespace Engine
 				renderCommand::drawIndexed(geometry);
 			}
 		}
-		//s_renderQueue.clear();//______________________________remove this
 		//fill the ambient-occlusion texture:
 		/*s_SSAO_FBO->bind();
 		renderCommand::clear();
@@ -403,9 +418,11 @@ namespace Engine
 		s_hdr_quad_va->bind();
 		renderCommand::drawIndexed(s_hdr_quad_va);
 		////////////now the forward-rendering part
-		s_gBuffer->setReadBuffer();//we want to copy some data from the gBuffer
+		renderCommand::copyFrameBufferContents(s_gBuffer, s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT,
+			s_hdr_fbo, s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT, FILTER_NEAREST);
+		/*s_gBuffer->setReadBuffer();//we want to copy some data from the gBuffer
 		s_hdr_fbo->setDrawBuffer();//we want to copy some data to the hdrBuffer
-		renderCommand::copyFrameBufferContents(s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT, FILTER_NEAREST);//copy over the geometry-pass depth-data to the hdr-buffer
+		renderCommand::copyFrameBufferContents(s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT, FILTER_NEAREST);//copy over the geometry-pass depth-data to the hdr-buffer*/
 		s_hdr_fbo->bind();//bind the hdr_fbo to both read and draw again
 		for (const auto Mesh : s_renderQueue)
 		{
@@ -425,31 +442,30 @@ namespace Engine
 				renderCommand::drawIndexed(geometry);
 			}
 		}
-		/*{//uncomment this for debugging cascaded shadowMaps
-			renderCommand::enableCullFace(false);
-			s_debug_cascade_va->bind();
-			s_debug_renderCascade->bind();
-			renderCommand::drawIndexed(s_debug_cascade_va);
-			s_debug_cascade_va->unbind();
-			s_debug_renderCascade->unbind();
-		}*/
 		/////////////////end of forward-rendering part
 		s_renderQueue.clear();
 		s_hdr_fbo->unbind();//don't remove this
+		//////testing with downscaling:
+		renderCommand::copyFrameBufferContents(s_hdr_fbo, s_maxViewportSize[0], s_maxViewportSize[1], ENG_COLOR_ATTACHMENT1,
+			s_testFrameBuffer, s_maxViewportSize[0] / 2, s_maxViewportSize[1] / 2, ENG_COLOR_ATTACHMENT0, FILTER_LINEAR);
+		//s_hdr_fbo->bind();
+		//s_hdr_fbo->unbind();
+		///////////end of testing with downscaling
 		//post-processing:
 		if (s_bloom)
 		{
-			s_blur_shader->bind();
+			//s_blur_shader[1]->bind();
 			s_pingPongFbo[0]->bind();
 			renderCommand::clear();
 			s_pingPongFbo[1]->bind();
 			renderCommand::clear();
 			bool horizontal = true, first_it = true;
-			constexpr uint8_t blurCount = 4;
+			constexpr uint8_t blurCount = 2;
 			for (uint8_t i = 0; i < blurCount; i++)
 			{
 				s_pingPongFbo[horizontal]->bind();
-				s_blur_shader->setUniform1b("horizontal", horizontal);
+				s_blur_shader[horizontal]->bind();
+				//s_blur_shader->setUniform1b("horizontal", horizontal);
 				if (first_it)
 					s_bright_tex->bind(0);
 				else
@@ -612,6 +628,12 @@ namespace Engine
 		ImGui::End();*/
 		/*ImGui::Begin("HDR_texture");
 		ImGui::Image((ImTextureID)s_hdr_tex->getRenderer_id(), { 512, 512 });
+		ImGui::End();*/
+		/*ImGui::Begin("Bright_texture");
+		ImGui::Image((ImTextureID)s_bright_tex->getRenderer_id(), { 512, 512 });
+		ImGui::End();
+		ImGui::Begin("TestTex");
+		ImGui::Image((ImTextureID)s_testTexture->getRenderer_id(), { 512, 512 });
 		ImGui::End();*/
 	}
 }

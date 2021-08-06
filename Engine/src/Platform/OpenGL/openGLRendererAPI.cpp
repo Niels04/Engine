@@ -104,6 +104,11 @@ namespace Engine
 		GLCALL(glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, buffer, interpolationMode));
 	}
 
+	void OpenGLRendererAPI::copyFrameBufferContents(const uint32_t width_src, const uint32_t height_src, const uint32_t width_dest, const uint32_t height_dest, const uint32_t buffer, const uint32_t interpolationMode) const
+	{
+		GLCALL(glBlitFramebuffer(0, 0, width_src, height_src, 0, 0, width_dest, height_dest, buffer, interpolationMode));
+	}
+
 	const uint32_t OpenGLRendererAPI::getMaxGlobalBuffers() const
 	{
 		GLint val;

@@ -5,22 +5,9 @@
 
 namespace Engine
 {
-	Scene::Scene(const float fov, const float nearPlane, const float farPlane, const float aspectRatio)
-		: m_camControl(nearPlane, farPlane, fov, aspectRatio)
-	{
-		//TEMPORARY!!!!!!!!!!!!
-		lightMatrixCalculator::init(fov, std::atanf((1.0f / aspectRatio) * std::tanf(0.5f * fov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / 3.14159265f), nearPlane, farPlane);
-	}
-
-	Scene::~Scene()
-	{
-		
-	}
-
 	void Scene::initialize(const float fov, const float nearPlane, const float farPlane, const float aspectRatio)
 	{
 		m_camControl.initialize(nearPlane, farPlane, fov, aspectRatio);
-		//TEMPORARY!!!!!!!!!
 		lightMatrixCalculator::init(fov, std::atanf((1.0f / aspectRatio) * std::tanf(0.5f * fov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / 3.14159265f), nearPlane, farPlane);
 	}
 

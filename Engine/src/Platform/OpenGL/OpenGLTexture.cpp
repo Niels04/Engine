@@ -48,7 +48,7 @@ namespace Engine
 		stbi_image_free(data);//deallocate the memory returned form stbi_load again
 	}
 
-	GLtexture2d::GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag)
+	GLtexture2d::GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t texWrap)
 	{
 		GLenum internalFormat = format;
 		m_width = width; m_height = height;
@@ -57,6 +57,8 @@ namespace Engine
 		stores the texture*/internalFormat, m_width, m_height));
 		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_MIN_FILTER, filterMin));
 		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_MAG_FILTER, filterMag));
+		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_WRAP_S, texWrap));
+		GLCALL(glTextureParameteri(m_renderer_id, GL_TEXTURE_WRAP_T, texWrap));
 	}
 
 	GLtexture2d::GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t textureWrap, const void* data)

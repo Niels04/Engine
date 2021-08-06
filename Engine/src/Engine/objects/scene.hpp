@@ -13,8 +13,8 @@ namespace Engine
 	{
 		friend class NodeEditorLayer;
 	public:
-		Scene(const float fov, const float nearPlane, const float farPlane, const float aspectRatio);
-		~Scene();
+		Scene() = default;
+		~Scene() = default;
 
 		void initialize(const float fov, const float nearPlane, const float farPlane, const float aspectRatio);//after the scene has been cleared, call this function to initialize a new scene
 		void clear(LightManager* lightManager);//delete absolutely everything from the scene

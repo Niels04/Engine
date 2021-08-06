@@ -8,7 +8,7 @@ namespace Engine
 	{
 	public:
 		GLtexture2d(const std::string& name, const bool sRGB, const uint32_t filterMin, const uint32_t filterMag);
-		GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag);
+		GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t texWrap);
 		GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t textureWrap, const void* data);
 		~GLtexture2d();
 

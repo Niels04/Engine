@@ -58,15 +58,6 @@ namespace Engine
 		frustaPoints_viewSpace[2][5] = { -frustaPoints_viewSpace[2][4].x, 0.0f, -Ff };//far-cascade | farPlane | negative x
 		frustaPoints_viewSpace[2][6] = { 0.0f, Ff * tanFovV, -Ff };//far-cascade | farPlane | positive y
 		frustaPoints_viewSpace[2][7] = { 0.0f, -frustaPoints_viewSpace[2][6].y, -Ff };//far-cascade | farPlane | negative y
-		/*mat4 reflect;
-		reflect.setReflectMat(mat4::reflectType::z);
-		for (uint8_t i = 0; i < 3; i++)
-		{
-			for (uint8_t j = 0; j < 8; j++)
-			{
-				frustaPoints_viewSpace[i][j] = (reflect * vec4(frustaPoints_viewSpace[i][j], 1.0f)).xyz();
-			}
-		}*/
 	}
 
 	void LightManager::init()

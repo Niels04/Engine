@@ -7,14 +7,16 @@ class SandboxLayer : public Engine::layer
 {
 	friend class Sandbox;
 public:
-	SandboxLayer(const float hFov, const float zNear, const float zFar)
-		: layer("RenderLayer"), m_scene(hFov, zNear, zFar, static_cast<float>(Engine::Application::Get().getWindow().getWidth() / static_cast<float>(Engine::Application::Get().getWindow().getHeight())))
+	SandboxLayer()
+		: layer("RenderLayer")
 	{
+		m_scene.initialize(90.0f, 0.1f, 100.0f, static_cast<float>(Engine::Application::Get().getWindow().getWidth() / static_cast<float>(Engine::Application::Get().getWindow().getHeight())));
 		Engine::Application::Get().getWindow().setDissableCursor(false);
 		Engine::Application::Get().getWindow().setFullscreen(false);
 	}
 	~SandboxLayer()
 	{
+		m_scene.clear(Engine::Renderer::getLightManager());
 	}
 
 	void onUpdate(Engine::timestep ts) override
@@ -36,7 +38,7 @@ public:
 		}
 		Engine::Renderer::endScene();
 		//first render to the depth maps
-		Engine::Renderer::RenderDepthMaps();// <- no shadows for now with deferred shading
+		Engine::Renderer::RenderDepthMaps();
 		//then render the scene with the shadows applied
 		Engine::Renderer::Flush();
 	}
@@ -155,6 +157,11 @@ public:
 		else if (ImGui::Button("hylia_bridge"))
 		{
 			hylia_bridge();
+			m_sceneLoaded = true;
+		}
+		else if (ImGui::Button("bloom_demo"))
+		{
+			bloom_demo();
 			m_sceneLoaded = true;
 		}
 		ImGui::End();
@@ -902,6 +909,10 @@ public:
 		Engine::Ref_ptr<Engine::vertexArray> Stone_Paving_1_Mt_Wall_StoneRoad_D_Va = Engine::vertexArray::create();
 		Stone_Paving_1_Mt_Wall_StoneRoad_D_Va->load("hylia_bridge/Stone_Paving_1_Mt_Wall_StoneRoad_D_tb.model");
 		Stone_Paving_1_Mt_Wall_StoneRoad_D_Va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> lightbulb_va = Engine::vertexArray::create();
+		lightbulb_va->load("lightbulb.model");
+		lightbulb_va->unbind();
+
 		//load textures:
 		//::::::::ALB::::::::::
 		Engine::Ref_ptr<Engine::texture2d> CmnTex_Wall_HyliaStucco_A_Alb = Engine::texture2d::create("hylia_bridge/CmnTex_Wall_HyliaStucco_A_Alb.png", true);
@@ -946,6 +957,9 @@ public:
 
 		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
 		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+
+		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
+		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		//create materials(named after their textures, not after the models that they are assigned to)
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_HyliaStucco_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_HyliaStucco_A");
@@ -1076,6 +1090,10 @@ public:
 		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_StoneRoad_D->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_StoneRoad_D);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
+		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 0.1f, 1.0f });
+		mat_emissive->setUniform1f("multiplier", 20.0f);
+		mat_emissive->flushAll();
 
 		Engine::Ref_ptr<Engine::mesh> Arch_0_Mt_Wall_HyliaStucco_A = Engine::mesh::create(Arch_0_Mt_Wall_HyliaStucco_A_Va, Mat_CmnTex_Wall_HyliaStucco_A, "Arch_0_Mt_Wall_HyliaStucco_A");
 		m_scene.addMesh(Arch_0_Mt_Wall_HyliaStucco_A);
@@ -1111,8 +1129,67 @@ public:
 		m_scene.addMesh(Pedestral_Center_2_Mt_Wall_TempleOfTime_A);
 		Engine::Ref_ptr<Engine::mesh> Stone_Paving_1_Mt_Wall_StoneRoad_D = Engine::mesh::create(Stone_Paving_1_Mt_Wall_StoneRoad_D_Va, Mat_CmnTex_Wall_StoneRoad_D, "Stone_Paving_1_Mt_Wall_StoneRoad_D");
 		m_scene.addMesh(Stone_Paving_1_Mt_Wall_StoneRoad_D);
+		Engine::Ref_ptr<Engine::mesh> lightbulb = Engine::mesh::create(lightbulb_va, mat_emissive, "lightbulb");
+		lightbulb->setScale(0.1f);
+		m_scene.addMesh(lightbulb);
 
 		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
+		m_scene.addLight(sun);
+		Engine::Ref_ptr<Engine::DirLightMovement> rotate = Engine::DirLightMovement::create(0.0174533f * 60.0f * 0.25f * 0.0f , 0.0174533f * 60.0f * 0.25f, 0.0f);
+		rotate->attachToLight(sun);
+		m_scene.addLightMovement(rotate);
+	}
+
+	void bloom_demo()
+	{
+		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
+		plane_va->load("plane.model");
+		plane_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> cube_va = Engine::vertexArray::create();
+		cube_va->load("cube.model");
+		cube_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> text_va = Engine::vertexArray::create();
+		text_va->load("test_text.model");
+		text_va->unbind();
+
+		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
+		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+
+		Engine::Ref_ptr<Engine::material> plane_mat = Engine::material::create(color_shader, "planeMat");
+		plane_mat->setUniform4f("alb", 0.1f, 0.1f, 0.1f, 1.0f);
+		plane_mat->setUniform1f("ambCoefficient", 0.285f);
+		plane_mat->setUniform1f("specCoefficient", 0.8f);
+		plane_mat->setUniform1f("shininess", 100.0f);
+		plane_mat->flushAll();
+		m_scene.addMaterial(plane_mat);
+
+		Engine::Ref_ptr<Engine::material> cube_mat = Engine::material::create(color_shader, "CubeMat");
+		cube_mat->setUniform4f("alb", 0.1f, 0.1f, 0.1f, 1.0f);
+		cube_mat->setUniform1f("ambCoefficient", 0.285f);
+		cube_mat->setUniform1f("specCoefficient", 0.8f);
+		cube_mat->setUniform1f("shininess", 100.0f);
+		cube_mat->flushAll();
+		m_scene.addMaterial(cube_mat);
+
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
+		mat_emissive->setUniform4f("emissiveColor", { 1.0f, 0.95f, 0.05f, 1.0f });
+		mat_emissive->setUniform1f("multiplier", 20.0f);
+		mat_emissive->flushAll();
+		m_scene.addMaterial(mat_emissive);
+
+		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, plane_mat, "plane");
+		m_scene.addMesh(plane);
+		Engine::Ref_ptr<Engine::mesh> cube = Engine::mesh::create(cube_va, cube_mat, "cube");
+		m_scene.addMesh(cube);
+		Engine::Ref_ptr<Engine::mesh> text = Engine::mesh::create(text_va, mat_emissive, "text");
+		text->setScale(2.0f);
+		text->setRot({ 3.1415926f / 2.0f, 0.0f, 0.0f });
+		text->setPos({ 0.0f, 6.0f, -5.5f, 1.0f });
+		m_scene.addMesh(text);
+
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.8f, 0.8f, 0.8f), vec3(1.0f, 1.0f, 1.0f) });
 		m_scene.addLight(sun);
 	}
 
@@ -1128,7 +1205,7 @@ class Sandbox : public Engine::Application
 public:
 	Sandbox()
 	{
-		SandboxLayer* sandboxLayer = new SandboxLayer(90.f, 0.1f, 100.0f);
+		SandboxLayer* sandboxLayer = new SandboxLayer();
 		pushLayer(sandboxLayer);
 		pushOverlay(new Engine::NodeEditorLayer(sandboxLayer->getScene()));
 	}

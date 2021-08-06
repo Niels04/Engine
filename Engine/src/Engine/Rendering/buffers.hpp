@@ -104,6 +104,7 @@ namespace Engine
 
 	class FrameBuffer
 	{
+		friend class renderCommand;
 	public:
 		static Ref_ptr<FrameBuffer> create();
 		virtual ~FrameBuffer() = default;
@@ -123,5 +124,8 @@ namespace Engine
 		inline virtual void attachTexture(const Ref_ptr<ShadowMap3dArray>& map) const = 0;
 		inline virtual void attachTexture(const Ref_ptr<texture2d>& tex, const uint32_t slot = 0) const = 0;
 		inline virtual void attachRenderBuffer(const Ref_ptr<RenderBuffer>& buffer) const = 0;
+	private:
+		inline virtual void setSrcBuffer(const uint32_t src_attachment) const = 0;
+		inline virtual void setDestBuffer(const uint32_t dest_attachment) const = 0;
 	};
 }

@@ -114,17 +114,12 @@ namespace Engine
 	};
 
 //defines for shadows
-#define DIR_LIGHT_CAM -25.0f, 25.0f, -25.0f, 25.0f, -1.0f, -60.0f//default orthographic camera for a directional-light
 #define SPOT_LIGHT_CAM 1.0f, 20.0f, 90.0f, 90.0f//default projectionMatrix for a spotLight
 #define POINT_LIGHT_CAM 1.0f, 60.0f, 90.0f, 90.0f//default camera for a pointLight
 
 	class lightMatrixCalculator
 	{
 	public:
-		/*inline static const mat4 getMatrix(const directionalLight& light)
-		{
-			return s_projDir * mat4::transposed(mat4::lookAt(light.direction)) * mat4::transMat(light.direction * 30.0f);
-		}*/
 		inline static const cascadedDirLightMatrices getMatrix(const directionalLight& light)
 		{
 			vec3 frustaPoints_lightSpace[3][8];
@@ -169,8 +164,6 @@ namespace Engine
 		inline static void setViewMat(const mat4& viewMat)
 		{
 			s_INV_viewMat = mat4::inverse3x3(viewMat) * mat4::transMat({ -viewMat.mat[0][3], -viewMat.mat[1][3], -viewMat.mat[2][3], 1.0f });
-			//s_INV_viewMat = mat4::inverse3x3(viewMat) * mat4::transMat(-viewMat.mat[0][3], -viewMat.mat[1][3], viewMat.mat[2][3]);
-			//s_INV_viewMat = mat4::transMat(-viewMat.mat[0][3], -viewMat.mat[1][3], viewMat.mat[2][3]) * mat4::inverse3x3(viewMat);
 			for (uint8_t i = 0; i < 3; i++)
 			{
 				for (uint8_t j = 0; j < 8; j++)
@@ -178,14 +171,14 @@ namespace Engine
 					frustaPoints_worldSpace[i][j] = (s_INV_viewMat * vec4(frustaPoints_viewSpace[i][j], 1.0f)).xyz();
 				}
 			}
-		}//test this!!!
+		}
 		inline static void calcFrustumBox(vec3 points[8], float dimensionsOut[6])
 		{
 			dimensionsOut[0] = std::numeric_limits<float>::max();
 			dimensionsOut[1] = std::numeric_limits<float>::min();
 			dimensionsOut[2] = std::numeric_limits<float>::max();
 			dimensionsOut[3] = std::numeric_limits<float>::min();
-			dimensionsOut[4] = std::numeric_limits<float>::min();//near <- originally this was max, but since near and far are negative now, this should be min
+			dimensionsOut[4] = std::numeric_limits<float>::min();//near
 			dimensionsOut[4] = -100000.0f;
 			dimensionsOut[5] = std::numeric_limits<float>::min();//far
 			dimensionsOut[5] = -10.0f;//a value that is between znear and zfar from which we can go in the negative direction
@@ -195,11 +188,9 @@ namespace Engine
 				dimensionsOut[1] = std::fmax(dimensionsOut[1], points[i].x);//right
 				dimensionsOut[2] = std::fmin(dimensionsOut[2], points[i].y);//bottom
 				dimensionsOut[3] = std::fmax(dimensionsOut[3], points[i].y);//top
-				dimensionsOut[4] = std::fmax(dimensionsOut[4], points[i].z);//near <- originally min, but changed to max
+				dimensionsOut[4] = std::fmax(dimensionsOut[4], points[i].z);//near
 				dimensionsOut[5] = std::fmin(dimensionsOut[5], points[i].z);//far
 			}
-			//dimensionsOut[4] = -dimensionsOut[4];//this is only temporary and because my orthographic projMat only works with positive zfar and znear
-			//dimensionsOut[5] = -dimensionsOut[5];
 		}
 
 		static void init(const float hFov, const float vFov, const float nearPlane, const float farPlane);

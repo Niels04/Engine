@@ -20,6 +20,7 @@ namespace Engine
 		virtual void cullFace(const uint32_t face) const override;
 		virtual void drawToBuffers(const uint32_t count, va_list params) const override;
 		virtual void copyFrameBufferContents(const uint32_t width, const uint32_t const height, const uint32_t const buffer, const uint32_t interpolationMode) const override;
+		virtual void copyFrameBufferContents(const uint32_t width_src, const uint32_t height_src, const uint32_t width_dest, const uint32_t height_dest, const uint32_t buffer, const uint32_t interpolationMode) const override;
 		virtual const uint32_t getMaxGlobalBuffers() const override;
 		virtual const uint8_t getMaxTextureBinds() const override;
 	};

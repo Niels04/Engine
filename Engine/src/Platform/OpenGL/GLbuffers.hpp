@@ -173,6 +173,9 @@ namespace Engine
 		inline virtual void attachTexture(const Ref_ptr<texture2d>& tex, const uint32_t slot = 0) const override;
 		inline virtual void attachRenderBuffer(const Ref_ptr<RenderBuffer>& buffer) const override;
 	private:
+		inline virtual void setSrcBuffer(const uint32_t scr_attachment) const override;
+		inline virtual void setDestBuffer(const uint32_t dest_attachment) const override;
+
 		uint32_t m_renderer_id;
 	};
 }

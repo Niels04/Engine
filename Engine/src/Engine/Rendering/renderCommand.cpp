@@ -79,4 +79,34 @@ namespace Engine
 	{
 		s_RendererAPI->copyFrameBufferContents(width, height, buffer, interpolationMode);
 	}
+
+	void renderCommand::copyFrameBufferContents(const uint32_t width_src, const uint32_t height_src, const uint32_t width_dest, const uint32_t height_dest, const uint32_t buffer, const uint32_t interpolationMode)
+	{
+		s_RendererAPI->copyFrameBufferContents(width_src, height_src, width_dest, height_dest, buffer, interpolationMode);
+	}
+
+	//note that for anything else than color attachments "src_attachment" and "dest_attachment" have to be exactly the same!!!
+	void renderCommand::copyFrameBufferContents(const Ref_ptr<FrameBuffer> src_fbo, const uint32_t src_width, const uint32_t src_height, const uint32_t src_attachment,
+		const Ref_ptr<FrameBuffer> dest_fbo, const uint32_t dest_width, const uint32_t dest_height, const uint32_t dest_attachment, const uint32_t interpolationMode)
+	{
+		src_fbo->setReadBuffer();
+		dest_fbo->setDrawBuffer();
+		if (src_attachment == ENG_DEPTH_BUFFER_BIT)
+		{
+			ENG_ASSERT(dest_attachment == src_attachment, "When using non-color attachments, source and destination attachments are to be of the same type.");
+			ENG_ASSERT(interpolationMode == FILTER_NEAREST, "Linear interpolation can only be used with color attachments.");
+			s_RendererAPI->copyFrameBufferContents(src_width, src_height, dest_width, dest_height, ENG_DEPTH_BUFFER_BIT, interpolationMode);
+		}
+		else if (src_attachment >= ENG_COLOR_ATTACHMENT0 && src_attachment <= ENG_COLOR_ATTACHMENT31)//if both are color attachments
+		{
+			ENG_ASSERT(dest_attachment >= ENG_COLOR_ATTACHMENT0 && dest_attachment <= ENG_COLOR_ATTACHMENT31, "Can't copy attachment of type color into attachment of other type.");
+			src_fbo->setSrcBuffer(src_attachment);
+			dest_fbo->setDestBuffer(dest_attachment);
+			s_RendererAPI->copyFrameBufferContents(src_width, src_height, dest_width, dest_height, ENG_COLOR_BUFFER_BIT, interpolationMode);
+			dest_fbo->unbind();//just so that no frameBuffer is bound after the operation
+		}
+		else
+			ENG_ASSERT(false, "Unsupported value of \"src_attachment\".");
+	}
+
 }

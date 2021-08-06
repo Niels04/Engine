@@ -237,6 +237,16 @@ namespace Engine
         GLCALL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_renderer_id));
     }
 
+    void GLFrameBuffer::setSrcBuffer(const uint32_t src_attachment) const
+    {
+        GLCALL(glReadBuffer(src_attachment));
+    }
+
+    void GLFrameBuffer::setDestBuffer(const uint32_t dest_attachment) const
+    {
+        GLCALL(glDrawBuffer(dest_attachment));
+    }
+
     void GLFrameBuffer::initShadow() const
     {
         bind();

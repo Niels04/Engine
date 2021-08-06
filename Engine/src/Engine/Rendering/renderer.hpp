@@ -66,8 +66,10 @@ namespace Engine
 		static Ref_ptr<vertexArray> s_hdr_quad_va;
 		static Ref_ptr<shader> s_hdr_quad_shader;
 		static Ref_ptr<shader> s_hdr_quad_shader_bloom;
-		static Ref_ptr<shader> s_blur_shader;
+		static Ref_ptr<shader> s_blur_shader[2];
 		static bool s_bloom;
+		static Ref_ptr<FrameBuffer> s_testFrameBuffer;
+		static Ref_ptr<texture2d> s_testTexture;
 		//static bool s_DebugDrawLights;
 		//G-BUFFER:::::
 		static Ref_ptr<FrameBuffer> s_gBuffer;

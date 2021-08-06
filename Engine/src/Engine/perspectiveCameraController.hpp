@@ -17,6 +17,7 @@ namespace Engine
 			m_farPlane(zFar), m_fov(Fov)
 		{
 		}
+		PerspectiveCameraController() = default;
 		void initialize(const float zNear, const float zFar, /*the horizontal fov*/const float Fov, const float aspectRatio);//used for initialization after a call to "clear"
 		void clear();//clear the cameraController -> make a call to "initialize" before using it again
 		inline const perspectiveCamera& getCam() const { return m_cam; }
