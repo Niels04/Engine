@@ -236,6 +236,8 @@ void main()
 	vec4 AlbSpec = texture(u_gAlbSpec, v_texCoord).rgba;
 	float specIntensity = AlbSpec.a;
 	vec4 normal = texture(u_gNormal, v_texCoord).rgba;
+	//first restore the viewSpace normal and then multiply it with the inverse viewMatrix
+	//normal.z = sqrt(1.0f - (normal.x * normal.x) - (normal.y * normal.y));
 	float shininess = normal.w;//<-retrieve the shininess from the normal's w-component
 	vec3 viewDir = viewPos.xyz - fragPos.xyz;
 	float viewDistance = length(viewDir);

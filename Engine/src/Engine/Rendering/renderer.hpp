@@ -33,6 +33,9 @@ namespace Engine
 		inline static shaderLib* getShaderLib() { return s_shaderLib; }
 		inline static LightManager* getLightManager() { return &s_sceneData->lightManager; }
 
+		inline static Ref_ptr<shader> getSkyboxShader() { return s_skyboxShader; }
+		inline static Ref_ptr<vertexArray> getSkyboxVa() { return s_skyboxVa; }
+
 		//inline static void setDebugDrawLights(bool DebugDrawLights) { s_DebugDrawLights = DebugDrawLights; /*initialize shaders and models that are needet to draw the lights HERE(if set to false de-initialize all the buffers and shaders)*/ }
 
 		[[nodiscard]] static directionalLight** addStaticDirLight(const directionalLight& light, const vec3& pos = { 0.0f, 0.0f, 0.0f }) { return s_sceneData->lightManager.addStaticDirLight(light); }
@@ -47,6 +50,7 @@ namespace Engine
 			void init();
 			mat4 viewProjMat;
 			vec4 viewPos;
+			mat4 viewMat;
 			Ref_ptr<globalBuffer> viewProjBuffer;
 			Ref_ptr<globalBuffer> testBuffer;
 			LightManager lightManager;
@@ -68,8 +72,7 @@ namespace Engine
 		static Ref_ptr<shader> s_hdr_quad_shader_bloom;
 		static Ref_ptr<shader> s_blur_shader[2];
 		static bool s_bloom;
-		static Ref_ptr<FrameBuffer> s_testFrameBuffer;
-		static Ref_ptr<texture2d> s_testTexture;
+		static float s_exposure;//exposure for hdr rendering
 		//static bool s_DebugDrawLights;
 		//G-BUFFER:::::
 		static Ref_ptr<FrameBuffer> s_gBuffer;
@@ -84,6 +87,9 @@ namespace Engine
 		static Ref_ptr<texture2d> s_AO;//ambient occlusion texture that only has a red-component
 		static Ref_ptr<shader> s_SSAO_shader;
 		static Ref_ptr<shader> s_debug_display_ssao;
+		//skybox
+		static Ref_ptr<shader> s_skyboxShader;
+		static Ref_ptr<vertexArray> s_skyboxVa;
 		//other
 		static Ref_ptr<shader> s_debug_display_cascaded;//renders a cascaded shadowMap to screen
 		static Ref_ptr<vertexArray> s_debug_cascade_va;//vertexArray used to visualize a cascade

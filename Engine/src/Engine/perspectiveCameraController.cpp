@@ -71,6 +71,20 @@ namespace Engine
 		dispatcher.dispatchEvent<windowResizeEvent>(ENG_BIND_EVENT_FN(PerspectiveCameraController::onWindowResizedEvent));
 	}
 
+	void PerspectiveCameraController::DEBUG_setCamPos(const vec4& pos)
+	{
+		ENG_CORE_WARN("Using debug function \"PerspectiveCameraController::DEBUG_setCamPos(const vec4& pos)\"!");
+		m_camPos = pos;
+		m_cam.setPos(pos.xyz());
+	}
+
+	void PerspectiveCameraController::DEBUG_setCAmRot(const vec3& rot)
+	{
+		ENG_CORE_WARN("Using debug function \"PerspectiveCameraController::DEBUG_setCamRot(const vec3& rot)\"!");
+		m_camRot = rot;
+		m_cam.setRot(rot);
+	}
+
 	bool PerspectiveCameraController::onWindowResizedEvent(windowResizeEvent& e)
 	{
 		float aspectRatioInverse = static_cast<float>(e.getHeight()) / static_cast<float>(e.getWidth());

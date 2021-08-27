@@ -68,6 +68,46 @@ namespace Engine
 		}
 	}
 
+	Ref_ptr<texture3d> texture3d::create(const std::string& folderPath, const bool sRGB, const uint32_t filterMin, const uint32_t filterMag)
+	{
+		switch (Renderer::getAPI())
+		{
+		case RendererAPI::API::OpenGL:
+		{
+			return std::make_shared<GLtexture3d>(folderPath, sRGB, filterMin, filterMag);
+		}break;
+		case RendererAPI::API::NONE:
+		{
+			ENG_CORE_WARN("Tried to create a 3d-texture while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			return nullptr;
+		}break;
+		default:
+		{
+			ENG_CORE_ASSERT(false, "RenderingAPI was an unknown value.");
+		}break;
+		}
+	}
+
+	Ref_ptr<texture3d_hdr> texture3d_hdr::create(const std::string& folderPath)
+	{
+		switch (Renderer::getAPI())
+		{
+		case RendererAPI::API::OpenGL:
+		{
+			return std::make_shared<GLtexture3d_hdr>(folderPath);
+		}break;
+		case RendererAPI::API::NONE:
+		{
+			ENG_CORE_WARN("Tried to create a 3d_hdr-texture while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			return nullptr;
+		}break;
+		default:
+		{
+			ENG_CORE_ASSERT(false, "RenderingAPI was an unknown value.");
+		}break;
+		}
+	}
+
 	Ref_ptr<ShadowMap2d> ShadowMap2d::create(const uint32_t width, const uint32_t height)
 	{
 		switch (Renderer::getAPI())
@@ -138,7 +178,7 @@ namespace Engine
 		}break;
 		case RendererAPI::API::NONE:
 		{
-			ENG_CORE_WARN("Tried to create a ShadowMap3d while RenderingAPI was set to \"NONE\". Returning nullptr.");
+			ENG_CORE_WARN("Tried to create a ShadowMap3dArray while RenderingAPI was set to \"NONE\". Returning nullptr.");
 			return nullptr;
 		}break;
 		default:

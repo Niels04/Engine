@@ -1,8 +1,9 @@
 #matUniformBlock
-#size 48
+#size 64
 #var float 'ambCoefficient'
 #var float 'specCoefficient'
 #var float 'shininess'
+#var float 'emissiveMultiplier'
 #endMatUniformBlock
 
 #textures
@@ -24,7 +25,8 @@ out vec3 v_normal;
 layout(std140) uniform ViewProjection
 {
 	mat4 viewProjMat;
-	vec4 viewPos;//not needed in this shader, but in the lighting-shader <- maybe just remove this
+	vec4 padd;
+	mat4 viewMat;//in order to transform the normal into viewSpace
 };
 
 uniform mat4 u_modelMat;
@@ -34,7 +36,7 @@ void main()
 {
 	v_fragPos = (u_modelMat * vec4(a_pos, 1.0f)).xyz;
 	v_texCoord = a_texCoord;
-	v_normal = u_normalMat * a_normal;
+	v_normal = mat3(viewMat) * u_normalMat * a_normal;
 	gl_Position = viewProjMat * u_modelMat * vec4(a_pos, 1.0f);
 };
 
@@ -54,17 +56,18 @@ layout(std140) uniform material
 	float ambCoefficient;
 	float specCoefficient;
 	float shininess;
+	float emissiveMultiplier;
 };
 
 uniform sampler2D u_texture;//albedo texture
 
 void main()
 {
-	vec3 normal = normalize(v_normal);
-	gPosition = vec4(v_fragPos, ambCoefficient);//save ambient coeffiecient as w-component of position-tex
-	gNormal = vec4(normal, shininess);//multiply with the tangent-space matrix //<-pass in shininess as the w-component of the normal-texture
 	gAlbSpec = texture(u_texture, v_texCoord);
 	if (gAlbSpec.a == 0.0f)
 		discard;
 	gAlbSpec.a = specCoefficient;
+	vec3 normal = normalize(v_normal);
+	gPosition = vec4(v_fragPos, ambCoefficient);//save ambient coeffiecient as w-component of position-tex
+	gNormal = vec4(normal.xy, emissiveMultiplier, shininess * (normal.z != 0.0f ? sign(normal.z) : 1.0f));//multiply with the tangent-space matrix //<-pass in shininess as the w-component of the normal-texture //<- encode the normal's z component's sign in the shininess
 };

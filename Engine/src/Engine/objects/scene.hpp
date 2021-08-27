@@ -40,6 +40,8 @@ namespace Engine
 		void addLightAnimation(const Ref_ptr<PointLightAnimation>& animation) { m_pointLightAnimations.push_back(animation); }
 		void addLightAnimation(const Ref_ptr<SpotLightAnimation>& animation) { m_spotLightAnimations.push_back(animation); }
 
+		void setSkybox(const Ref_ptr<texture3d>& skybox) { m_matLib.get("skyboxMat")->setTexture("u_skybox", skybox); }
+
 		void onUpdate(timestep& ts, const bool rotateCam);//in this on-update-function one can implement certain routines that should be done like moving an object in a circle(or changing a light's color)
 		void onEvent(Event& e);//process events that the scene should react on
 		void onImGuiRender();/*in this function automatically create a window that lists all of the scene's elements

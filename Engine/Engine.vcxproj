@@ -147,6 +147,7 @@
     <ClInclude Include="src\Engine\Events\Event.hpp" />
     <ClInclude Include="src\Engine\Events\KeyEvent.hpp" />
     <ClInclude Include="src\Engine\Events\MouseEvent.hpp" />
+    <ClInclude Include="src\Engine\hdr_imageLoader\hdr_imageLoader.hpp" />
     <ClInclude Include="src\Engine\ImGui\ImGuiLayer.hpp" />
     <ClInclude Include="src\Engine\Log.hpp" />
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp" />
@@ -199,6 +200,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp" />
+    <ClCompile Include="src\Engine\hdr_imageLoader\hdr_imageLoader.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp" />
     <ClCompile Include="src\Engine\Log.cpp" />

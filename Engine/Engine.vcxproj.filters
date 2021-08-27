@@ -213,6 +213,7 @@
     <ClInclude Include="vendor\stb_image\stb_image.hpp">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\hdr_imageLoader\hdr_imageLoader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -326,5 +327,6 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\hdr_imageLoader\hdr_imageLoader.cpp" />
   </ItemGroup>
 </Project>

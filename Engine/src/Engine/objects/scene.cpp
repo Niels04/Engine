@@ -1,7 +1,8 @@
 #include "Engpch.hpp"
 
-#include "scene.hpp"
 #include "imgui.h"
+#include "scene.hpp"
+#include "Engine/Rendering/renderer.hpp"
 
 namespace Engine
 {
@@ -9,6 +10,12 @@ namespace Engine
 	{
 		m_camControl.initialize(nearPlane, farPlane, fov, aspectRatio);
 		lightMatrixCalculator::init(fov, std::atanf((1.0f / aspectRatio) * std::tanf(0.5f * fov * (3.14159265f / 180.0f))) * 2.0f * (180.0f / 3.14159265f), nearPlane, farPlane);
+		//create a skybox and push it as a mesh:
+		Ref_ptr<texture3d_hdr> skyboxTex = texture3d_hdr::create("skyboxes/stadium_hdr/");
+		Ref_ptr<material> skyboxMat = material::create(Renderer::getSkyboxShader(), "skyboxMat", flag_no_deferred | flag_no_backface_cull | flag_depth_test);
+		skyboxMat->setTexture("u_skybox", skyboxTex);
+		m_matLib.add(skyboxMat);
+		m_meshes.push_back(mesh::create(Renderer::getSkyboxVa(), skyboxMat, "skybox"));
 	}
 
 	void Scene::clear(LightManager* lightManager)

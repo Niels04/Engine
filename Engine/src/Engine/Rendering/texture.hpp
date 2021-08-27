@@ -53,6 +53,20 @@ namespace Engine
 		static Ref_ptr<texture2d> create(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t textureWrap, const void* data);
 	};
 
+	class texture3d : public texture
+	{
+	public:
+		virtual ~texture3d() = default;
+		static Ref_ptr<texture3d> create(const std::string& folderPath, const bool sRGB = false, const uint32_t filterMin = FILTER_LINEAR, const uint32_t filterMag = FILTER_LINEAR);
+	};
+
+	class texture3d_hdr : public texture
+	{
+	public:
+		virtual ~texture3d_hdr() = default;
+		static Ref_ptr<texture3d_hdr> create(const std::string& folderPath);
+	};
+
 	class ShadowMap2d : public texture
 	{
 	public:

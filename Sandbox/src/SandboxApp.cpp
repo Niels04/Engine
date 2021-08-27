@@ -52,7 +52,7 @@ public:
 			else
 			{
 				m_scene.onImGuiRender();
-				Engine::Renderer::onImGuiRender();
+				Engine::Renderer::onImGuiRender();//this should probably not be called by Sandbox
 			}
 		}
 	}
@@ -201,6 +201,7 @@ public:
 		red->setUniform1f("ambCoefficient", 0.285f);
 		red->setUniform1f("specCoefficient", 0.5f);
 		red->setUniform1f("shininess", 100.0f);
+		red->setUniform1f("emissiveMultiplier", 0.0f);
 		red->flushAll();
 		m_scene.addMaterial(red);
 
@@ -218,6 +219,7 @@ public:
 		helmetMat->setUniform1f("ambCoefficient", 0.1f);
 		helmetMat->setUniform1f("specCoefficient", 1.0f);
 		helmetMat->setUniform1f("shininess", 100.0f);
+		helmetMat->setUniform1f("emissiveMultiplier", 0.0f);
 		helmetMat->flushAll();
 		m_scene.addMaterial(helmetMat);
 
@@ -226,6 +228,7 @@ public:
 		cubeMat->setUniform1f("ambCoefficient", 0.1f);
 		cubeMat->setUniform1f("specCoefficient", 1.0f),
 		cubeMat->setUniform1f("shininess", 80.0f);
+		cubeMat->setUniform1f("emissiveMultiplier", 0.0f);
 		cubeMat->flushAll();
 		m_scene.addMaterial(cubeMat);
 
@@ -309,6 +312,7 @@ public:
 		light_grey->setUniform4f("alb", 0.6f, 0.6f, 0.6f, 1.0f);
 		light_grey->setUniform1f("ambCoefficient", 0.1666f);
 		light_grey->setUniform1f("shininess", 50.0f);
+		light_grey->setUniform1f("emissiveMultiplier", 0.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
@@ -317,6 +321,7 @@ public:
 		water_mat->setUniform1f("ambCoefficient", 0.1f);
 		water_mat->setUniform1f("specCoefficient", 1.0f);
 		water_mat->setUniform1f("shininess", 25.0f);
+		water_mat->setUniform1f("emissiveMultiplier", 0.0f);
 		water_mat->flushAll();
 		m_scene.addMaterial(water_mat);
 
@@ -325,6 +330,7 @@ public:
 		lighthouse_mat->setUniform1f("ambCoefficient", 0.1f);
 		lighthouse_mat->setUniform1f("specCoefficient", 1.0f);
 		lighthouse_mat->setUniform1f("shininess", 100.0f);
+		lighthouse_mat->setUniform1f("emissiveMultiplier", 0.0f);
 		lighthouse_mat->flushAll();
 		m_scene.addMaterial(lighthouse_mat);
 
@@ -332,6 +338,7 @@ public:
 		boat_mat->setUniform4f("alb", 0.5451f, 0.2706f, 0.07451f, 1.0f);
 		boat_mat->setUniform1f("ambCoefficient", 0.25f);
 		boat_mat->setUniform1f("shininess", 45.0f);
+		boat_mat->setUniform1f("emissiveMultiplier", 0.0f);
 		boat_mat->flushAll();
 		m_scene.addMaterial(boat_mat);
 
@@ -340,6 +347,7 @@ public:
 		figureMat->setUniform1f("ambCoefficient", 0.1f);
 		figureMat->setUniform1f("specCoefficient", 1.0f);
 		figureMat->setUniform1f("shininess", 50.0f);
+		figureMat->setUniform1f("emissiveMultiplier", 0.0f);
 		figureMat->flushAll();
 		m_scene.addMaterial(figureMat);
 
@@ -430,6 +438,7 @@ public:
 		light_grey->setUniform1f("ambCoefficient", 0.1666f);
 		light_grey->setUniform1f("specCoefficient", 1.0f);
 		light_grey->setUniform1f("shininess", 50.0f);
+		light_grey->setUniform1f("emissiveMultiplier", 0.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
@@ -438,6 +447,7 @@ public:
 		black->setUniform1f("ambCoefficient", 0.1666f);
 		black->setUniform1f("specCoefficient", 1.0f);
 		black->setUniform1f("shininess", 100.0f);
+		black->setUniform1f("emissiveMultiplier", 0.0f);
 		black->flushAll();
 		m_scene.addMaterial(black);
 
@@ -446,6 +456,7 @@ public:
 		yellow->setUniform1f("ambCoefficient", 0.1f);
 		yellow->setUniform1f("specCoefficient", 1.0f);
 		yellow->setUniform1f("shininess", 80.0f);
+		yellow->setUniform1f("emissiveMultiplier", 0.0f);
 		yellow->flushAll();
 		m_scene.addMaterial(yellow);
 
@@ -454,6 +465,7 @@ public:
 		spot_light_mat->setUniform1f("ambCoefficient", 0.1f);
 		spot_light_mat->setUniform1f("specCoefficient", 1.0f);
 		spot_light_mat->setUniform1f("shininess", 100.0f);
+		spot_light_mat->setUniform1f("emissiveMultiplier", 0.0f);
 		spot_light_mat->flushAll();
 		m_scene.addMaterial(spot_light_mat);
 
@@ -462,6 +474,7 @@ public:
 		duck_mat->setUniform1f("ambCoefficient", 0.1f);
 		duck_mat->setUniform1f("specCoefficient", 1.0f);
 		duck_mat->setUniform1f("shininess", 80.0f);
+		duck_mat->setUniform1f("emissiveMultiplier", 0.0f);
 		duck_mat->flushAll();
 		m_scene.addMaterial(duck_mat);
 
@@ -527,6 +540,7 @@ public:
 		gunMat->setUniform1f("ambCoefficient", 0.1f);
 		gunMat->setUniform1f("specCoefficient", 1.0f);
 		gunMat->setUniform1f("shininess", 100.0f);
+		gunMat->setUniform1f("emissiveMultiplier", 0.0f);
 		gunMat->flushAll();
 		m_scene.addMaterial(gunMat);
 
@@ -604,6 +618,7 @@ public:
 		Mat_Rock_RuinStoneBridge_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Rock_RuinStoneBridge_A->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneBridge_A->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneBridge_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneBridge_A->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneBridge_A);
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_B = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneBridge_B");
@@ -612,6 +627,7 @@ public:
 		Mat_Rock_RuinStoneBridge_B->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Rock_RuinStoneBridge_B->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneBridge_B->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneBridge_B->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneBridge_B->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneBridge_B);
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_A = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_A");
@@ -620,6 +636,7 @@ public:
 		Mat_Rock_RuinStoneWall_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Rock_RuinStoneWall_A->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneWall_A->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneWall_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneWall_A->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_A);
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_C = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_C");
@@ -628,6 +645,7 @@ public:
 		Mat_Rock_RuinStoneWall_C->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Rock_RuinStoneWall_C->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneWall_C->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneWall_C->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneWall_C->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_C);
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_D = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_D");
@@ -636,6 +654,7 @@ public:
 		Mat_Rock_RuinStoneWall_D->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Rock_RuinStoneWall_D->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneWall_D->setUniform1f("shininess", 100.0f);
+		Mat_Rock_RuinStoneWall_D->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneWall_D->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_D);
 		Engine::Ref_ptr<Engine::material> green = Engine::material::create(color_shader, "green");
@@ -643,6 +662,7 @@ public:
 		green->setUniform1f("ambCoefficient", 0.25f);
 		green->setUniform1f("specCoefficient", 0.1f);
 		green->setUniform1f("shininess", 100.0f);
+		green->setUniform1f("emissiveMultiplier", 0.0f);
 		green->flushAll();
 		m_scene.addMaterial(green);
 		Engine::Ref_ptr<Engine::material> Mat_Boar = Engine::material::create(alb_nrm_map_shader, "Boar");
@@ -651,6 +671,7 @@ public:
 		Mat_Boar->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Boar->setUniform1f("specCoefficient", 0.01f);
 		Mat_Boar->setUniform1f("shininess", 20.0f);
+		Mat_Boar->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Boar->flushAll();
 		m_scene.addMaterial(Mat_Boar);
 		Engine::Ref_ptr<Engine::material> Mat_Deer = Engine::material::create(alb_nrm_map_shader, "Deer");
@@ -659,6 +680,7 @@ public:
 		Mat_Deer->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Deer->setUniform1f("specCoefficient", 0.01f);
 		Mat_Deer->setUniform1f("shininess", 20.0f);
+		Mat_Deer->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Deer->flushAll();
 		m_scene.addMaterial(Mat_Deer);
 
@@ -730,6 +752,7 @@ public:
 		gunMat->setTexture("u_specMap", gunSpecTex);
 		gunMat->setUniform1f("ambCoefficient", 0.1f);
 		gunMat->setUniform1f("shininess", 100.0f);
+		gunMat->setUniform1f("emissiveMultiplier", 0.0f);
 		gunMat->flushAll();
 		m_scene.addMaterial(gunMat);
 
@@ -738,6 +761,8 @@ public:
 
 		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
+
+		//m_scene.setSkybox(Engine::texture3d::create("skyboxes/stadium/"));
 	}
 
 	void emissive()
@@ -760,6 +785,7 @@ public:
 		light_grey->setUniform1f("ambCoefficient", 0.2f);
 		light_grey->setUniform1f("specCoefficient", 1.0f);
 		light_grey->setUniform1f("shininess", 50.0f);
+		light_grey->setUniform1f("emissiveMultiplier", 0.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
@@ -813,6 +839,7 @@ public:
 		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(shader_alb_nrm_spec, "gun_mat");
 		gunMat->setUniform1f("ambCoefficient", 0.1f);
 		gunMat->setUniform1f("shininess", 100.0f);
+		gunMat->setUniform1f("emissiveMultiplier", 0.0f);
 		gunMat->flushAll();
 		gunMat->setTexture("u_texture", gunDiffTex);
 		gunMat->setTexture("u_normalMap", gunNormalTex);
@@ -828,6 +855,7 @@ public:
 		cubeMat->setUniform1f("ambCoefficient", 0.1f);
 		cubeMat->setUniform1f("specCoefficient", 1.0f);
 		cubeMat->setUniform1f("shininess", 100.0f);
+		cubeMat->setUniform1f("emissiveMultiplier", 0.0f);
 		cubeMat->flushAll();
 		cubeMat->setTexture("u_texture", cubeTex);
 		m_scene.addMaterial(cubeMat);
@@ -968,6 +996,7 @@ public:
 		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_HyliaStucco_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_HyliaStucco_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_SmallBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_SmallBrick_A");
@@ -976,6 +1005,7 @@ public:
 		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_SmallBrick_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_SmallBrick_A);
 		Engine::Ref_ptr<Engine::material> Mat_Builparts_HyliaOrnament_C = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_HyliaOrnament_C");
@@ -984,6 +1014,7 @@ public:
 		Mat_Builparts_HyliaOrnament_C->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Builparts_HyliaOrnament_C->setUniform1f("specCoefficient", 0.05f);
 		Mat_Builparts_HyliaOrnament_C->setUniform1f("shininess", 80.0f);
+		Mat_Builparts_HyliaOrnament_C->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Builparts_HyliaOrnament_C->flushAll();
 		m_scene.addMaterial(Mat_Builparts_HyliaOrnament_C);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Builparts_HyliaOrnament_B = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Builparts_HyliaOrnament_B");
@@ -992,6 +1023,7 @@ public:
 		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Builparts_HyliaOrnament_B->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Builparts_HyliaOrnament_B);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TOTTile01_G = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TOTTile01_G");
@@ -1000,6 +1032,7 @@ public:
 		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_TOTTile01_G->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_TOTTile01_G);
 		Engine::Ref_ptr<Engine::material> Mat_Builparts_HyliaStoneBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_HyliaStoneBrick_A");
@@ -1008,6 +1041,7 @@ public:
 		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("shininess", 80.0f);
+		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Builparts_HyliaStoneBrick_A->flushAll();
 		m_scene.addMaterial(Mat_Builparts_HyliaStoneBrick_A);
 		Engine::Ref_ptr<Engine::material> Mat_Wall_FloorBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_Mat_Wall_FloorBrick_A");
@@ -1016,6 +1050,7 @@ public:
 		Mat_Wall_FloorBrick_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Wall_FloorBrick_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_Wall_FloorBrick_A->setUniform1f("shininess", 80.0f);
+		Mat_Wall_FloorBrick_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Wall_FloorBrick_A->flushAll();
 		m_scene.addMaterial(Mat_Wall_FloorBrick_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_ReliefStone_D = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_ReliefStone_D");
@@ -1024,6 +1059,7 @@ public:
 		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_ReliefStone_D->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_ReliefStone_D);
 		Engine::Ref_ptr<Engine::material> green = Engine::material::create(color_shader, "green");
@@ -1031,6 +1067,7 @@ public:
 		green->setUniform1f("ambCoefficient", 0.25f);
 		green->setUniform1f("specCoefficient", 0.1f);
 		green->setUniform1f("shininess", 80.0f);
+		green->setUniform1f("emissiveMultiplier", 0.0f);
 		green->flushAll();
 		m_scene.addMaterial(green);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_Crack_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_Crack_A");
@@ -1040,6 +1077,7 @@ public:
 		Mat_CmnTex_Wall_Crack_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_Crack_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_Crack_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_Crack_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_Crack_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_Crack_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TOTTileCutsurface = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TOTTileCutsurface");
@@ -1048,6 +1086,7 @@ public:
 		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_TOTTileCutsurface->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_TOTTileCutsurface);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Stone_HyliaBridgeBreak_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Stone_HyliaBridgeBreak_A");
@@ -1056,6 +1095,7 @@ public:
 		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Stone_HyliaBridgeBreak_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Stone_HyliaBridgeBreak_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_LargeBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_LargeBrick_A");
@@ -1064,6 +1104,7 @@ public:
 		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_LargeBrick_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_LargeBrick_A);
 		Engine::Ref_ptr<Engine::material> Mat_Builparts_Ornament_A = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_Ornament_A");
@@ -1072,6 +1113,7 @@ public:
 		Mat_Builparts_Ornament_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_Builparts_Ornament_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_Builparts_Ornament_A->setUniform1f("shininess", 80.0f);
+		Mat_Builparts_Ornament_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_Builparts_Ornament_A->flushAll();
 		m_scene.addMaterial(Mat_Builparts_Ornament_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TempleOfTime_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TempleOfTime_A");
@@ -1080,6 +1122,7 @@ public:
 		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_TempleOfTime_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_TempleOfTime_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_StoneRoad_D = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_StoneRoad_D");
@@ -1088,12 +1131,14 @@ public:
 		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("ambCoefficient", 0.1f);
 		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("shininess", 80.0f);
+		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("emissiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_StoneRoad_D->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_StoneRoad_D);
 		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
 		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 0.1f, 1.0f });
 		mat_emissive->setUniform1f("multiplier", 20.0f);
 		mat_emissive->flushAll();
+		m_scene.addMaterial(mat_emissive);
 
 		Engine::Ref_ptr<Engine::mesh> Arch_0_Mt_Wall_HyliaStucco_A = Engine::mesh::create(Arch_0_Mt_Wall_HyliaStucco_A_Va, Mat_CmnTex_Wall_HyliaStucco_A, "Arch_0_Mt_Wall_HyliaStucco_A");
 		m_scene.addMesh(Arch_0_Mt_Wall_HyliaStucco_A);
@@ -1116,6 +1161,7 @@ public:
 		Engine::Ref_ptr<Engine::mesh> Circle_Paving_4_10_Mt_Wall_FloorBrick_B = Engine::mesh::create(Circle_Paving_4_10_Mt_Wall_FloorBrick_B_Va, Mat_Wall_FloorBrick_A, "Circle_Paving_4_10_Mt_Wall_FloorBrick_B");
 		m_scene.addMesh(Circle_Paving_4_10_Mt_Wall_FloorBrick_B);
 		Engine::Ref_ptr<Engine::mesh> Crack_10_Mt_Wall_Crack_A = Engine::mesh::create(Crack_10_Mt_Wall_Crack_A_Va, Mat_CmnTex_Wall_Crack_A, "Crack_10_Mt_Wall_Crack_A");
+		Crack_10_Mt_Wall_Crack_A->setPos({ 0.0f, 0.002f, 0.0f, 1.0f });//to at least avoid z-fighting when close to camera(still occurs when further away)
 		m_scene.addMesh(Crack_10_Mt_Wall_Crack_A);
 		Engine::Ref_ptr<Engine::mesh> Decoration_1_4_Mt_Wall_TOTTileCutsurface = Engine::mesh::create(Decoration_1_4_Mt_Wall_TOTTileCutsurface_Va, Mat_CmnTex_Wall_TOTTileCutsurface , "Decoration_1_4_Mt_Wall_TOTTileCutsurface");
 		m_scene.addMesh(Decoration_1_4_Mt_Wall_TOTTileCutsurface);
@@ -1145,19 +1191,75 @@ public:
 		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
 		plane_va->load("plane.model");
 		plane_va->unbind();
-		Engine::Ref_ptr<Engine::vertexArray> cube_va = Engine::vertexArray::create();
-		cube_va->load("cube.model");
-		cube_va->unbind();
 		Engine::Ref_ptr<Engine::vertexArray> text_va = Engine::vertexArray::create();
 		text_va->load("test_text.model");
 		text_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> lightsaber_va = Engine::vertexArray::create();
+		lightsaber_va->load("lightsaber.model");
+		lightsaber_va->unbind();
 
 		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
 		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
 		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::material> plane_mat = Engine::material::create(color_shader, "planeMat");
+		Engine::Ref_ptr<Engine::material> plane_mat = Engine::material::create(color_shader, "planeMat", flags_default | flag_no_backface_cull);
+		plane_mat->setUniform4f("alb", 0.1f, 0.1f, 0.1f, 1.0f);
+		plane_mat->setUniform1f("ambCoefficient", 0.285f);
+		plane_mat->setUniform1f("specCoefficient", 0.8f);
+		plane_mat->setUniform1f("shininess", 100.0f);
+		plane_mat->setUniform1f("emissiveMultiplier", 0.0f);
+		plane_mat->flushAll();
+		m_scene.addMaterial(plane_mat);
+
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
+		mat_emissive->setUniform4f("emissiveColor", { 1.0f, 0.95f, 0.05f, 1.0f });
+		mat_emissive->setUniform1f("multiplier", 100.0f);
+		mat_emissive->flushAll();
+		m_scene.addMaterial(mat_emissive);
+
+		Engine::Ref_ptr<Engine::material> lightsaber_mat = Engine::material::create(emissive_bloom, "lightsaber_mat", flag_depth_test | flag_no_deferred);
+		lightsaber_mat->setUniform4f("emissiveColor", { 0.05f, 1.0f, 0.05f, 1.0f });
+		lightsaber_mat->setUniform1f("multiplier", 100.0f);
+		lightsaber_mat->flushAll();
+		m_scene.addMaterial(lightsaber_mat);
+
+		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, plane_mat, "plane");
+		m_scene.addMesh(plane);
+		Engine::Ref_ptr<Engine::mesh> text = Engine::mesh::create(text_va, mat_emissive, "text");
+		text->setScale(2.0f);
+		text->setRot({ 3.1415926f / 2.0f, 0.0f, 0.0f });
+		text->setPos({ 0.0f, 6.0f, -5.5f, 1.0f });
+		m_scene.addMesh(text);
+		Engine::Ref_ptr<Engine::mesh> lightsaber = Engine::mesh::create(lightsaber_va, lightsaber_mat, "lightsaber");
+		lightsaber->setPos({ -2.0f, 5.0f, -5.5f, 1.0f });
+		m_scene.addMesh(lightsaber);
+
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(10.0f, 10.0f, 10.0f), vec3(100.0f, 100.0f, 100.0f) });
+		m_scene.addLight(sun);
+	}
+
+	void newMatProperties()
+	{
+		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
+		plane_va->load("plane.model");
+		plane_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> text_va = Engine::vertexArray::create();
+		text_va->load("test_text.model");
+		text_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> lightsaber_va = Engine::vertexArray::create();
+		lightsaber_va->load("lightsaber.model");
+		lightsaber_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> sphere_va = Engine::vertexArray::create();
+		sphere_va->load("sphere.model");
+		sphere_va->unbind();
+
+		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/emissive.shader");
+		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+
+		Engine::Ref_ptr<Engine::material> plane_mat = Engine::material::create(color_shader, "planeMat", flags_default | flag_no_backface_cull);
 		plane_mat->setUniform4f("alb", 0.1f, 0.1f, 0.1f, 1.0f);
 		plane_mat->setUniform1f("ambCoefficient", 0.285f);
 		plane_mat->setUniform1f("specCoefficient", 0.8f);
@@ -1165,31 +1267,30 @@ public:
 		plane_mat->flushAll();
 		m_scene.addMaterial(plane_mat);
 
-		Engine::Ref_ptr<Engine::material> cube_mat = Engine::material::create(color_shader, "CubeMat");
-		cube_mat->setUniform4f("alb", 0.1f, 0.1f, 0.1f, 1.0f);
-		cube_mat->setUniform1f("ambCoefficient", 0.285f);
-		cube_mat->setUniform1f("specCoefficient", 0.8f);
-		cube_mat->setUniform1f("shininess", 100.0f);
-		cube_mat->flushAll();
-		m_scene.addMaterial(cube_mat);
-
 		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
 		mat_emissive->setUniform4f("emissiveColor", { 1.0f, 0.95f, 0.05f, 1.0f });
-		mat_emissive->setUniform1f("multiplier", 20.0f);
+		mat_emissive->setUniform1f("multiplier", 100.0f);
 		mat_emissive->flushAll();
 		m_scene.addMaterial(mat_emissive);
 
+		Engine::Ref_ptr<Engine::material> lightsaber_mat = Engine::material::create(emissive_bloom, "lightsaber_mat", flag_depth_test | flag_no_deferred);
+		lightsaber_mat->setUniform4f("emissiveColor", { 0.05f, 1.0f, 0.05f, 1.0f });
+		lightsaber_mat->setUniform1f("multiplier", 100.0f);
+		lightsaber_mat->flushAll();
+		m_scene.addMaterial(lightsaber_mat);
+
 		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, plane_mat, "plane");
 		m_scene.addMesh(plane);
-		Engine::Ref_ptr<Engine::mesh> cube = Engine::mesh::create(cube_va, cube_mat, "cube");
-		m_scene.addMesh(cube);
 		Engine::Ref_ptr<Engine::mesh> text = Engine::mesh::create(text_va, mat_emissive, "text");
 		text->setScale(2.0f);
 		text->setRot({ 3.1415926f / 2.0f, 0.0f, 0.0f });
 		text->setPos({ 0.0f, 6.0f, -5.5f, 1.0f });
 		m_scene.addMesh(text);
+		Engine::Ref_ptr<Engine::mesh> lightsaber = Engine::mesh::create(lightsaber_va, lightsaber_mat, "lightsaber");
+		lightsaber->setPos({ -2.0f, 5.0f, -5.5f, 1.0f });
+		m_scene.addMesh(lightsaber);
 
-		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(0.8f, 0.8f, 0.8f), vec3(1.0f, 1.0f, 1.0f) });
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(10.0f, 10.0f, 10.0f), vec3(100.0f, 100.0f, 100.0f) });
 		m_scene.addLight(sun);
 	}
 

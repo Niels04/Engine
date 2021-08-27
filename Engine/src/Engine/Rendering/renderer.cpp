@@ -23,8 +23,7 @@ namespace Engine
 	Ref_ptr<shader> Renderer::s_hdr_quad_shader_bloom = nullptr;
 	Ref_ptr<shader> Renderer::s_blur_shader[2] = { nullptr, nullptr };
 	bool Renderer::s_bloom = false;
-	Ref_ptr<FrameBuffer> Renderer::s_testFrameBuffer = nullptr;
-	Ref_ptr<texture2d> Renderer::s_testTexture = nullptr;
+	float Renderer::s_exposure = 1.0f;
 	//bool Renderer::s_drawLights = false;
 	//G-Buffer:::::::::::
 	Ref_ptr<FrameBuffer> Renderer::s_gBuffer = nullptr;
@@ -39,6 +38,9 @@ namespace Engine
 	Ref_ptr<texture2d> Renderer::s_AO = nullptr;
 	Ref_ptr<shader> Renderer::s_SSAO_shader = nullptr;
 	Ref_ptr<shader> Renderer::s_debug_display_ssao = nullptr;
+	//skybox
+	Ref_ptr<vertexArray> Renderer::s_skyboxVa = nullptr;
+	Ref_ptr<shader> Renderer::s_skyboxShader = nullptr;
 	//other
 	Ref_ptr<shader> Renderer::s_debug_display_cascaded = nullptr;
 	Ref_ptr<vertexArray> Renderer::s_debug_cascade_va = nullptr;
@@ -69,8 +71,8 @@ namespace Engine
 		s_hdr_fbo->checkStatus();
 		s_hdr_fbo->unbind();
 		//setup the pingPong textures and fbo for 
-		s_pingPongTex[0] = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA16F);
-		s_pingPongTex[1] = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA16F);
+		s_pingPongTex[0] = texture2d::create(s_maxViewportSize[0] / 2, s_maxViewportSize[1] / 2, ENG_RGBA16F, FILTER_LINEAR, FILTER_LINEAR, ENG_CLAMP_TO_EDGE);
+		s_pingPongTex[1] = texture2d::create(s_maxViewportSize[0] / 2, s_maxViewportSize[1] / 2, ENG_RGBA16F, FILTER_LINEAR, FILTER_LINEAR, ENG_CLAMP_TO_EDGE);
 		s_pingPongFbo[0] = FrameBuffer::create();
 		s_pingPongFbo[0]->bind();
 		s_pingPongFbo[0]->attachTexture(s_pingPongTex[0]);
@@ -94,11 +96,11 @@ namespace Engine
 		s_hdr_quad_va->addBuffer(quad_vb);
 		s_hdr_quad_va->addBuffer(quad_ib);
 		s_hdr_quad_va->unbind();//this is only for testing
-		s_hdr_quad_shader = shader::create("hdr/hdr_quad_shader.shader");
+		s_hdr_quad_shader = shader::create("hdr/hdr_quad_shader_exposure.shader");
 		s_hdr_quad_shader->bind();
 		s_hdr_quad_shader->setUniform1i("u_hdr", 0);
 		s_hdr_quad_shader->unbind();
-		s_hdr_quad_shader_bloom = shader::create("hdr/hdr_quad_shader_bloom.shader");
+		s_hdr_quad_shader_bloom = shader::create("hdr/hdr_quad_shader_bloom_exposure.shader");
 		s_hdr_quad_shader_bloom->bind();
 		s_hdr_quad_shader_bloom->setUniform1i("u_hdr", 0);
 		s_hdr_quad_shader_bloom->setUniform1i("u_bloom_blur", 1);
@@ -120,8 +122,8 @@ namespace Engine
 		s_gBuffer->bind();
 		renderCommand::drawToBuffers(3, ENG_COLOR_ATTACHMENT0, ENG_COLOR_ATTACHMENT1, ENG_COLOR_ATTACHMENT2);
 		s_gPosition = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA32F);
-		s_gNormal = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA32F);
-		s_gAlbSpec = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA8);//<-maybe this needs to be changed to ENG_RGBA
+		s_gNormal = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA16F);
+		s_gAlbSpec = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_RGBA8);
 		s_gDepth = RenderBuffer::create(RenderBufferUsage::DEPTH, s_maxViewportSize[0], s_maxViewportSize[1]);
 		s_gBuffer->attachTexture(s_gPosition, 0);
 		s_gBuffer->attachTexture(s_gNormal, 1);
@@ -129,7 +131,7 @@ namespace Engine
 		s_gBuffer->attachRenderBuffer(s_gDepth);
 		s_gBuffer->checkStatus();
 
-		s_gLightingShader[0] = shader::create("deferred/lighting_pass/shadow/cascaded/lighting.shader");
+		s_gLightingShader[0] = shader::create("deferred/lighting_pass/shadow/cascaded/normal_compression/lighting.shader");
 		s_gLightingShader[0]->bind();
 		s_gLightingShader[0]->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		s_gLightingShader[0]->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
@@ -140,7 +142,7 @@ namespace Engine
 		s_gLightingShader[0]->setUniform1i("u_gAlbSpec", 2);
 		s_gLightingShader[0]->unbind();
 		
-		s_gLightingShader[1] = shader::create("deferred/lighting_pass/shadow/cascaded/lighting_bloom.shader");
+		s_gLightingShader[1] = shader::create("deferred/lighting_pass/shadow/cascaded/normal_compression/lighting_bloom.shader");
 		s_gLightingShader[1]->bind();
 		s_gLightingShader[1]->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		s_gLightingShader[1]->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
@@ -200,14 +202,15 @@ namespace Engine
 		s_debug_display_cascaded->setUniform1i("u_texture", 0);
 		s_debug_display_cascaded->unbind();
 
-		s_testTexture = texture2d::create(s_maxViewportSize[0] / 2, s_maxViewportSize[1] / 2, ENG_RGBA16F, FILTER_LINEAR, FILTER_LINEAR, ENG_CLAMP_TO_EDGE);
-		s_testFrameBuffer = FrameBuffer::create();
-		s_testFrameBuffer->bind();
-		s_testFrameBuffer->attachTexture(s_testTexture);
-		s_testFrameBuffer->checkStatus();
-		s_testFrameBuffer->unbind();
 		//setup of the display of one cascade:
 		//setupCascadeDisplay();
+
+		//setup skybox-drawing
+		s_skyboxVa = vertexArray::create();
+		s_skyboxVa->load("cube.model");
+		s_skyboxVa->unbind();
+		s_skyboxShader = s_shaderLib->load("skybox/skybox_hdr.shader");
+		//s_skyboxShader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 	}
 
 	void Renderer::setupCascadeDisplay()
@@ -293,8 +296,6 @@ namespace Engine
 		s_hdr_quad_shader_bloom.reset();
 		s_blur_shader[0].reset();
 		s_blur_shader[1].reset();
-		s_testFrameBuffer.reset();
-		s_testTexture.reset();
 		s_gBuffer.reset();
 		s_gPosition.reset();
 		s_gNormal.reset();
@@ -308,6 +309,8 @@ namespace Engine
 		s_SSAO_shader.reset();
 		s_debug_display_ssao.reset();
 		s_debug_display_cascaded.reset();
+		s_skyboxVa.reset();
+		s_skyboxShader.reset();
 		s_debug_cascade_va.reset();
 		s_debug_renderCascade.reset();
 	}
@@ -316,16 +319,27 @@ namespace Engine
 	{
 		s_sceneData->viewProjMat = cam.getViewProjMat();
 		s_sceneData->viewPos = { cam.getPos(), 1.0f };
+		s_sceneData->viewMat = cam.getViewMat();
 		lightMatrixCalculator::setViewMat(cam.getViewMat());
-		s_gLightingShader[0]->bind();
+		/*s_gLightingShader[0]->bind();
 		s_gLightingShader[0]->setUniformMat4("u_viewMat", cam.getViewMat(), 1);
 		s_gLightingShader[1]->bind();
 		s_gLightingShader[1]->setUniformMat4("u_viewMat", cam.getViewMat(), 1);
+		s_gLightingShader[1]->unbind();*/
+		s_gLightingShader[0]->bind();
+		s_gLightingShader[0]->setUniformMat4("u_invViewMat", mat4::inverse3x3(cam.getViewMat()), 1);
+		s_gLightingShader[1]->bind();
+		s_gLightingShader[1]->setUniformMat4("u_invViewMat", mat4::inverse3x3(cam.getViewMat()), 1);
 		s_gLightingShader[1]->unbind();
+		//supply skyboxShader with required information
+		s_skyboxShader->bind();
+		s_skyboxShader->setUniformMat4("u_viewProj", cam.getProjMat() * mat4::rmTranslation(cam.getViewMat()), 1);//set a viewProjMat without translation applied
+		s_skyboxShader->unbind();
 		//set uniformBuffers for view - and projection matrices here, they will be used by many shaders
 		s_sceneData->viewProjBuffer->bind();
 		s_sceneData->viewProjBuffer->updateElement(0, &mat4::transposed(s_sceneData->viewProjMat));//viewProjMat is at index 0
 		s_sceneData->viewProjBuffer->updateElement(1, &s_sceneData->viewPos);//viewPos is at index 1
+		s_sceneData->viewProjBuffer->updateElement(2, &mat4::transposed(s_sceneData->viewMat));//viewMat is at index 2
 		s_sceneData->viewProjBuffer->unbind();
 		//update the ssao-shader with the new matrices
 		s_SSAO_shader->bind();
@@ -334,6 +348,12 @@ namespace Engine
 		s_SSAO_shader->unbind();
 		//update dynamic lights
 		s_sceneData->lightManager.updateLights();//update lights for all shaders
+		//update the exposure
+		s_hdr_quad_shader->bind();
+		s_hdr_quad_shader->setUniform1f("u_exposure", s_exposure);
+		s_hdr_quad_shader_bloom->bind();
+		s_hdr_quad_shader_bloom->setUniform1f("u_exposure", s_exposure);
+		s_hdr_quad_shader_bloom->unbind();
 	}
 
 	void Renderer::endScene()
@@ -424,13 +444,14 @@ namespace Engine
 		s_hdr_fbo->setDrawBuffer();//we want to copy some data to the hdrBuffer
 		renderCommand::copyFrameBufferContents(s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT, FILTER_NEAREST);//copy over the geometry-pass depth-data to the hdr-buffer*/
 		s_hdr_fbo->bind();//bind the hdr_fbo to both read and draw again
-		for (const auto Mesh : s_renderQueue)
+		for (auto& it = s_renderQueue.rbegin(); it != s_renderQueue.rend(); it++)//NOTE THAT iterating through this backwards is important, so that the skybox is drawn last!!!
 		{
+			const auto& Mesh = *it;
 			const auto mat = Mesh->getMaterial();
 			if (mat->getFlags() & flag_no_deferred)
 			{
 				if (mat->getFlags() & flag_depth_test)
-					renderCommand::setDepth(ENG_LESS);
+					renderCommand::setDepth(ENG_LEQUAL);//ENG_LESS by default
 				else
 					renderCommand::setDepth(ENG_ALWAYS);
 				renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
@@ -445,38 +466,31 @@ namespace Engine
 		/////////////////end of forward-rendering part
 		s_renderQueue.clear();
 		s_hdr_fbo->unbind();//don't remove this
-		//////testing with downscaling:
-		renderCommand::copyFrameBufferContents(s_hdr_fbo, s_maxViewportSize[0], s_maxViewportSize[1], ENG_COLOR_ATTACHMENT1,
-			s_testFrameBuffer, s_maxViewportSize[0] / 2, s_maxViewportSize[1] / 2, ENG_COLOR_ATTACHMENT0, FILTER_LINEAR);
-		//s_hdr_fbo->bind();
-		//s_hdr_fbo->unbind();
-		///////////end of testing with downscaling
 		//post-processing:
 		if (s_bloom)
 		{
-			//s_blur_shader[1]->bind();
-			s_pingPongFbo[0]->bind();
-			renderCommand::clear();
+			renderCommand::copyFrameBufferContents(s_hdr_fbo, s_maxViewportSize[0], s_maxViewportSize[1], ENG_COLOR_ATTACHMENT1,
+				s_pingPongFbo[0], s_maxViewportSize[0] / 2, s_maxViewportSize[1] / 2, ENG_COLOR_ATTACHMENT0, FILTER_LINEAR);
 			s_pingPongFbo[1]->bind();
+			renderCommand::setViewport(s_maxViewportSize[0] / 2, s_maxViewportSize[1] / 2);
 			renderCommand::clear();
-			bool horizontal = true, first_it = true;
-			constexpr uint8_t blurCount = 2;
+			bool horizontal = false;
+			//on the first iteration we want to blur vertically -> the bright_tex is in pingPongTex[0], so we bind pingPongFbo[1] for rendering!
+			constexpr uint8_t blurCount = 6;
 			for (uint8_t i = 0; i < blurCount; i++)
 			{
-				s_pingPongFbo[horizontal]->bind();
+				s_pingPongFbo[!horizontal]->bind();
+				//shader at index 0 is vertical, shader at index 1 is horizontal
 				s_blur_shader[horizontal]->bind();
-				//s_blur_shader->setUniform1b("horizontal", horizontal);
-				if (first_it)
-					s_bright_tex->bind(0);
-				else
-					s_pingPongTex[!horizontal]->bind(0);
+				s_pingPongTex[horizontal]->bind(0);
 				s_hdr_quad_va->bind();
 				renderCommand::drawIndexed(s_hdr_quad_va);
 				horizontal = !horizontal;
-				if (first_it)
-					first_it = false;
 			}
-			s_pingPongFbo[1]->unbind();
+			//brightTex is in pingPongTex[0] -> pingPongFbo[1] is bound and the texture is rendered and transfered into pingPongTex[1] using blurShader[0]
+			//now the horizontal-variable flips(now true): brightTex is in pingPongTex[1] -> pingPongFbo[0] is bound and the texture is rendered and transfered into pingPongTex[0] again using blurShader[1]
+			//renderCommand::setViewport(s_maxViewportSize[0], s_maxViewportSize[1]); //<- normally we would have to set the viewport back to normal after setting it to half resolution for blurring
+			s_pingPongFbo[0]->unbind();
 		}
 		//now render to screen-spaced quad:
 		renderCommand::setViewport(s_mainViewport[0], s_mainViewport[1]);
@@ -485,8 +499,9 @@ namespace Engine
 		s_hdr_quad_va->bind();
 		if (s_bloom)
 		{
+			//s_hdr_quad_shader->bind();
 			s_hdr_quad_shader_bloom->bind();
-			s_pingPongTex[1]->bind(1);
+			s_pingPongTex[0]->bind(1);
 		}
 		else
 		{
@@ -504,9 +519,10 @@ namespace Engine
 	void Renderer::sceneData::init()
 	{
 		//initialize buffer for viewProjection
-		viewProjBuffer = globalBuffer::create(sizeof(mat4) + sizeof(vec4), DYNAMIC_DRAW);
-		viewProjBuffer->lAddMat4B();
-		viewProjBuffer->lAddVec4B();
+		viewProjBuffer = globalBuffer::create(sizeof(mat4) + sizeof(vec4) + sizeof(mat4), DYNAMIC_DRAW);
+		viewProjBuffer->lAddMat4B();//viewProjMat
+		viewProjBuffer->lAddVec4B();//viewPosition
+		viewProjBuffer->lAddMat4B();//viewMat
 		viewProjBuffer->bindToPoint(VIEWPROJ_BIND);//binding point for viewProjectionBuffer always is 0
 		viewProjBuffer->unbind();
 		//initialize lights
@@ -620,6 +636,7 @@ namespace Engine
 	{
 		ImGui::Begin("Rendering options");
 		ImGui::Checkbox("bloom", &s_bloom);
+		ImGui::SliderFloat("exposure", &s_exposure, 0.01f, 100.0f);
 		ImGui::End();
 		/*ImGui::Begin("Textures");
 		ImGui::Image((ImTextureID)s_gPosition->getRenderer_id(), { 128, 128 });
@@ -631,9 +648,9 @@ namespace Engine
 		ImGui::End();*/
 		/*ImGui::Begin("Bright_texture");
 		ImGui::Image((ImTextureID)s_bright_tex->getRenderer_id(), { 512, 512 });
-		ImGui::End();
-		ImGui::Begin("TestTex");
-		ImGui::Image((ImTextureID)s_testTexture->getRenderer_id(), { 512, 512 });
+		ImGui::End();*/
+		/*ImGui::Begin("PingPongTex0");
+		ImGui::Image((ImTextureID)s_pingPongTex[0]->getRenderer_id(), { 960, 540 });
 		ImGui::End();*/
 	}
 }

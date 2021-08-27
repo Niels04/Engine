@@ -25,6 +25,8 @@ namespace Engine
 		inline const vec3& getRot() const { return m_camRot; }
 		void onUpdate(timestep& ts, const bool rotate);
 		void onEvent(Event& e);
+		void DEBUG_setCamPos(const vec4& pos);
+		void DEBUG_setCAmRot(const vec3& rot);
 	private:
 		bool onWindowResizedEvent(windowResizeEvent& e);
 		bool onMouseScrolledEvent(mouseScrollEvent& e);

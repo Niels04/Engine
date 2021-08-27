@@ -25,6 +25,44 @@ namespace Engine
 		inline const uint32_t getRenderer_id() const override { return m_renderer_id; }
 	};
 
+	class GLtexture3d : public texture3d
+	{
+	public:
+		GLtexture3d(const std::string& folderPath, const bool sRGB, const uint32_t filterMin, const uint32_t filetMag);
+		~GLtexture3d();
+
+		inline const uint32_t getHeight() const override { return m_size; }
+		inline const uint32_t getWidth() const override { return m_size; }
+
+		inline void bind(const uint8_t slot = 0) const override;
+		inline void clear(const vec4& color) const override;
+	private:
+		std::string m_path;
+		uint32_t m_size;
+		uint32_t m_renderer_id;
+
+		inline const uint32_t getRenderer_id() const override { return m_renderer_id; }
+	};
+
+	class GLtexture3d_hdr : public texture3d_hdr
+	{
+	public:
+		GLtexture3d_hdr(const std::string& folderPath);
+		~GLtexture3d_hdr();
+
+		inline const uint32_t getHeight() const override { return m_size; }
+		inline const uint32_t getWidth() const override { return m_size; }
+
+		inline void bind(const uint8_t slot = 0) const override;
+		inline void clear(const vec4& color) const override;
+	private:
+		std::string m_path;
+		uint32_t m_size;
+		uint32_t m_renderer_id;
+
+		inline const uint32_t getRenderer_id() const override { return m_renderer_id; }
+	};
+
 	class GLShadowMap2d : public ShadowMap2d
 	{
 		friend class GLFrameBuffer;

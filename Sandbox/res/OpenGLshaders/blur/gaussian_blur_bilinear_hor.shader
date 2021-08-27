@@ -58,5 +58,5 @@ void main()
 		result += texture(u_texture, v_texCoord + vec2(texOffset.x * offset_linear[i], 0.0f)).rgb * weight_linear[i];
 		result += texture(u_texture, v_texCoord - vec2(texOffset.x * offset_linear[i], 0.0f)).rgb * weight_linear[i];
 	}
-	color = vec4(result, 1.0f);
+	color = vec4(10.0f * result, 1.0f);
 };
