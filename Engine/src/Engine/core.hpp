@@ -57,4 +57,20 @@ namespace Engine
 	private:
 		T** m_ptr;
 	};
+
+	template<typename T>
+	class const_PtrPtr//a version of PtrPtr that points to a const T*
+	{
+	public:
+		const_PtrPtr() = default;
+		const_PtrPtr(const T* const* ptr) : m_ptr(ptr) {  }
+		const_PtrPtr(T* const* ptr) : m_ptr(ptr) {  }
+		inline void operator =(const T* const* ptr) { m_ptr = ptr; }
+		inline void operator =(T* const* ptr) { m_ptr = ptr; }
+		inline operator const T* () const { return (*m_ptr); }//so it can be used as a T* ???
+		inline const T* operator->() const { return (*m_ptr); }
+		inline T* const* get() const { return m_ptr; }
+	private:
+		T* const* m_ptr;
+	};
 }

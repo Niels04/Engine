@@ -40,7 +40,8 @@ namespace Engine
 		void addLightAnimation(const Ref_ptr<PointLightAnimation>& animation) { m_pointLightAnimations.push_back(animation); }
 		void addLightAnimation(const Ref_ptr<SpotLightAnimation>& animation) { m_spotLightAnimations.push_back(animation); }
 
-		void setSkybox(const Ref_ptr<texture3d>& skybox) { m_matLib.get("skyboxMat")->setTexture("u_skybox", skybox); }
+		void setSkybox(const Ref_ptr<texture>& skybox) { m_skyboxTex = skybox; m_matLib.get("skyboxMat")->setTexture("u_skybox", m_skyboxTex); }
+		inline WeakRef_ptr<texture> getSkyboxTex() const { return m_skyboxTex; }
 
 		void onUpdate(timestep& ts, const bool rotateCam);//in this on-update-function one can implement certain routines that should be done like moving an object in a circle(or changing a light's color)
 		void onEvent(Event& e);//process events that the scene should react on
@@ -70,5 +71,8 @@ namespace Engine
 		std::vector<Ref_ptr<SpotLightAnimation>> m_spotLightAnimations;
 
 		PerspectiveCameraController m_camControl;
+
+		//weak reference to the skyboxTexture so that we don't always have to look it up
+		WeakRef_ptr<texture> m_skyboxTex;
 	};
 }

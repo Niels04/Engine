@@ -39,6 +39,8 @@ public:
 		Engine::Renderer::endScene();
 		//first render to the depth maps
 		Engine::Renderer::RenderDepthMaps();
+		//submit a skyboxTexture
+		Engine::Renderer::setSkyboxTex(m_scene.getSkyboxTex());//I'm not really happy, with how this is happening at the moment, maybe I should just store the skybox in the Renderer??
 		//then render the scene with the shadows applied
 		Engine::Renderer::Flush();
 	}
@@ -164,6 +166,16 @@ public:
 			bloom_demo();
 			m_sceneLoaded = true;
 		}
+		else if (ImGui::Button("pcf_test"))
+		{
+			pcfTest();
+			m_sceneLoaded = true;
+		}
+		else if (ImGui::Button("ECS_Test"))
+		{
+			ECS_Test();
+			m_sceneLoaded = true;
+		}
 		ImGui::End();
 	}
 	//scenes
@@ -202,6 +214,7 @@ public:
 		red->setUniform1f("specCoefficient", 0.5f);
 		red->setUniform1f("shininess", 100.0f);
 		red->setUniform1f("emissiveMultiplier", 0.0f);
+		red->setUniform1f("reflectiveMultiplier", 0.0f);
 		red->flushAll();
 		m_scene.addMaterial(red);
 
@@ -220,6 +233,7 @@ public:
 		helmetMat->setUniform1f("specCoefficient", 1.0f);
 		helmetMat->setUniform1f("shininess", 100.0f);
 		helmetMat->setUniform1f("emissiveMultiplier", 0.0f);
+		helmetMat->setUniform1f("reflectiveMultiplier", 0.3f);
 		helmetMat->flushAll();
 		m_scene.addMaterial(helmetMat);
 
@@ -229,6 +243,7 @@ public:
 		cubeMat->setUniform1f("specCoefficient", 1.0f),
 		cubeMat->setUniform1f("shininess", 80.0f);
 		cubeMat->setUniform1f("emissiveMultiplier", 0.0f);
+		cubeMat->setUniform1f("reflectiveMultiplier", 0.0f);
 		cubeMat->flushAll();
 		m_scene.addMaterial(cubeMat);
 
@@ -305,14 +320,12 @@ public:
 		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
 		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
-		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-
 		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(color_shader, "light_grey");
 		light_grey->setUniform4f("alb", 0.6f, 0.6f, 0.6f, 1.0f);
 		light_grey->setUniform1f("ambCoefficient", 0.1666f);
 		light_grey->setUniform1f("shininess", 50.0f);
 		light_grey->setUniform1f("emissiveMultiplier", 0.0f);
+		light_grey->setUniform1f("reflectiveMultiplier", 0.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
@@ -322,6 +335,7 @@ public:
 		water_mat->setUniform1f("specCoefficient", 1.0f);
 		water_mat->setUniform1f("shininess", 25.0f);
 		water_mat->setUniform1f("emissiveMultiplier", 0.0f);
+		water_mat->setUniform1f("reflectiveMultiplier", 0.0f);
 		water_mat->flushAll();
 		m_scene.addMaterial(water_mat);
 
@@ -331,14 +345,17 @@ public:
 		lighthouse_mat->setUniform1f("specCoefficient", 1.0f);
 		lighthouse_mat->setUniform1f("shininess", 100.0f);
 		lighthouse_mat->setUniform1f("emissiveMultiplier", 0.0f);
+		lighthouse_mat->setUniform1f("reflectiveMultiplier", 0.0f);
 		lighthouse_mat->flushAll();
 		m_scene.addMaterial(lighthouse_mat);
 
 		Engine::Ref_ptr<Engine::material> boat_mat = Engine::material::create(color_shader, "boat_brown");
 		boat_mat->setUniform4f("alb", 0.5451f, 0.2706f, 0.07451f, 1.0f);
 		boat_mat->setUniform1f("ambCoefficient", 0.25f);
+		boat_mat->setUniform1f("specCoefficient", 1.0f);
 		boat_mat->setUniform1f("shininess", 45.0f);
 		boat_mat->setUniform1f("emissiveMultiplier", 0.0f);
+		boat_mat->setUniform1f("reflectiveMultiplier", 0.0f);
 		boat_mat->flushAll();
 		m_scene.addMaterial(boat_mat);
 
@@ -348,13 +365,19 @@ public:
 		figureMat->setUniform1f("specCoefficient", 1.0f);
 		figureMat->setUniform1f("shininess", 50.0f);
 		figureMat->setUniform1f("emissiveMultiplier", 0.0f);
+		figureMat->setUniform1f("reflectiveMultiplier", 0.0f);
 		figureMat->flushAll();
 		m_scene.addMaterial(figureMat);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
-		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
-		mat_emissive->setUniform1f("multiplier", 5.0f);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(color_shader, "emissive");
+		mat_emissive->setUniform4f("alb", 0.0f, 0.0f, 0.0f, 1.0f);
+		mat_emissive->setUniform1f("ambCoefficient", 0.0f);
+		mat_emissive->setUniform1f("specCoefficient", 0.0f);
+		mat_emissive->setUniform1f("shininess", 1.0f);
+		mat_emissive->setUniform1f("emissiveMultiplier", 40.0f);
+		mat_emissive->setUniform1f("reflectiveMultiplier", 0.0f);
 		mat_emissive->flushAll();
+		mat_emissive->dissableFlags(flag_cast_shadow);
 
 		Engine::Ref_ptr<Engine::mesh> environment = Engine::mesh::create(environment_va, light_grey, "environment");
 		environment->setScale(11.1111111f);
@@ -402,7 +425,7 @@ public:
 		//now add the material that is attached to the light
 		m_scene.addMaterial(mat_emissive, [](const void* light, Engine::material* mat) {
 			Engine::PtrPtr<Engine::spotLight> Light = (Engine::spotLight**)light;
-			mat->setUniform4fF("emissiveColor", Light->diffuse);
+			mat->setUniform4fF("alb", Light->diffuse);
 			}, spot_0.get());
 	}
 
@@ -439,6 +462,7 @@ public:
 		light_grey->setUniform1f("specCoefficient", 1.0f);
 		light_grey->setUniform1f("shininess", 50.0f);
 		light_grey->setUniform1f("emissiveMultiplier", 0.0f);
+		light_grey->setUniform1f("reflectiveMultiplier", 0.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
@@ -448,6 +472,7 @@ public:
 		black->setUniform1f("specCoefficient", 1.0f);
 		black->setUniform1f("shininess", 100.0f);
 		black->setUniform1f("emissiveMultiplier", 0.0f);
+		black->setUniform1f("reflectiveMultiplier", 0.0f);
 		black->flushAll();
 		m_scene.addMaterial(black);
 
@@ -457,6 +482,7 @@ public:
 		yellow->setUniform1f("specCoefficient", 1.0f);
 		yellow->setUniform1f("shininess", 80.0f);
 		yellow->setUniform1f("emissiveMultiplier", 0.0f);
+		yellow->setUniform1f("reflectiveMultiplier", 0.0f);
 		yellow->flushAll();
 		m_scene.addMaterial(yellow);
 
@@ -466,6 +492,7 @@ public:
 		spot_light_mat->setUniform1f("specCoefficient", 1.0f);
 		spot_light_mat->setUniform1f("shininess", 100.0f);
 		spot_light_mat->setUniform1f("emissiveMultiplier", 0.0f);
+		spot_light_mat->setUniform1f("reflectiveMultiplier", 0.0f);
 		spot_light_mat->flushAll();
 		m_scene.addMaterial(spot_light_mat);
 
@@ -475,6 +502,7 @@ public:
 		duck_mat->setUniform1f("specCoefficient", 1.0f);
 		duck_mat->setUniform1f("shininess", 80.0f);
 		duck_mat->setUniform1f("emissiveMultiplier", 0.0f);
+		duck_mat->setUniform1f("reflectiveMultiplier", 0.0f);
 		duck_mat->flushAll();
 		m_scene.addMaterial(duck_mat);
 
@@ -541,6 +569,7 @@ public:
 		gunMat->setUniform1f("specCoefficient", 1.0f);
 		gunMat->setUniform1f("shininess", 100.0f);
 		gunMat->setUniform1f("emissiveMultiplier", 0.0f);
+		gunMat->setUniform1f("reflectiveMultiplier", 0.0f);
 		gunMat->flushAll();
 		m_scene.addMaterial(gunMat);
 
@@ -608,9 +637,6 @@ public:
 		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
 		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
-		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-
 		//create materials
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_A = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneBridge_A");
 		Mat_Rock_RuinStoneBridge_A->setTexture("u_texture", Rock_RuinStoneBridge_A_Alb);
@@ -619,6 +645,7 @@ public:
 		Mat_Rock_RuinStoneBridge_A->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneBridge_A->setUniform1f("shininess", 100.0f);
 		Mat_Rock_RuinStoneBridge_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Rock_RuinStoneBridge_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneBridge_A->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneBridge_A);
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneBridge_B = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneBridge_B");
@@ -628,6 +655,7 @@ public:
 		Mat_Rock_RuinStoneBridge_B->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneBridge_B->setUniform1f("shininess", 100.0f);
 		Mat_Rock_RuinStoneBridge_B->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Rock_RuinStoneBridge_B->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneBridge_B->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneBridge_B);
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_A = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_A");
@@ -637,6 +665,7 @@ public:
 		Mat_Rock_RuinStoneWall_A->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneWall_A->setUniform1f("shininess", 100.0f);
 		Mat_Rock_RuinStoneWall_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Rock_RuinStoneWall_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneWall_A->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_A);
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_C = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_C");
@@ -646,6 +675,7 @@ public:
 		Mat_Rock_RuinStoneWall_C->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneWall_C->setUniform1f("shininess", 100.0f);
 		Mat_Rock_RuinStoneWall_C->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Rock_RuinStoneWall_C->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneWall_C->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_C);
 		Engine::Ref_ptr<Engine::material> Mat_Rock_RuinStoneWall_D = Engine::material::create(alb_nrm_map_shader, "Rock_RuinStoneWall_D");
@@ -655,6 +685,7 @@ public:
 		Mat_Rock_RuinStoneWall_D->setUniform1f("specCoefficient", 0.5f);
 		Mat_Rock_RuinStoneWall_D->setUniform1f("shininess", 100.0f);
 		Mat_Rock_RuinStoneWall_D->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Rock_RuinStoneWall_D->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Rock_RuinStoneWall_D->flushAll();
 		m_scene.addMaterial(Mat_Rock_RuinStoneWall_D);
 		Engine::Ref_ptr<Engine::material> green = Engine::material::create(color_shader, "green");
@@ -663,6 +694,7 @@ public:
 		green->setUniform1f("specCoefficient", 0.1f);
 		green->setUniform1f("shininess", 100.0f);
 		green->setUniform1f("emissiveMultiplier", 0.0f);
+		green->setUniform1f("reflectiveMultiplier", 0.0f);
 		green->flushAll();
 		m_scene.addMaterial(green);
 		Engine::Ref_ptr<Engine::material> Mat_Boar = Engine::material::create(alb_nrm_map_shader, "Boar");
@@ -672,6 +704,7 @@ public:
 		Mat_Boar->setUniform1f("specCoefficient", 0.01f);
 		Mat_Boar->setUniform1f("shininess", 20.0f);
 		Mat_Boar->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Boar->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Boar->flushAll();
 		m_scene.addMaterial(Mat_Boar);
 		Engine::Ref_ptr<Engine::material> Mat_Deer = Engine::material::create(alb_nrm_map_shader, "Deer");
@@ -681,13 +714,19 @@ public:
 		Mat_Deer->setUniform1f("specCoefficient", 0.01f);
 		Mat_Deer->setUniform1f("shininess", 20.0f);
 		Mat_Deer->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Deer->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Deer->flushAll();
 		m_scene.addMaterial(Mat_Deer);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
-		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 0.1f, 1.0f });
-		mat_emissive->setUniform1f("multiplier", 20.0f);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(color_shader, "emissive");
+		mat_emissive->setUniform4f("alb", 0.0f, 0.0f, 0.0f, 1.0f);
+		mat_emissive->setUniform1f("ambCoefficient", 0.0f);
+		mat_emissive->setUniform1f("specCoefficient", 0.0f);
+		mat_emissive->setUniform1f("shininess", 1.0f);
+		mat_emissive->setUniform1f("emissiveMultiplier", 50.0f);
+		mat_emissive->setUniform1f("reflectiveMultiplier", 0.0f);
 		mat_emissive->flushAll();
+		mat_emissive->dissableFlags(flag_cast_shadow);
 
 		//create meshes
 		Engine::Ref_ptr<Engine::mesh> bridge_a = Engine::mesh::create(bridge_a_va, Mat_Rock_RuinStoneBridge_A, "bridge_a");
@@ -726,11 +765,13 @@ public:
 
 		m_scene.addMaterial(mat_emissive, [](const void* light, Engine::material* mat) {
 			Engine::PtrPtr<Engine::pointLight> Light = (Engine::pointLight**)light;
-			mat->setUniform4fF("emissiveColor", Light->diffuse);
+			mat->setUniform4fF("alb", Light->diffuse);
 			}, lamp.get());
 
 		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
+
+		m_scene.setSkybox(Engine::texture3d_hdr::create("skyboxes/sky_field_hdr/"));
 }
 
 	void nrm_map_spc_map()
@@ -741,7 +782,7 @@ public:
 
 		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga", true);
 		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
-		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_R.tga");
+		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_M.tga");
 
 		Engine::Ref_ptr<Engine::shader> shader_alb_nrm_spec = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map_spc_map.shader");
 		shader_alb_nrm_spec->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
@@ -753,6 +794,7 @@ public:
 		gunMat->setUniform1f("ambCoefficient", 0.1f);
 		gunMat->setUniform1f("shininess", 100.0f);
 		gunMat->setUniform1f("emissiveMultiplier", 0.0f);
+		gunMat->setUniform1f("reflectiveMultiplier", 0.1f);
 		gunMat->flushAll();
 		m_scene.addMaterial(gunMat);
 
@@ -762,7 +804,7 @@ public:
 		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
 
-		//m_scene.setSkybox(Engine::texture3d::create("skyboxes/stadium/"));
+		m_scene.setSkybox(Engine::texture3d_hdr::create("skyboxes/clouds_hdr/"));
 	}
 
 	void emissive()
@@ -776,9 +818,6 @@ public:
 
 		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
 		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-			
-		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
-		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		Engine::Ref_ptr<Engine::material> light_grey = Engine::material::create(color_shader, "light_grey");
 		light_grey->setUniform4f("alb", 0.6f, 0.6f, 0.6f, 1.0f);
@@ -786,13 +825,19 @@ public:
 		light_grey->setUniform1f("specCoefficient", 1.0f);
 		light_grey->setUniform1f("shininess", 50.0f);
 		light_grey->setUniform1f("emissiveMultiplier", 0.0f);
+		light_grey->setUniform1f("reflectiveMultiplier", 0.0f);
 		light_grey->flushAll();
 		m_scene.addMaterial(light_grey);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
-		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
-		mat_emissive->setUniform1f("multiplier", 5.0f);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(color_shader, "emissive");
+		mat_emissive->setUniform4f("alb", 0.0f, 0.0f, 0.0f, 1.0f);
+		mat_emissive->setUniform1f("ambCoefficient", 0.0f);
+		mat_emissive->setUniform1f("specCoefficient", 0.0f);
+		mat_emissive->setUniform1f("shininess", 1.0f);
+		mat_emissive->setUniform1f("emissiveMultiplier", 50.0f);
+		mat_emissive->setUniform1f("reflectiveMultiplier", 0.0f);
 		mat_emissive->flushAll();
+		mat_emissive->dissableFlags(flag_cast_shadow);
 
 		Engine::Ref_ptr<Engine::mesh> environment = Engine::mesh::create(environment_va, light_grey, "environment");
 		environment->setScale(11.1111111f);
@@ -806,7 +851,7 @@ public:
 
 		m_scene.addMaterial(mat_emissive, [] (const void* light, Engine::material* mat) {
 			Engine::PtrPtr<Engine::pointLight> Light = (Engine::pointLight**)light;
-			mat->setUniform4fF("emissiveColor", Light->diffuse);
+			mat->setUniform4fF("alb", Light->diffuse);
 			}, lamp.get());//<- an update-function and a pointer to some update-data get's supplied -> various kinds of materials could be created like this
 	}
 
@@ -824,14 +869,14 @@ public:
 
 		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga", true);
 		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
-		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_R.tga");
+		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_M.tga");
 		Engine::Ref_ptr<Engine::texture2d> cubeTex = Engine::texture2d::create("checkerboard.png");
+
+		Engine::Ref_ptr<Engine::shader> shader_color = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
+		shader_color->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		Engine::Ref_ptr<Engine::shader> shader_alb_nrm_spec = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map_spc_map.shader");
 		shader_alb_nrm_spec->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-
-		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
-		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		Engine::Ref_ptr<Engine::shader> shader_alb_map = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map.shader");
 		shader_alb_map->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
@@ -840,15 +885,21 @@ public:
 		gunMat->setUniform1f("ambCoefficient", 0.1f);
 		gunMat->setUniform1f("shininess", 100.0f);
 		gunMat->setUniform1f("emissiveMultiplier", 0.0f);
+		gunMat->setUniform1f("reflectiveMultiplier", 0.2f);
 		gunMat->flushAll();
 		gunMat->setTexture("u_texture", gunDiffTex);
 		gunMat->setTexture("u_normalMap", gunNormalTex);
 		gunMat->setTexture("u_specMap", gunSpecTex);
 		m_scene.addMaterial(gunMat);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
-		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 1.0f, 1.0f });
-		mat_emissive->setUniform1f("multiplier", 5.0f);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(shader_color, "emissive");
+		mat_emissive->setUniform4f("alb", 0.0f, 0.0f, 0.0f, 1.0f);
+		mat_emissive->setUniform1f("ambCoefficient", 0.0f);
+		mat_emissive->setUniform1f("specCoefficient", 0.0f);
+		mat_emissive->setUniform1f("shininess", 1.0f);//for emissive materials set the shininess to 1(setting it to 0 leads to errors)
+		mat_emissive->setUniform1f("emissiveMultiplier", 80.0f);
+		mat_emissive->setUniform1f("reflectiveMultiplier", 0.0f);
+		mat_emissive->dissableFlags(flag_cast_shadow);
 		mat_emissive->flushAll();
 
 		Engine::Ref_ptr<Engine::material> cubeMat = Engine::material::create(shader_alb_map, "cube_mat");
@@ -856,6 +907,7 @@ public:
 		cubeMat->setUniform1f("specCoefficient", 1.0f);
 		cubeMat->setUniform1f("shininess", 100.0f);
 		cubeMat->setUniform1f("emissiveMultiplier", 0.0f);
+		cubeMat->setUniform1f("reflectiveMultiplier", 0.0f);
 		cubeMat->flushAll();
 		cubeMat->setTexture("u_texture", cubeTex);
 		m_scene.addMaterial(cubeMat);
@@ -876,11 +928,13 @@ public:
 
 		m_scene.addMaterial(mat_emissive, [](const void* light, Engine::material* mat) {
 			Engine::PtrPtr<Engine::pointLight> Light = (Engine::pointLight**)light;
-			mat->setUniform4fF("emissiveColor", Light->diffuse);
+			mat->setUniform4fF("alb", Light->diffuse);
 			}, lamp.get());//<- an update-function and a pointer to some update-data get's supplied -> various kinds of materials could be created like this
 
 		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
+
+		m_scene.setSkybox(Engine::texture3d_hdr::create("skyboxes/clouds_hdr/"));
 	}
 
 	void hylia_bridge()
@@ -986,9 +1040,6 @@ public:
 		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
 		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
-		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
-		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-
 		//create materials(named after their textures, not after the models that they are assigned to)
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_HyliaStucco_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_HyliaStucco_A");
 		Mat_CmnTex_Wall_HyliaStucco_A->setTexture("u_texture", CmnTex_Wall_HyliaStucco_A_Alb);
@@ -997,6 +1048,7 @@ public:
 		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_HyliaStucco_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_HyliaStucco_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_HyliaStucco_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_SmallBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_SmallBrick_A");
@@ -1006,6 +1058,7 @@ public:
 		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_SmallBrick_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_SmallBrick_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_SmallBrick_A);
 		Engine::Ref_ptr<Engine::material> Mat_Builparts_HyliaOrnament_C = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_HyliaOrnament_C");
@@ -1015,6 +1068,7 @@ public:
 		Mat_Builparts_HyliaOrnament_C->setUniform1f("specCoefficient", 0.05f);
 		Mat_Builparts_HyliaOrnament_C->setUniform1f("shininess", 80.0f);
 		Mat_Builparts_HyliaOrnament_C->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Builparts_HyliaOrnament_C->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Builparts_HyliaOrnament_C->flushAll();
 		m_scene.addMaterial(Mat_Builparts_HyliaOrnament_C);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Builparts_HyliaOrnament_B = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Builparts_HyliaOrnament_B");
@@ -1024,6 +1078,7 @@ public:
 		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Builparts_HyliaOrnament_B->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Builparts_HyliaOrnament_B->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Builparts_HyliaOrnament_B);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TOTTile01_G = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TOTTile01_G");
@@ -1033,6 +1088,7 @@ public:
 		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_TOTTile01_G->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_TOTTile01_G->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_TOTTile01_G);
 		Engine::Ref_ptr<Engine::material> Mat_Builparts_HyliaStoneBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_HyliaStoneBrick_A");
@@ -1042,6 +1098,7 @@ public:
 		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("shininess", 80.0f);
 		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Builparts_HyliaStoneBrick_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Builparts_HyliaStoneBrick_A->flushAll();
 		m_scene.addMaterial(Mat_Builparts_HyliaStoneBrick_A);
 		Engine::Ref_ptr<Engine::material> Mat_Wall_FloorBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_Mat_Wall_FloorBrick_A");
@@ -1051,6 +1108,7 @@ public:
 		Mat_Wall_FloorBrick_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_Wall_FloorBrick_A->setUniform1f("shininess", 80.0f);
 		Mat_Wall_FloorBrick_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Wall_FloorBrick_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Wall_FloorBrick_A->flushAll();
 		m_scene.addMaterial(Mat_Wall_FloorBrick_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_ReliefStone_D = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_ReliefStone_D");
@@ -1060,6 +1118,7 @@ public:
 		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_ReliefStone_D->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_ReliefStone_D->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_ReliefStone_D);
 		Engine::Ref_ptr<Engine::material> green = Engine::material::create(color_shader, "green");
@@ -1068,6 +1127,7 @@ public:
 		green->setUniform1f("specCoefficient", 0.1f);
 		green->setUniform1f("shininess", 80.0f);
 		green->setUniform1f("emissiveMultiplier", 0.0f);
+		green->setUniform1f("reflectiveMultiplier", 0.0f);
 		green->flushAll();
 		m_scene.addMaterial(green);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_Crack_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_Crack_A");
@@ -1078,6 +1138,7 @@ public:
 		Mat_CmnTex_Wall_Crack_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_Crack_A->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_Crack_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_Crack_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_Crack_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_Crack_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TOTTileCutsurface = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TOTTileCutsurface");
@@ -1087,6 +1148,7 @@ public:
 		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_TOTTileCutsurface->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_TOTTileCutsurface->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_TOTTileCutsurface);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Stone_HyliaBridgeBreak_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Stone_HyliaBridgeBreak_A");
@@ -1096,6 +1158,7 @@ public:
 		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Stone_HyliaBridgeBreak_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Stone_HyliaBridgeBreak_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Stone_HyliaBridgeBreak_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_LargeBrick_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_LargeBrick_A");
@@ -1105,6 +1168,7 @@ public:
 		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_LargeBrick_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_LargeBrick_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_LargeBrick_A);
 		Engine::Ref_ptr<Engine::material> Mat_Builparts_Ornament_A = Engine::material::create(alb_nrm_map_shader, "Mat_Builparts_Ornament_A");
@@ -1114,6 +1178,7 @@ public:
 		Mat_Builparts_Ornament_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_Builparts_Ornament_A->setUniform1f("shininess", 80.0f);
 		Mat_Builparts_Ornament_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_Builparts_Ornament_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_Builparts_Ornament_A->flushAll();
 		m_scene.addMaterial(Mat_Builparts_Ornament_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_TempleOfTime_A = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_TempleOfTime_A");
@@ -1123,6 +1188,7 @@ public:
 		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_TempleOfTime_A->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_TempleOfTime_A->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_TempleOfTime_A);
 		Engine::Ref_ptr<Engine::material> Mat_CmnTex_Wall_StoneRoad_D = Engine::material::create(alb_nrm_map_shader, "Mat_CmnTex_Wall_StoneRoad_D");
@@ -1132,12 +1198,18 @@ public:
 		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("specCoefficient", 0.05f);
 		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("shininess", 80.0f);
 		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("emissiveMultiplier", 0.0f);
+		Mat_CmnTex_Wall_StoneRoad_D->setUniform1f("reflectiveMultiplier", 0.0f);
 		Mat_CmnTex_Wall_StoneRoad_D->flushAll();
 		m_scene.addMaterial(Mat_CmnTex_Wall_StoneRoad_D);
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
-		mat_emissive->setUniform4f("emissiveColor", { 0.1f, 0.1f, 0.1f, 1.0f });
-		mat_emissive->setUniform1f("multiplier", 20.0f);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(color_shader, "emissive");
+		mat_emissive->setUniform4f("alb", 1.0f, 1.0f, 1.0f, 1.0f);
+		mat_emissive->setUniform1f("ambCoefficient", 0.0f);
+		mat_emissive->setUniform1f("specCoefficient", 0.0f);
+		mat_emissive->setUniform1f("shininess", 1.0f);//for emissive materials set the shininess to 1(setting it to 0 leads to errors)
+		mat_emissive->setUniform1f("emissiveMultiplier", 80.0f);
+		mat_emissive->setUniform1f("reflectiveMultiplier", 0.0f);
 		mat_emissive->flushAll();
+		mat_emissive->dissableFlags(flag_cast_shadow);
 		m_scene.addMaterial(mat_emissive);
 
 		Engine::Ref_ptr<Engine::mesh> Arch_0_Mt_Wall_HyliaStucco_A = Engine::mesh::create(Arch_0_Mt_Wall_HyliaStucco_A_Va, Mat_CmnTex_Wall_HyliaStucco_A, "Arch_0_Mt_Wall_HyliaStucco_A");
@@ -1184,6 +1256,8 @@ public:
 		Engine::Ref_ptr<Engine::DirLightMovement> rotate = Engine::DirLightMovement::create(0.0174533f * 60.0f * 0.25f * 0.0f , 0.0174533f * 60.0f * 0.25f, 0.0f);
 		rotate->attachToLight(sun);
 		m_scene.addLightMovement(rotate);
+
+		m_scene.setSkybox(Engine::texture3d_hdr::create("skyboxes/sky_field_hdr/"));
 	}
 
 	void bloom_demo()
@@ -1200,8 +1274,6 @@ public:
 
 		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
 		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("emissive/emissive_bloom.shader");
-		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		Engine::Ref_ptr<Engine::material> plane_mat = Engine::material::create(color_shader, "planeMat", flags_default | flag_no_backface_cull);
 		plane_mat->setUniform4f("alb", 0.1f, 0.1f, 0.1f, 1.0f);
@@ -1209,19 +1281,30 @@ public:
 		plane_mat->setUniform1f("specCoefficient", 0.8f);
 		plane_mat->setUniform1f("shininess", 100.0f);
 		plane_mat->setUniform1f("emissiveMultiplier", 0.0f);
+		plane_mat->setUniform1f("reflectiveMultiplier", 0.0f);
 		plane_mat->flushAll();
 		m_scene.addMaterial(plane_mat);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
-		mat_emissive->setUniform4f("emissiveColor", { 1.0f, 0.95f, 0.05f, 1.0f });
-		mat_emissive->setUniform1f("multiplier", 100.0f);
+		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(color_shader, "emissive");
+		mat_emissive->setUniform4f("alb", 1.0f, 1.0f, 0.0195f, 1.0f);
+		mat_emissive->setUniform1f("ambCoefficient", 0.0f);
+		mat_emissive->setUniform1f("specCoefficient", 0.0f);
+		mat_emissive->setUniform1f("shininess", 1.0f);
+		mat_emissive->setUniform1f("emissiveMultiplier", 100.0f);
+		mat_emissive->setUniform1f("reflectiveMultiplier", 0.0f);
 		mat_emissive->flushAll();
+		mat_emissive->dissableFlags(flag_cast_shadow);
 		m_scene.addMaterial(mat_emissive);
 
-		Engine::Ref_ptr<Engine::material> lightsaber_mat = Engine::material::create(emissive_bloom, "lightsaber_mat", flag_depth_test | flag_no_deferred);
-		lightsaber_mat->setUniform4f("emissiveColor", { 0.05f, 1.0f, 0.05f, 1.0f });
-		lightsaber_mat->setUniform1f("multiplier", 100.0f);
+		Engine::Ref_ptr<Engine::material> lightsaber_mat = Engine::material::create(color_shader, "lightsaber_mat");
+		lightsaber_mat->setUniform4f("alb", 0.0781f, 1.0f, 0.0195f, 1.0f);
+		lightsaber_mat->setUniform1f("ambCoefficient", 0.0f);
+		lightsaber_mat->setUniform1f("specCoefficient", 0.0f);
+		lightsaber_mat->setUniform1f("shininess", 1.0f);
+		lightsaber_mat->setUniform1f("emissiveMultiplier", 100.0);
+		lightsaber_mat->setUniform1f("reflectiveMultiplier", 0.0f);
 		lightsaber_mat->flushAll();
+		lightsaber_mat->dissableFlags(flag_cast_shadow);
 		m_scene.addMaterial(lightsaber_mat);
 
 		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, plane_mat, "plane");
@@ -1239,59 +1322,103 @@ public:
 		m_scene.addLight(sun);
 	}
 
-	void newMatProperties()
+	void pcfTest()
 	{
 		Engine::Ref_ptr<Engine::vertexArray> plane_va = Engine::vertexArray::create();
 		plane_va->load("plane.model");
 		plane_va->unbind();
-		Engine::Ref_ptr<Engine::vertexArray> text_va = Engine::vertexArray::create();
-		text_va->load("test_text.model");
-		text_va->unbind();
-		Engine::Ref_ptr<Engine::vertexArray> lightsaber_va = Engine::vertexArray::create();
-		lightsaber_va->load("lightsaber.model");
-		lightsaber_va->unbind();
+		Engine::Ref_ptr<Engine::vertexArray> cube_va = Engine::vertexArray::create();
+		cube_va->load("cube.model");
+		cube_va->unbind();
 		Engine::Ref_ptr<Engine::vertexArray> sphere_va = Engine::vertexArray::create();
-		sphere_va->load("sphere.model");
+		sphere_va->load("sphere_high_tb.model");
 		sphere_va->unbind();
+
+		Engine::Ref_ptr<Engine::texture2d> sphereNormal = Engine::texture2d::create("sphere_normal.png");
 
 		Engine::Ref_ptr<Engine::shader> color_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color.shader");
 		color_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
-		Engine::Ref_ptr<Engine::shader> emissive_bloom = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/emissive.shader");
-		emissive_bloom->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+		Engine::Ref_ptr<Engine::shader> nrm_map_shader = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/color_nrm_map.shader");
+		nrm_map_shader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 
 		Engine::Ref_ptr<Engine::material> plane_mat = Engine::material::create(color_shader, "planeMat", flags_default | flag_no_backface_cull);
 		plane_mat->setUniform4f("alb", 0.1f, 0.1f, 0.1f, 1.0f);
 		plane_mat->setUniform1f("ambCoefficient", 0.285f);
 		plane_mat->setUniform1f("specCoefficient", 0.8f);
 		plane_mat->setUniform1f("shininess", 100.0f);
+		plane_mat->setUniform1f("emissiveMultiplier", 0.0f);
+		plane_mat->setUniform1f("reflectiveMultiplier", 0.0f);
 		plane_mat->flushAll();
 		m_scene.addMaterial(plane_mat);
 
-		Engine::Ref_ptr<Engine::material> mat_emissive = Engine::material::create(emissive_bloom, "emissive", flag_depth_test | flag_no_deferred);
-		mat_emissive->setUniform4f("emissiveColor", { 1.0f, 0.95f, 0.05f, 1.0f });
-		mat_emissive->setUniform1f("multiplier", 100.0f);
-		mat_emissive->flushAll();
-		m_scene.addMaterial(mat_emissive);
+		Engine::Ref_ptr<Engine::material> red = Engine::material::create(color_shader, "red");
+		red->setUniform4f("alb", 0.7f, 0.0875f, 0.0875f, 1.0f);
+		red->setUniform1f("ambCoefficient", 0.285f);
+		red->setUniform1f("specCoefficient", 0.5f);
+		red->setUniform1f("shininess", 100.0f);
+		red->setUniform1f("emissiveMultiplier", 0.0f);
+		red->setUniform1f("reflectiveMultiplier", 0.0f);
+		red->flushAll();
+		m_scene.addMaterial(red);
 
-		Engine::Ref_ptr<Engine::material> lightsaber_mat = Engine::material::create(emissive_bloom, "lightsaber_mat", flag_depth_test | flag_no_deferred);
-		lightsaber_mat->setUniform4f("emissiveColor", { 0.05f, 1.0f, 0.05f, 1.0f });
-		lightsaber_mat->setUniform1f("multiplier", 100.0f);
-		lightsaber_mat->flushAll();
-		m_scene.addMaterial(lightsaber_mat);
+		Engine::Ref_ptr<Engine::material> sphereMat = Engine::material::create(nrm_map_shader, "sphereMat");
+		sphereMat->setTexture("u_normalMap", sphereNormal);
+		sphereMat->setUniform4f("alb", 0.1f, 0.1f, 0.1f, 1.0f);
+		sphereMat->setUniform1f("ambCoefficient", 0.1f);
+		sphereMat->setUniform1f("specCoefficient", 1.0f);
+		sphereMat->setUniform1f("shininess", 100.0f);
+		sphereMat->setUniform1f("emissiveMultiplier", 0.0f);
+		sphereMat->setUniform1f("reflectiveMultiplier", 1.0f);
+		sphereMat->flushAll();
+		m_scene.addMaterial(sphereMat);
 
 		Engine::Ref_ptr<Engine::mesh> plane = Engine::mesh::create(plane_va, plane_mat, "plane");
 		m_scene.addMesh(plane);
-		Engine::Ref_ptr<Engine::mesh> text = Engine::mesh::create(text_va, mat_emissive, "text");
-		text->setScale(2.0f);
-		text->setRot({ 3.1415926f / 2.0f, 0.0f, 0.0f });
-		text->setPos({ 0.0f, 6.0f, -5.5f, 1.0f });
-		m_scene.addMesh(text);
-		Engine::Ref_ptr<Engine::mesh> lightsaber = Engine::mesh::create(lightsaber_va, lightsaber_mat, "lightsaber");
-		lightsaber->setPos({ -2.0f, 5.0f, -5.5f, 1.0f });
-		m_scene.addMesh(lightsaber);
+		Engine::Ref_ptr<Engine::mesh> cube = Engine::mesh::create(cube_va, red, "cube");
+		cube->setPos({ 0.0f, 2.5f, 0.0f, 1.0f });
+		cube->setRot({RAD(45.0f), RAD(45.0f), RAD(45.0f)});
+		cube->setScale(0.1f);
+		m_scene.addMesh(cube);
+		Engine::Ref_ptr<Engine::mesh> sphere = Engine::mesh::create(sphere_va, sphereMat, "sphere");
+		sphere->setPos({ 3.0f, 2.0f, 4.0f, 1.0f });
+		m_scene.addMesh(sphere);
 
-		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(10.0f, 10.0f, 10.0f), vec3(100.0f, 100.0f, 100.0f) });
+		//Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
+		//m_scene.addLight(sun);
+		m_scene.addLight(Engine::Renderer::addDynamicSpotLight({ vec3(0.0f, 8.0f, 0.0f), vec3(0.0f, -1.0f, 0.0f), vec3(0.1f, 0.1f, 0.1f), vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f), cosf(RAD(20.0f)) }));
+	}
+
+	void ECS_Test()
+	{
+		Engine::Ref_ptr<Engine::vertexArray> gun_va = Engine::vertexArray::create();
+		gun_va->load("gun_tb.model");
+		gun_va->unbind();
+
+		Engine::Ref_ptr<Engine::texture2d> gunDiffTex = Engine::texture2d::create("Cerberus_A.tga", true);
+		Engine::Ref_ptr<Engine::texture2d> gunNormalTex = Engine::texture2d::create("Cerberus_N.tga");//USE LINEAR INTERPOLATION FOR NORMALMAPS AND NOT SOMETHING LIKE "FILTER_NEAREST" -> mutch smoother
+		Engine::Ref_ptr<Engine::texture2d> gunSpecTex = Engine::texture2d::create("Cerberus_M.tga");
+
+		Engine::Ref_ptr<Engine::shader> shader_alb_nrm_spec = Engine::Renderer::getShaderLib()->load("deferred/geometry_pass/alb_map_nrm_map_spc_map.shader");
+		shader_alb_nrm_spec->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+
+		Engine::Ref_ptr<Engine::material> gunMat = Engine::material::create(shader_alb_nrm_spec, "gun_mat");//just use the variant for directional lights for initialization
+		gunMat->setTexture("u_texture", gunDiffTex);
+		gunMat->setTexture("u_normalMap", gunNormalTex);
+		gunMat->setTexture("u_specMap", gunSpecTex);
+		gunMat->setUniform1f("ambCoefficient", 0.1f);
+		gunMat->setUniform1f("shininess", 100.0f);
+		gunMat->setUniform1f("emissiveMultiplier", 0.0f);
+		gunMat->setUniform1f("reflectiveMultiplier", 0.1f);
+		gunMat->flushAll();
+		m_scene.addMaterial(gunMat);
+
+		Engine::Ref_ptr<Engine::mesh> gun = Engine::mesh::create(gun_va, gunMat, "gun");
+		m_scene.addMesh(gun);
+
+		Engine::PtrPtr<Engine::directionalLight> sun = Engine::Renderer::addDynamicDirLight({ vec3(0.0f, -0.7071067f, -0.7071067f), vec3(0.1f, 0.1f, 0.1f), vec3(2.5f, 2.5f, 2.5f), vec3(3.75f, 3.75f, 3.75f) });
 		m_scene.addLight(sun);
+
+		m_scene.setSkybox(Engine::texture3d_hdr::create("skyboxes/clouds_hdr/"));
 	}
 
 private:

@@ -45,7 +45,7 @@ layout(std140) uniform ViewProjection
 {
 	mat4 viewProjMat;//not needed in this shader, but in the geometryPass-shader <- maybe just replace this with: mat4 padd;
 	vec4 viewPos;
-	mat4 viewMat;//viewMat that is needed to find out the depth of each pixel in order to determine the correct cascade for cascaded shadowMaps
+	mat4 padd;//this actually is the viewMat, but it is not needed in this shader at the moment
 };
 
 uniform sampler2D u_gPosition;
@@ -54,6 +54,7 @@ uniform sampler2D u_gAlbSpec;
 uniform sampler2DArray u_dirShadowMaps;
 uniform samplerCubeArray u_pointShadowMaps;
 uniform sampler2DArray u_spotShadowMaps;
+uniform samplerCube u_skybox;
 uniform mat4 u_invViewMat;
 
 struct directionalLight
@@ -228,24 +229,40 @@ float calcSpotShadow(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir, float s
 	return shadow;
 }
 
+vec4 getPosition(float zViewSpace, vec2 uv)
+{
+	vec4 result;
+	float zNear = 0.1f;//zFar is already defined
+	vec2 clipSpace = (uv * 2.0f) - 1.0f;
+	result.x = -(clipSpace.x * zViewSpace/*times tan of half horizontal fov*/);
+	result.y = -(clipSpace.y * zViewSpace * (1080.0f / 1920.0f)/*this value is equal to the tangent of the half vertical fov, or just the aspect ratio(height/width)*/);
+	result.z = zViewSpace;
+	result.w = 1.0f;
+	return result;
+}
+
+vec4 convertRGBE(vec4 rgbe)
+{
+	rgbe *= 255.0f;
+	//convert from rgbe to hdr rgba
+	float factor = pow(2.0f, rgbe.a - 128.0f) / 256.0f;
+	return vec4(rgbe.rgb * factor, 1.0f);
+}
+
 void main()
 {
 	vec3 colOutput = vec3(0.0f);
-	vec4 fragPos = texture(u_gPosition, v_texCoord).rgba;
-	float ambCoefficient = fragPos.w;
-	fragPos.w = 1.0f;
+	vec4 posTexRead = texture(u_gPosition, v_texCoord).rgba;
+	float reflectiveCoefficient = posTexRead.x;
+	float fragZView = posTexRead.z;
+	float ambCoefficient = posTexRead.w;
+	vec4 fragPos = u_invViewMat * getPosition(fragZView, v_texCoord);//restore viewSpacePosition and transform to worldSpace
 	vec4 AlbSpec = texture(u_gAlbSpec, v_texCoord).rgba;
 	float specIntensity = AlbSpec.a;
 	//first restore the normal's z-component and then restore its sign with the sign of the shininess-value
 	vec4 normal = texture(u_gNormal, v_texCoord).rgba;
 	float emissiveMultiplier = normal.z;//<-retrieve the emissiveMultiplier from the texture's z-component
 	normal.z = sign(normal.w) * sqrt(1.0f - (normal.x * normal.x) - (normal.y * normal.y));
-	//normal.z = sqrt(1.0f - (normal.x * normal.x) - (normal.y * normal.y));
-	//if (abs(normal.z) > 0.04f)//FIGURE OUT why the fuck there seems to be such a huge error. We should just be able to compare this with 0 and thats it, but there seems to be an error between 0.03 and 0.04 when
-		//doing the normal-recovery: the square root should just return 0 if the normal originally had a z-component of 0, but apparently thats not the case
-	//	normal.z = normal.z * sign(normal.w);
-	//else
-	//	normal.z = 0.0f;
 	float shininess = abs(normal.w);//<-retrieve the shininess from the normal's w-component -> using abs, because this carries the sign of the normal's z-component#
 	normal.w = 0.0f;
 	normal = u_invViewMat * normal;
@@ -257,11 +274,10 @@ void main()
 	if (normal.xyz != vec3(0.0f, 0.0f, 0.0f))
 	{
 		uint cascadeIndex = 0;
-		float worldSpaceDepth = -(viewMat * fragPos).z;
 		for (uint i = 1; i < cascade_count; i++)
 		{
 			float length = float(i) * length_per_cascade;
-			if (worldSpaceDepth > length)//note that this uses the length of the vector from camera to pixel instead of the depth -> maybe change this
+			if ((-fragZView) > length)//note that this uses the length of the vector from camera to pixel instead of the depth -> maybe change this
 				cascadeIndex++;
 		}
 		for (int i = 0; i < dirLightCount; i++)
@@ -283,6 +299,8 @@ void main()
 		}
 		//apply emissive parameter:
 		colOutput += AlbSpec.xyz * emissiveMultiplier;
+		//apply reflective parameter:
+		colOutput += convertRGBE(texture(u_skybox, reflect(-viewDir, normal.xyz))).xyz * reflectiveCoefficient;
 
 		hdrColor = vec4(colOutput, 1.0f);
 	}

@@ -321,9 +321,9 @@ namespace Engine
 	void materialLib::onImGuiRender()
 	{
 		ImGui::Begin("Materials");
-		ImVec2 p = ImGui::GetCursorScreenPos();
-		ImVec2 dest(p.x + 300, p.y + 150);
-		ImGui::GetWindowDrawList()->AddBezierCurve(p, ImVec2((5 * p.x + dest.x) / 6, (p.y + dest.y) / 2), ImVec2((p.x + 5 * dest.x) / 6, (p.y + dest.y) / 2), dest, IM_COL32(100, 100, 200, 255), 3.0f);
+		//ImVec2 p = ImGui::GetCursorScreenPos();
+		//ImVec2 dest(p.x + 300, p.y + 150);
+		//ImGui::GetWindowDrawList()->AddBezierCurve(p, ImVec2((5 * p.x + dest.x) / 6, (p.y + dest.y) / 2), ImVec2((p.x + 5 * dest.x) / 6, (p.y + dest.y) / 2), dest, IM_COL32(100, 100, 200, 255), 3.0f);
 		for (const auto& mat : m_materials)
 		{
 			bool isOpen = ImGui::TreeNode(mat.second->getName().c_str());
@@ -356,7 +356,7 @@ namespace Engine
 		{
 		case(ENG_FLOAT):
 		{
-			ImGui::DragFloat(props.first.c_str(), (float*)(data + props.second.offset), 2.0f, -100.0f, 100.0f);
+			ImGui::DragFloat(props.first.c_str(), (float*)(data + props.second.offset), 2.0f, 0.0f, 100.0f);
 		}break;
 		case(ENG_INT):
 		{

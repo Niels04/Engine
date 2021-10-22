@@ -142,20 +142,22 @@
   <ItemGroup>
     <ClInclude Include="src\Engine.hpp" />
     <ClInclude Include="src\Engine\Application.hpp" />
+    <ClInclude Include="src\Engine\ECS\Entitiy.hpp" />
+    <ClInclude Include="src\Engine\ECS\registry.hpp" />
+    <ClInclude Include="src\Engine\ECS\util.hpp" />
     <ClInclude Include="src\Engine\EntryPoint.hpp" />
     <ClInclude Include="src\Engine\Events\ApplicationEvent.hpp" />
     <ClInclude Include="src\Engine\Events\Event.hpp" />
     <ClInclude Include="src\Engine\Events\KeyEvent.hpp" />
     <ClInclude Include="src\Engine\Events\MouseEvent.hpp" />
-    <ClInclude Include="src\Engine\hdr_imageLoader\hdr_imageLoader.hpp" />
     <ClInclude Include="src\Engine\ImGui\ImGuiLayer.hpp" />
     <ClInclude Include="src\Engine\Log.hpp" />
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp" />
+    <ClInclude Include="src\Engine\Rendering\LightMatrixStructs.hpp" />
     <ClInclude Include="src\Engine\Rendering\buffers.hpp" />
     <ClInclude Include="src\Engine\Rendering\lights.hpp" />
     <ClInclude Include="src\Engine\Rendering\material.hpp" />
     <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp" />
-    <ClInclude Include="src\Engine\Rendering\LightMatrixStructs.hpp" />
     <ClInclude Include="src\Engine\Rendering\perspCam.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderer.hpp" />
@@ -173,6 +175,7 @@
     <ClInclude Include="src\Engine\datatypes\types.hpp" />
     <ClInclude Include="src\Engine\datatypes\vec3.hpp" />
     <ClInclude Include="src\Engine\datatypes\vec4.hpp" />
+    <ClInclude Include="src\Engine\hdr_imageLoader\hdr_imageLoader.hpp" />
     <ClInclude Include="src\Engine\input.hpp" />
     <ClInclude Include="src\Engine\keyCodes.hpp" />
     <ClInclude Include="src\Engine\layer.hpp" />
@@ -200,7 +203,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp" />
-    <ClCompile Include="src\Engine\hdr_imageLoader\hdr_imageLoader.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp" />
     <ClCompile Include="src\Engine\Log.cpp" />
@@ -217,6 +219,7 @@
     <ClCompile Include="src\Engine\Rendering\texture.cpp" />
     <ClCompile Include="src\Engine\Rendering\vertexArray.cpp" />
     <ClCompile Include="src\Engine\Rendering\vertexBufferLayout.cpp" />
+    <ClCompile Include="src\Engine\hdr_imageLoader\hdr_imageLoader.cpp" />
     <ClCompile Include="src\Engine\layer.cpp" />
     <ClCompile Include="src\Engine\layerStack.cpp" />
     <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp" />

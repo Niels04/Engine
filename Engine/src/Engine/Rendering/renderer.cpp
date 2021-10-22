@@ -41,10 +41,11 @@ namespace Engine
 	//skybox
 	Ref_ptr<vertexArray> Renderer::s_skyboxVa = nullptr;
 	Ref_ptr<shader> Renderer::s_skyboxShader = nullptr;
+	WeakRef_ptr<texture> Renderer::s_skyboxTex = nullptr;
 	//other
-	Ref_ptr<shader> Renderer::s_debug_display_cascaded = nullptr;
+	/*Ref_ptr<shader> Renderer::s_debug_display_cascaded = nullptr;
 	Ref_ptr<vertexArray> Renderer::s_debug_cascade_va = nullptr;
-	Ref_ptr<shader> Renderer::s_debug_renderCascade = nullptr;
+	Ref_ptr<shader> Renderer::s_debug_renderCascade = nullptr;*/
 
 	float lerp(float a, float b, float f)
 	{
@@ -118,6 +119,11 @@ namespace Engine
 		////////
 		//SETUP THE G-BUFFER
 		////////
+		////LAYOUT:
+		//- s_gPosition: RGBA 32bit non normalized floats that store: x = ?, y = ?, z = fragmentZViewSpace, w = ambCoefficient
+		//- s_gNormal: RGBA 16bit non normalized floats that store: x = normal.x, y = normal.y, z = emissiveMultiplier, w = shininess * sign(normal.z) -> w stores the shininess multiplied with the sign of normal.z
+		//- s_gAlbSpec: RGBA 8bit normalized floats that store: x = alb.r, y = alb.g, z = alb.b, w = specCoefficient
+		//- s_gDepth: Renderbuffer that is attached as depthBuffer
 		s_gBuffer = FrameBuffer::create();
 		s_gBuffer->bind();
 		renderCommand::drawToBuffers(3, ENG_COLOR_ATTACHMENT0, ENG_COLOR_ATTACHMENT1, ENG_COLOR_ATTACHMENT2);
@@ -131,7 +137,7 @@ namespace Engine
 		s_gBuffer->attachRenderBuffer(s_gDepth);
 		s_gBuffer->checkStatus();
 
-		s_gLightingShader[0] = shader::create("deferred/lighting_pass/shadow/cascaded/normal_compression/lighting.shader");
+		s_gLightingShader[0] = shader::create("deferred/lighting_pass/shadow/cascaded/normal_compression/hardware_pcf/lighting.shader");
 		s_gLightingShader[0]->bind();
 		s_gLightingShader[0]->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		s_gLightingShader[0]->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
@@ -140,9 +146,13 @@ namespace Engine
 		s_gLightingShader[0]->setUniform1i("u_gPosition", 0);
 		s_gLightingShader[0]->setUniform1i("u_gNormal", 1);
 		s_gLightingShader[0]->setUniform1i("u_gAlbSpec", 2);
+		s_gLightingShader[0]->setUniform1i("u_dirShadowMaps", 3);
+		s_gLightingShader[0]->setUniform1i("u_pointShadowMaps", 4);
+		s_gLightingShader[0]->setUniform1i("u_spotShadowMaps", 5);
+		s_gLightingShader[0]->setUniform1i("u_skybox", 6);
 		s_gLightingShader[0]->unbind();
 		
-		s_gLightingShader[1] = shader::create("deferred/lighting_pass/shadow/cascaded/normal_compression/lighting_bloom.shader");
+		s_gLightingShader[1] = shader::create("deferred/lighting_pass/shadow/cascaded/normal_compression/hardware_pcf/lighting_bloom.shader");
 		s_gLightingShader[1]->bind();
 		s_gLightingShader[1]->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		s_gLightingShader[1]->bindUniformBlock("directionalLights", DIRECTIONAL_LIGHTS_BIND);
@@ -151,69 +161,69 @@ namespace Engine
 		s_gLightingShader[1]->setUniform1i("u_gPosition", 0);
 		s_gLightingShader[1]->setUniform1i("u_gNormal", 1);
 		s_gLightingShader[1]->setUniform1i("u_gAlbSpec", 2);
+		s_gLightingShader[1]->setUniform1i("u_dirShadowMaps", 3);
+		s_gLightingShader[1]->setUniform1i("u_pointShadowMaps", 4);
+		s_gLightingShader[1]->setUniform1i("u_spotShadowMaps", 5);
+		s_gLightingShader[1]->setUniform1i("u_skybox", 6);
 		s_gLightingShader[1]->unbind();
 
 		//setup SSAO
-		std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);//random Floats between 0 and 1
-		std::default_random_engine generator;
-		vec3 ssaoKernel[SSAO_kernelSize];
-		for (uint8_t i = 0; i < SSAO_kernelSize; i++)
 		{
-			vec3 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator));//we want the vector's z-component to always be oriented in the positive z-direction,
-			//because in tangent-space that is the same as the normal
-			sample.normalize();
-			sample *= randomFloats(generator);
-			float scale = static_cast<float>(i) / static_cast<float>(SSAO_kernelSize);
-			scale = lerp(0.1f, 1.0f, scale * scale);//we want most samples to be closer to the origin -> this function achieves exactly that
-			sample *= scale;
-			ssaoKernel[i] = sample;
+			std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);//random Floats between 0 and 1
+			std::default_random_engine generator;
+			vec3 ssaoKernel[SSAO_kernelSize];
+			for (uint8_t i = 0; i < SSAO_kernelSize; i++)
+			{
+				vec3 sample(randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator));//we want the vector's z-component to always be oriented in the positive z-direction,
+				//because in tangent-space that is the same as the normal
+				sample.normalize();
+				sample *= randomFloats(generator);
+				float scale = static_cast<float>(i) / static_cast<float>(SSAO_kernelSize);
+				scale = lerp(0.1f, 1.0f, scale * scale);//we want most samples to be closer to the origin -> this function achieves exactly that
+				sample *= scale;
+				ssaoKernel[i] = sample;
+			}
+
+			vec3 ssaoNoise[16];
+			for (uint8_t i = 0; i < 16; i++)
+			{
+				vec3 noise = { randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, 0.0f };
+				noise.normalize();
+				ssaoNoise[i] = noise;
+			}
+			s_SSAONoise = texture2d::create(4U, 4U, ENG_RGBA16F, FILTER_NEAREST, FILTER_NEAREST, ENG_REPEAT, ssaoNoise);
+			s_SSAO_FBO = FrameBuffer::create();
+			s_AO = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_R8, FILTER_NEAREST, FILTER_NEAREST);
+			s_SSAO_FBO->bind();
+			s_SSAO_FBO->attachTexture(s_AO);
+			s_SSAO_FBO->checkStatus();
+			s_SSAO_FBO->unbind();
+
+			s_SSAO_shader = shader::create("SSAO/SSAO.shader");
+			s_SSAO_shader->bind();
+			s_SSAO_shader->setUniform1i("u_gPosition", 0);
+			s_SSAO_shader->setUniform1i("u_gNormal", 1);
+			s_SSAO_shader->setUniform1i("u_ssaoNoise", 2);
+			s_SSAO_shader->setUniform3fArr("u_samples", SSAO_kernelSize, ssaoKernel);
+			s_SSAO_shader->unbind();
+
+			s_debug_display_ssao = shader::create("SSAO/debug_display.shader");
+			s_debug_display_ssao->bind();
+			s_debug_display_ssao->setUniform1i("u_texture", 0);
+			s_debug_display_ssao->unbind();
 		}
-
-		vec3 ssaoNoise[16];
-		for (uint8_t i = 0; i < 16; i++)
-		{
-			vec3 noise = { randomFloats(generator) * 2.0f - 1.0f, randomFloats(generator) * 2.0f - 1.0f, 0.0f };
-			noise.normalize();
-			ssaoNoise[i] = noise;
-		}
-		s_SSAONoise = texture2d::create(4U, 4U, ENG_RGBA16F, FILTER_NEAREST, FILTER_NEAREST, ENG_REPEAT, ssaoNoise);
-		s_SSAO_FBO = FrameBuffer::create();
-		s_AO = texture2d::create(s_maxViewportSize[0], s_maxViewportSize[1], ENG_R8, FILTER_NEAREST, FILTER_NEAREST);
-		s_SSAO_FBO->bind();
-		s_SSAO_FBO->attachTexture(s_AO);
-		s_SSAO_FBO->checkStatus();
-		s_SSAO_FBO->unbind();
-		
-		s_SSAO_shader = shader::create("SSAO/SSAO.shader");
-		s_SSAO_shader->bind();
-		s_SSAO_shader->setUniform1i("u_gPosition", 0);
-		s_SSAO_shader->setUniform1i("u_gNormal", 1);
-		s_SSAO_shader->setUniform1i("u_ssaoNoise", 2);
-		s_SSAO_shader->setUniform3fArr("u_samples", SSAO_kernelSize, ssaoKernel);
-		s_SSAO_shader->unbind();
-
-		s_debug_display_ssao = shader::create("SSAO/debug_display.shader");
-		s_debug_display_ssao->bind();
-		s_debug_display_ssao->setUniform1i("u_texture", 0);
-		s_debug_display_ssao->unbind();
-
-		s_debug_display_cascaded = shader::create("shadow/depthMapRenderer_cascaded.shader");
-		s_debug_display_cascaded->bind();
-		s_debug_display_cascaded->setUniform1i("u_texture", 0);
-		s_debug_display_cascaded->unbind();
-
-		//setup of the display of one cascade:
-		//setupCascadeDisplay();
 
 		//setup skybox-drawing
 		s_skyboxVa = vertexArray::create();
 		s_skyboxVa->load("cube.model");
 		s_skyboxVa->unbind();
 		s_skyboxShader = s_shaderLib->load("skybox/skybox_hdr.shader");
-		//s_skyboxShader->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
+
+		//setup pcf
+		//create a random jitter-texture
 	}
 
-	void Renderer::setupCascadeDisplay()
+	/*void Renderer::setupCascadeDisplay()
 	{
 		vec4 pos(0.0f, 0.0f, 0.0f, 1.0f);
 		vec4 rot(0.0f, 0.0f, 0.0f, 0.0f);
@@ -278,7 +288,7 @@ namespace Engine
 		s_debug_renderCascade = shader::create("forward/debug_cascaded.shader");
 		s_debug_renderCascade->bindUniformBlock("ViewProjection", VIEWPROJ_BIND);
 		s_debug_renderCascade->unbind();
-	}
+	}*/
 
 	void Renderer::shutdown()
 	{
@@ -308,11 +318,13 @@ namespace Engine
 		s_AO.reset();
 		s_SSAO_shader.reset();
 		s_debug_display_ssao.reset();
-		s_debug_display_cascaded.reset();
+		//s_debug_display_cascaded.reset();
+		//s_debug_cascade_va.reset();
+		//s_debug_renderCascade.reset();
 		s_skyboxVa.reset();
+		s_skyboxTex.reset();
 		s_skyboxShader.reset();
-		s_debug_cascade_va.reset();
-		s_debug_renderCascade.reset();
+		//s_pcfJitter.reset();
 	}
 
 	void Renderer::beginScene(const perspectiveCamera& cam)
@@ -327,9 +339,9 @@ namespace Engine
 		s_gLightingShader[1]->setUniformMat4("u_viewMat", cam.getViewMat(), 1);
 		s_gLightingShader[1]->unbind();*/
 		s_gLightingShader[0]->bind();
-		s_gLightingShader[0]->setUniformMat4("u_invViewMat", mat4::inverse3x3(cam.getViewMat()), 1);
+		s_gLightingShader[0]->setUniformMat4("u_invViewMat", mat4::inverse3x3(s_sceneData->viewMat) * mat4::transMat({ -s_sceneData->viewMat.mat[0][3], -s_sceneData->viewMat.mat[1][3], -s_sceneData->viewMat.mat[2][3], 1.0f }), 1);
 		s_gLightingShader[1]->bind();
-		s_gLightingShader[1]->setUniformMat4("u_invViewMat", mat4::inverse3x3(cam.getViewMat()), 1);
+		s_gLightingShader[1]->setUniformMat4("u_invViewMat", mat4::inverse3x3(s_sceneData->viewMat) * mat4::transMat({ -s_sceneData->viewMat.mat[0][3], -s_sceneData->viewMat.mat[1][3], -s_sceneData->viewMat.mat[2][3], 1.0f }), 1);
 		s_gLightingShader[1]->unbind();
 		//supply skyboxShader with required information
 		s_skyboxShader->bind();
@@ -429,20 +441,16 @@ namespace Engine
 		s_gAlbSpec->bind(2);
 		//bind the shadowMaps
 		s_sceneData->lightManager.getDirLightMapArray()->bind(3);
-		s_gLightingShader[s_bloom]->setUniform1i("u_dirShadowMaps", 3);
 		s_sceneData->lightManager.getPointLightMapArray()->bind(4);
-		s_gLightingShader[s_bloom]->setUniform1i("u_pointShadowMaps", 4);
 		s_sceneData->lightManager.getSpotLightMapArray()->bind(5);
-		s_gLightingShader[s_bloom]->setUniform1i("u_spotShadowMaps", 5);
+		//bind the skybox for reflections
+		s_skyboxTex->bind(6);//wow, we actually have 7 textures attached
 		//////
 		s_hdr_quad_va->bind();
 		renderCommand::drawIndexed(s_hdr_quad_va);
 		////////////now the forward-rendering part
 		renderCommand::copyFrameBufferContents(s_gBuffer, s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT,
 			s_hdr_fbo, s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT, FILTER_NEAREST);
-		/*s_gBuffer->setReadBuffer();//we want to copy some data from the gBuffer
-		s_hdr_fbo->setDrawBuffer();//we want to copy some data to the hdrBuffer
-		renderCommand::copyFrameBufferContents(s_maxViewportSize[0], s_maxViewportSize[1], ENG_DEPTH_BUFFER_BIT, FILTER_NEAREST);//copy over the geometry-pass depth-data to the hdr-buffer*/
 		s_hdr_fbo->bind();//bind the hdr_fbo to both read and draw again
 		for (auto& it = s_renderQueue.rbegin(); it != s_renderQueue.rend(); it++)//NOTE THAT iterating through this backwards is important, so that the skybox is drawn last!!!
 		{

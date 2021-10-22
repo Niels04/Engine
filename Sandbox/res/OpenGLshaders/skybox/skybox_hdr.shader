@@ -39,7 +39,7 @@ uniform samplerCube u_skybox;
 
 void main()
 {
-	vec4 col_rgbe = texture(u_skybox, texCoords).rgba * 255;//multiply to the range 0 - 255 instead of 0 to 1
+	vec4 col_rgbe = texture(u_skybox, texCoords).rgba * 255.0f;//multiply to the range 0 - 255 instead of 0 to 1
 	//convert from rgbe to hdr rgba
 	float factor = pow(2.0f, col_rgbe.a - 128.0f) / 256.0f;
 	color = vec4(col_rgbe.rgb * factor, 1.0f);

@@ -25,6 +25,7 @@ namespace Engine
 		static void sub(const Ref_ptr<mesh> mesh);//submit a mesh
 
 		inline static void setMainViewPort(const uint32_t viewportWidth, const uint32_t viewportHeight) { s_mainViewport[0] = viewportWidth; s_mainViewport[1] = viewportHeight; }
+		inline static void setSkyboxTex(const Ref_ptr<texture>& skyboxTex) { s_skyboxTex = skyboxTex; }
 
 		static void RenderDepthMaps();
 		static void onImGuiRender();
@@ -90,9 +91,10 @@ namespace Engine
 		//skybox
 		static Ref_ptr<shader> s_skyboxShader;
 		static Ref_ptr<vertexArray> s_skyboxVa;
+		static WeakRef_ptr<texture> s_skyboxTex;//can be updated by Sandbox whenever necessary ->Renderer does not have ownership over this!
 		//other
-		static Ref_ptr<shader> s_debug_display_cascaded;//renders a cascaded shadowMap to screen
+		/*static Ref_ptr<shader> s_debug_display_cascaded;//renders a cascaded shadowMap to screen
 		static Ref_ptr<vertexArray> s_debug_cascade_va;//vertexArray used to visualize a cascade
-		static Ref_ptr<shader> s_debug_renderCascade;//renders the debug_cascade vertexArray
+		static Ref_ptr<shader> s_debug_renderCascade;//renders the debug_cascade vertexArray*/
 	};
 }

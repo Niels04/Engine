@@ -409,7 +409,7 @@ struct mat4
 		float r = tan((hFov * 0.5) * (3.141592653f / 180.0f)) * zNear;
 		float l = -r;
 #else
-		float test = tanf(RAD(vFov * 0.5f));
+		//float test = tanf(RAD(vFov * 0.5f));
 		float t = tanf(RAD(vFov * 0.5f)) * zNear;
 		float b = -t;
 		float r = tanf(RAD(hFov * 0.5f)) * zNear;

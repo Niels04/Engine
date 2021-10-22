@@ -8,6 +8,7 @@
 #include "Engine/core/timeStep.hpp"
 #include "Engine/perspectiveCameraController.hpp"
 #include "Engine/nodeEditor/nodeEditorLayer.hpp"
+#include "Engine/ECS/registry.hpp"
 
 //___own datatypes such as matrices and vectors____
 #include "Engine/datatypes/include.hpp"

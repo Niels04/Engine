@@ -22,6 +22,9 @@
     <Filter Include="src\Engine\datatypes">
       <UniqueIdentifier>{F05CD232-DCEB-5BFC-850A-70F771786CA2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Engine\hdr_imageLoader">
+      <UniqueIdentifier>{389F607C-24AF-0C4D-8D68-716B7997FBE5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Engine\nodeEditor">
       <UniqueIdentifier>{2E6AFF14-9AD6-BA0F-63CA-526DCFF5DC77}</UniqueIdentifier>
     </Filter>
@@ -75,6 +78,9 @@
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\Rendering\LightMatrixStructs.hpp">
+      <Filter>src\Engine\Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\Engine\Rendering\buffers.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
@@ -85,9 +91,6 @@
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\Rendering\orthographicCam.hpp">
-      <Filter>src\Engine\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\Rendering\LightMatrixStructs.hpp">
       <Filter>src\Engine\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\Rendering\perspCam.hpp">
@@ -140,6 +143,9 @@
     </ClInclude>
     <ClInclude Include="src\Engine\datatypes\vec4.hpp">
       <Filter>src\Engine\datatypes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Engine\hdr_imageLoader\hdr_imageLoader.hpp">
+      <Filter>src\Engine\hdr_imageLoader</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\input.hpp">
       <Filter>src\Engine</Filter>
@@ -213,7 +219,9 @@
     <ClInclude Include="vendor\stb_image\stb_image.hpp">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\hdr_imageLoader\hdr_imageLoader.hpp" />
+    <ClInclude Include="src\Engine\ECS\Entitiy.hpp" />
+    <ClInclude Include="src\Engine\ECS\registry.hpp" />
+    <ClInclude Include="src\Engine\ECS\util.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -266,6 +274,9 @@
     </ClCompile>
     <ClCompile Include="src\Engine\Rendering\vertexBufferLayout.cpp">
       <Filter>src\Engine\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Engine\hdr_imageLoader\hdr_imageLoader.cpp">
+      <Filter>src\Engine\hdr_imageLoader</Filter>
     </ClCompile>
     <ClCompile Include="src\Engine\layer.cpp">
       <Filter>src\Engine</Filter>
@@ -327,6 +338,5 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\hdr_imageLoader\hdr_imageLoader.cpp" />
   </ItemGroup>
 </Project>
