@@ -90,7 +90,6 @@ struct spotLight
 	vec4 ambient;
 	vec4 diffuse;
 	vec4 specular;
-	vec4 pad;
 	mat4 toLightSpace;
 };
 

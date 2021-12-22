@@ -17,8 +17,10 @@ struct vec3
 		out.append(std::to_string(z)); out.push_back('\n');
 		return out;
 	}
+	inline vec3 operator +(const vec3& other) const { return { x + other.x, y + other.y, z + other.z }; }
 	inline vec3 operator -() const { return {-x, -y, -z}; }
 	inline vec3 operator -(const vec3& other) const { return { x - other.x, y - other.y, z - other.z }; }
+	inline vec3 operator *(const vec3& other) const { return { x * other.x, y * other.y, z * other.z }; }
 	inline vec3 operator *(const float factor) const { return {x * factor, y * factor, z * factor}; }
 	inline void operator *=(const float factor) { x *= factor; y *= factor; z *= factor; }
 	inline void normalize() { float factor = 1.0f / sqrtf(x * x + y * y + z * z); *this *= factor; }

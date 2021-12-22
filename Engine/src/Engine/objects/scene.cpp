@@ -16,73 +16,31 @@ namespace Engine
 		Ref_ptr<material> skyboxMat = material::create(Renderer::getSkyboxShader(), "skyboxMat", flag_no_deferred | flag_no_backface_cull | flag_depth_test);
 		skyboxMat->setTexture("u_skybox", skyboxTex);
 		m_matLib.add(skyboxMat);
-		m_meshes.push_back(mesh::create(Renderer::getSkyboxVa(), skyboxMat, "skybox"));
+		Entity skybox = m_registry.create();
+		m_registry.addComponent<MeshComponent>(skybox, Renderer::getSkyboxVa(), skyboxMat, std::string("skybox"));
+		m_registry.addComponent<TransformComponent>(skybox);
 	}
 
-	void Scene::clear(LightManager* lightManager)
+	void Scene::clear()
 	{
 		m_camControl.clear();
-		m_meshes.clear();//is it actually safe to delete like this?
-		m_dirLightMovements.clear();
-		m_pointLightMovements.clear();
-		m_spotLightMovements.clear();
-		m_dirLightEffects.clear();
-		m_pointLightEffects.clear();
-		m_spotLightEffects.clear();
-		m_dirLightAnimations.clear();
-		m_pointLightAnimations.clear();
-		m_spotLightAnimations.clear();
 		m_matLib.clear();
-		m_dirLights.clear();
-		m_pointLights.clear();
-		m_spotLights.clear();
-		lightManager->clear();
+		m_registry.clear();
 	}
 
 	void Scene::onUpdate(timestep& ts, const bool rotateCam)
 	{
-		m_camControl.onUpdate(ts, rotateCam);
-		for (auto& mesh : m_meshes)
-		{
-			mesh->onUpdate(ts);
-		}
-		for (const auto& movement : m_dirLightMovements)
-		{
-			movement->onUpdate(ts);
-		}
-		for (const auto& movement : m_pointLightMovements)
-		{
-			movement->onUpdate(ts);
-		}
-		for (const auto& movement : m_spotLightMovements)
-		{
-			movement->onUpdate(ts);
-		}
-		for (auto& effect : m_dirLightEffects)
-		{
-			effect->onUpdate();
-		}
-		for (auto& effect : m_pointLightEffects)
-		{
-			effect->onUpdate();
-		}
-		for (auto& effect : m_spotLightEffects)
-		{
-			effect->onUpdate();
-		}
-		for (auto& animation : m_dirLightAnimations)
-		{
-			animation->onUpdate();
-		}
-		for (auto& animation : m_pointLightAnimations)
-		{
-			animation->onUpdate();
-		}
-		for (auto& animation : m_spotLightAnimations)
-		{
-			animation->onUpdate();
-		}
-		m_matLib.updateDynamic();//update the dynamicMaterials
+		m_camControl.onUpdate(ts, rotateCam);//update the camera according to user input
+		Engine::Renderer::setCam(m_camControl.getCam());//submit the camera to the renderer for the next frame
+		m_sceneGraph->calculateGlobalTransforms();//calculate the transforms for all objects in the scene
+		m_matLib.updateDynamic();//update the dynamic materials
+	}
+
+	void Scene::onRender()
+	{
+		m_oss->sub();//submit all of the scene's meshes using the ObjectSubmitSystem
+		//submit a skyboxTexture that the Renderer needs for reflections
+		Engine::Renderer::setSkyboxTex(m_skyboxTex);//I'm not really happy, with how this is happening at the moment, maybe I should just store the skybox in the Renderer??
 	}
 
 	void Scene::onEvent(Event& e)
@@ -92,92 +50,7 @@ namespace Engine
 
 	void Scene::onImGuiRender()
 	{
-		ImGui::Begin("Meshes");
-		for (auto& Mesh : m_meshes)
-		{
-			bool isOpen = ImGui::TreeNode(Mesh->getName().c_str());
-			if (isOpen)
-			{
-				vec3 scale = Mesh->getScale();
-				vec4 pos = Mesh->getPos();
-				vec3 rot = Mesh->getRot();
-				ImGui::SliderFloat3("scale", (float*)&scale, 0.1f, 10.0f);
-				ImGui::DragFloat3("position", (float*)&pos, 0.25f, -100.0f, 100.0f);
-				ImGui::DragFloat3("rotation", (float*)&rot, 0.25f, -2.0f * 3.1415926f, 2.0f * 3.1415926f);
-				ImGui::TreePop();
-				Mesh->setScale(scale);
-				Mesh->setPos(pos);
-				Mesh->setRot(rot);
-			}
-		}
-		ImGui::End();
-		ImGui::Begin("Lights");
-		uint8_t index = 0;
-		char dirLight_str[] = "directional light[   ]";
-		for (const auto& light : m_dirLights)
-		{
-			std::to_chars(dirLight_str + 18U, dirLight_str + strlen(dirLight_str), index);
-			bool isOpen = ImGui::TreeNode(dirLight_str);
-			if (isOpen)
-			{
-				ImGui::ColorEdit3("ambient", (float*)&light->ambient);
-				ImGui::ColorEdit3("diffuse", (float*)&light->diffuse);
-				ImGui::ColorEdit3("specular", (float*)&light->specular);
-				vec4 direction = light->direction;
-				ImGui::DragFloat3("direction", (float*)&direction, 0.25f, -1000.0f, 1000.0f);
-				light->direction = vec4::normalized(direction);
-				ImGui::TreePop();
-			}
-			index++;
-		}
-		index = 0;
-		char pointLight_str[] = "point light[   ]";
-		for (const auto& light : m_pointLights)
-		{
-			std::to_chars(pointLight_str + 12U, pointLight_str + strlen(pointLight_str), index);
-			bool isOpen = ImGui::TreeNode(pointLight_str);
-			if (isOpen)
-			{
-				ImGui::ColorEdit3("ambient", (float*)&light->ambient);
-				ImGui::ColorEdit3("diffuse", (float*)&light->diffuse);
-				ImGui::ColorEdit3("specular", (float*)&light->specular);
-				ImGui::DragFloat3("position", (float*)&light->position, 0.25f, -100.0f, 100.0f);
-				ImGui::TreePop();
-			}
-			index++;
-		}
-		index = 0;
-		char spotLight_str[] = "spot light[   ]";
-		for (const auto& light : m_spotLights)
-		{
-			std::to_chars(spotLight_str + 11U, spotLight_str + strlen(spotLight_str), index);
-			bool isOpen = ImGui::TreeNode(spotLight_str);
-			if (isOpen)
-			{
-				ImGui::ColorEdit3("ambient", (float*)&light->ambient);
-				ImGui::ColorEdit3("diffuse", (float*)&light->diffuse);
-				ImGui::ColorEdit3("specular", (float*)&light->specular);
-				ImGui::DragFloat3("position", (float*)&light->position, 0.25f, -100.0f, 100.0f);
-				vec4 direction = light->direction;
-				ImGui::DragFloat3("direction", (float*)&direction, 0.25f, -1000.0f, 1000.0f);
-				light->direction = vec4::normalized(direction);
-				ImGui::SliderFloat("cutoff", &light->cutOff, cosf(80.0f * (3.1415926f / 180.0f)), 1.0f);
-				ImGui::TreePop();
-			}
-			index++;
-		}
-		ImGui::End();
-		const vec4& camPos = m_camControl.getPos();
-		const vec3& camRot = m_camControl.getRot();
-		ImGui::Begin("Camera");
-		ImGui::Text("position:");
-		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", camPos.x, camPos.y, camPos.z);
-		ImGui::Text("rotation:");
-		ImGui::Text("x: %.1f  y: %.1f  z: %.1f", camRot.x, camRot.y, camRot.z);
-		ImGui::End();
-
-		//Render Materials
-		m_matLib.onImGuiRender();
+		m_sceneGraph->onImGuiRender();//draw the sceneGraph ui
 	}
 
 	void Scene::addMaterial(const Ref_ptr<material>& mat)
@@ -188,23 +61,5 @@ namespace Engine
 	void Scene::addMaterial(const Ref_ptr<material>& mat, const std::function<void(const void* updateValues, material* mat)>& updateFunc, const void* updateValues)
 	{
 		m_matLib.addDynamic(mat, updateFunc, updateValues);
-	}
-
-	void Scene::addMesh(Ref_ptr<mesh>& Mesh)
-	{
-		m_meshes.push_back(Mesh);
-	}
-
-	void Scene::addLight(PtrPtr<directionalLight> light)
-	{
-		m_dirLights.push_back(light);
-	}
-	void Scene::addLight(PtrPtr<pointLight> light)
-	{
-		m_pointLights.push_back(light);
-	}
-	void Scene::addLight(PtrPtr<spotLight> light)
-	{
-		m_spotLights.push_back(light);
 	}
 }

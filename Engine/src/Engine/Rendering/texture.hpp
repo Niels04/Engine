@@ -29,7 +29,7 @@ namespace Engine
 	class texture//purely virtual, represents any kind of texture
 	{//mostly exist, because sometimes one might want to work with a texture, regardless wether it's 2d of 3d
 		friend class GLFrameBuffer;
-		friend class NodeEditorLayer;
+		friend class material;
 		friend class Renderer;//temporary
 	public:
 		virtual ~texture() = default;

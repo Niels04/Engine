@@ -1,154 +1,149 @@
 #pragma once
-#include <Engpch.hpp>
 
-#include "Entitiy.hpp"
-#include "util.hpp"
+#include <memory>
+#include <array>
 
-#define ALLOCATES(x) x.capacity() == x.size()//checks whether a vector is full and thus will allocate the next time an element is pushed back
+#include "Entity.hpp"
+#include "EntityContainer.hpp"
+#include "Component.hpp"
+#include "ComponentContainer.hpp"
+#include "System.hpp"
 
-namespace Engine
+template<size_t ComponentCount, size_t SystemCount>
+class Registry
 {
-	template<typename ... Types>
-	class Registry
+public:
+	void clear()
 	{
-	public:
-		Registry()
+		m_Entities.clear();//clear the entityContainer
+		for (auto& componentContainer : m_ComponentContainers)//clear all componentContainers(delete their contents but keep the empty containers)
+			componentContainer->clear();
+		for (auto& system : m_Systems)//clear all systems(delete their managedEntities but keep the empty systems)
+			system->clear();
+	}
+	template<typename T>
+	void registerComponent()//inform the registry that components of type "T" will be stored
+	{
+		checkComponentType<T>();
+		//m_ComponentContainers[T::type] = std::make_unique<ComponentContainer<T, ComponentCount, SystemCount>>(m_Entities.getEntityToBitset());
+		m_ComponentContainers[T::type] = std::make_unique<ComponentContainer<T, ComponentCount, SystemCount>>(m_Entities.getEntityToComponent(T::type), m_Entities.getEntityToBitset());
+	}
+	template<typename T, typename ... Args>
+	T* createSystem(Args&& ... args)
+	{
+		size_t id = m_Systems.size();
+		T* system = static_cast<T*>(m_Systems.emplace_back(std::make_unique<T>(std::forward<Args>(args)...)).get());
+		//system->setUp(id);
+		system->setUp(id, &m_Entities.getEntityToManagedEntity(id));
+		return system;
+	}
+	void reserve(size_t count)
+	{
+		for (size_t i = 0; i < ComponentCount; i++)//originally ++i(no difference I suppose)
 		{
-			//allocate the storage for all the types required
-			vecAllocator<Registry<Types...>::n, 0, Types...>()(m_componentVecs);
-			setAllocator<Registry<Types...>::n, 0, Types...>()(m_ptrSets);
-
-			//construct a jumpTable for efficient "branching" when dealing with componentTypes
-			forAllTypes<0, Types...>::fillDestructJumpTable(m_destructComponentJmpTable);
+			if (m_ComponentContainers[i])//if this ComponentConainer exists
+				m_ComponentContainers[i]->reserve(count);
 		}
-
-		[[nodiscard]] Entity<Types ...>* create()
+		m_Entities.reserve(count);
+	}
+	Entity create()
+	{
+		return m_Entities.create();
+	}
+	void removeEntity(Entity e)
+	{
+		//first remove the components
+		for (size_t i = 0; i < ComponentCount; i++)
 		{
-			m_entities.insert(std::make_pair<uint32_t, Entity<Types ...>>(m_lastID + 1, m_lastID + 1));
-			m_lastID++;
-			return &m_entities.at(m_lastID);
+			if (m_ComponentContainers[i])
+				m_ComponentContainers[i]->tryRemove(e);
 		}
-		void destruct(Entity<Types ...>** e)
-		{
-			//destroy all of the entitie's components and the entity itself
-			for (auto& component : (*e)->m_components)
-			{
-				std::invoke(m_destructComponentJmpTable[component.first], *this, component.second);//I wonder if "*this" copies the whole registry(I don't think so, but maybe investigate that)
-			}
-			m_entities.erase((*e)->m_id);
-			*e = nullptr;
-		}
-		template<typename T>
-		void addComponent(Entity<Types ...>* e, const T& component)
-		{
-			const_PtrPtr<T> ptr = push<T>(component);
-			e->addComponent(ptr);
-		}
-		template<typename T>
-		void reserve(const uint32_t n)
-		{
-			auto& vec = getVecByType<T>();
-			vec.reserve(n);
-			updatePtrs(vec, getSetByType<T>());
-		}
-
-		static constexpr size_t n = sizeof ...(Types);//make this public, so that I don't have to declare every template instantiation friends to each other
-	private:
-		template<typename T>
-		const_PtrPtr<T> push(const T& component)
-		{
-			auto& vec = getVecByType<T>();//get the vec of the corresponding type
-			auto& set = getSetByType<T>();//get the set of the corresponding type
-			bool allocates = ALLOCATES(vec);//if the vec allocated when the new element got pushed back, update all pointers
-			vec.push_back(component);
-			//set.insert(&vec.back());
-			if (allocates)
-				updatePtrs(vec, set);
-			set.insert(&vec.back());
-			return const_PtrPtr<T>(&(*set.rbegin()));//it is safe to do this, because the last element in the set is always the new element, that just got added
-		}
-
-		template<typename T>
-		void updatePtrs(std::vector<T>& vec, std::set<T*>& ptrSet)
-		{
-			std::set<T*> newSet;
-			uint32_t i = 0;
-			typename std::set<T*>::const_iterator delIt;
-			for (auto it = ptrSet.begin(); it != ptrSet.end();)
-			{
-				delIt = it; it++;
-				auto nodeHandler = ptrSet.extract(*delIt);
-				nodeHandler.value() = &vec[i];
-				newSet.insert(std::move(nodeHandler));
-				i++;
-			}
-			ptrSet = std::move(newSet);
-		}
-
-		template<typename T>
-		void destructComponent(const const_PtrPtr<void>& component)
-		{
-			auto& vec = getVecByType<T>();//get the vector of the corresponding type
-			auto& set = getSetByType<T>();//get the set of the corresponding type
-			T* ptr = (T*)*component.get();
-			size_t index = vecIndexFromPtr(vec, ptr);
-			if (index == (vec.size() - 1))
-			{
-				//the optimized deletion will probably just delete the last element from the set as well as the vector( -> look into how we can convert reverse_iterator to iterator or if we should use "--set.end()")
-				vec.pop_back();
-				set.erase(ptr);//remove the element, which is also the last element //since there is no function to remove the last element of a set, I assume this is the fastest way to do it
-			}
-			else
-			{
-				vec[index] = vec.back();//replace the element that is to be deleted with the last element
-				vec.pop_back();//pop the last element -> this is the key improvement of this algorithm, because no reallocation is required whatsoever
-				set.erase(ptr);//erase the element from the set
-				auto nodeHandler = set.extract(*set.rbegin());//extract the last element of the set(-> this is the element that points to the last element of the vector)
-				nodeHandler.value() = ptr;
-				set.insert(std::move(nodeHandler));//after this procedure the element in the set should still be at the same address but it's value should have changed to point to the new location of the proviously last element
-			}
-		}
-
-		template<typename T>
-		constexpr std::vector<T>& getVecByType()
-		{
-			return *(std::vector<T>*)m_componentVecs[getTypeIndexByType<T>()];
-		}
-
-		template<typename T>
-		constexpr std::set<T*>& getSetByType()
-		{
-			return *(std::set<T*>*)m_ptrSets[getTypeIndexByType<T>()];
-		}
-
-		template<typename T>
-		constexpr size_t getTypeIndexByType()
-		{
-			//return typeIndexGetter<n, 0, Types...>::template getIndex<T>();//in solchen Fällen muss hier noch "template" mit eingesetzt werden, da man sonst einen Compilerfehler bekommt
-			return typeIndexGetter<Types ...>::template getIndex<T>();
-		}
-
-		std::unordered_map<uint32_t, Entity<Types ...>> m_entities;
-
-		typedef void (Registry::* destructComponentFn)(const const_PtrPtr<void>&);
-		destructComponentFn m_destructComponentJmpTable[Registry<Types ...>::n] = { nullptr };
-
-		void* m_componentVecs[Registry<Types... >::n];
-		void* m_ptrSets[Registry<Types ...>::n];
-
-		uint32_t m_lastID = 0;//this means, that there can never be an Entity with ID 0 -> could use that for some kind of assertion(ASSERT(entity.id))
-
-		template<size_t i, typename ... Types>
-		struct forAllTypes
-		{
-			static constexpr void fillDestructJumpTable(destructComponentFn* jumpTable)
-			{
-				if constexpr (i < sizeof ...(Types))
-				{
-					jumpTable[i] = &Registry<Types ...>::template destructComponent<NthTypeOf<i, Types...>>;
-					forAllTypes<i + 1, Types...>::fillDestructJumpTable(jumpTable);
-				}
-			}
-		};
-	};
-}
+		//then notify the systems
+		for (auto& sytem : m_Systems)
+			system->onEntityRemoved(e);
+		//lastly delete the entity
+		m_Entities.remove(e);
+	}
+	template<typename T>
+	bool hasComponent(Entity e) const
+	{
+		checkComponentType<T>();//first check if components of this type are even stored
+		return m_Entities.getBitset(e)[T::type];//then check if the entity has that type
+	}
+	template<typename ... Types>//same but with fold expressions
+	bool hasComponents(Entity e)
+	{
+		checkComponentType<Types ...>();
+		auto requirements = std::bitset<ComponentCount>();
+		//(requirements.set(Types::type), ...);
+		requirements.set(Types::type ...);
+		return (requirements & m_Entities.getBitset(e)) == requirements;
+	}
+	template<typename T>
+	T& get(Entity e)
+	{
+		checkComponentType<T>();
+		return getComponentContainer<T>()->get(e);
+	}
+	template<typename ... Types>
+	std::tuple<Types& ...> getS(Entity e)
+	{
+		checkComponentTypes<Types ...>();
+		return std::tie(getComponentContainer<Types>()->get(e)...);
+	}
+	template<typename T>
+	std::vector<T>& getAllOf()
+	{
+		return getComponentContainer<T>()->getAll();
+	}
+	template<typename T, typename ... Args>
+	void addComponent(Entity e, Args&& ... args)
+	{
+		checkComponentType<T>();
+		getComponentContainer<T>()->add(e, std::forward<Args>(args)...);
+		//update systems
+		const auto& bitset = m_Entities.getBitset(e);
+		for (auto& system : m_Systems)
+			system->onEntityUpdated(e, bitset);
+	}
+	template<typename T>
+	void removeComponent(Entity e)
+	{
+		checkComponentType<T>();
+		getComponentContainer<T>()->remove(e);
+		//update systems
+		const auto& bitset = m_Entities.getBitset(e);
+		for (auto& system : m_Systems)
+			system->onEntityEntityUpdated(e, bitset);
+	}
+	template<typename T>
+	Entity getOwner(const T& component) const
+	{
+		return getComponentContainer<T>()->getOwner(component);
+	}
+private:
+	std::array<std::unique_ptr<BaseComponentContainer>, ComponentCount> m_ComponentContainers;
+	EntityContainer<ComponentCount, SystemCount> m_Entities;
+	std::vector<std::unique_ptr<System<ComponentCount, SystemCount>>> m_Systems;//why isn't this an array(we already now the max systemCount at compile time)???  -> maybe we can't construct systems on the stack because thei're virtual
+	//I think it isn't an array because at times we need to loop over all currently used systems and it wouldn't be ideal if there were empty unique_ptrs floating around in our array
+	template<typename T>
+	void checkComponentType() const
+	{
+		static_assert(std::is_base_of_v<Component<T>, T>, "Component must be derived from base component class.");
+	}
+	template<typename ... Types>
+	void checkComponentTypes() const
+	{
+		(checkComponentType<Types>(), ...);
+	}
+	template<typename T>
+	auto getComponentContainer()//is auto here just BaseComponentContainer???
+	{
+		return static_cast<ComponentContainer<T, ComponentCount, SystemCount>*>(m_ComponentContainers[T::type].get());
+	}
+	template<typename T>
+	auto getComponentContainer() const
+	{
+		return static_cast<const ComponentContainer<T, ComponentCount, SystemCount>*>(m_ComponentContainers[T::type].get());
+	}
+};

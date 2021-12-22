@@ -7,8 +7,12 @@
 #include "Engine/ImGui/ImGuiLayer.hpp"
 #include "Engine/core/timeStep.hpp"
 #include "Engine/perspectiveCameraController.hpp"
-#include "Engine/nodeEditor/nodeEditorLayer.hpp"
-#include "Engine/ECS/registry.hpp"
+//#include "Engine/nodeEditor/nodeEditorLayer.hpp"
+#include "Engine/ECS/Registry.hpp"
+#include "Engine/objects/components.hpp"
+#include "Engine/objects/scene.hpp"
+//#include "Engine/objects/mesh.hpp"
+//#include "Engine/objects/movement.hpp"
 
 //___own datatypes such as matrices and vectors____
 #include "Engine/datatypes/include.hpp"
@@ -23,9 +27,6 @@
 #include "Engine/Rendering/shader.hpp"
 #include "Engine/Rendering/texture.hpp"
 #include "Engine/Rendering/material.hpp"
-#include "Engine/objects/mesh.hpp"
-#include "Engine/objects/movement.hpp"
-#include "Engine/objects/scene.hpp"
 #include "Engine/Rendering/lights.hpp"
 
 #include "Engine/Rendering/perspCam.hpp"

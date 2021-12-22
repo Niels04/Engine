@@ -11,6 +11,7 @@ namespace Engine
 	GLtexture2d::GLtexture2d(const std::string& name, const bool sRGB, const uint32_t filterMin, const uint32_t filterMag)
 		: m_path("res/textures/")
 	{
+		//ENG_CORE_INFO("Constructed \"GLtexture2d\"");
 		m_path.append(name);
 		int width, height, channels;
 		stbi_set_flip_vertically_on_load(1);
@@ -51,6 +52,7 @@ namespace Engine
 
 	GLtexture2d::GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t texWrap)
 	{
+		//ENG_CORE_INFO("Constructed \"GLtexture2d\"");
 		GLenum internalFormat = format;
 		m_width = width; m_height = height;
 		GLCALL(glCreateTextures(GL_TEXTURE_2D, 1, &m_renderer_id));
@@ -64,6 +66,7 @@ namespace Engine
 
 	GLtexture2d::GLtexture2d(const uint32_t width, const uint32_t height, const uint32_t format, const uint32_t filterMin, const uint32_t filterMag, const uint32_t textureWrap, const void* data)
 	{
+		//ENG_CORE_INFO("Constructed \"GLtexture2d\"");
 		GLenum internalFormat = format;
 		m_width = width; m_height = height;
 		GLCALL(glCreateTextures(GL_TEXTURE_2D, 1, &m_renderer_id));
@@ -79,17 +82,20 @@ namespace Engine
 
 	GLtexture2d::~GLtexture2d()
 	{
+		//ENG_CORE_INFO("Destructed \"GLtexture2d\"");
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
 
 	void GLtexture2d::bind(const uint8_t slot) const
 	{
+		//ENG_CORE_INFO("Bound \"GLtexture2d\"");
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));//binding textures at multiple slots is only usefull when rendering objects, that use multiple textures(because all of the object's textures have to be
 		//accessible in the shader at the same time
 	}
 
 	void GLtexture2d::clear(const vec4& color) const
 	{
+		//ENG_CORE_INFO("Cleared \"GLtexture2d\"");
 		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_FLOAT, &color));
 	}
 	
@@ -97,6 +103,7 @@ namespace Engine
 	GLtexture3d::GLtexture3d(const std::string& folderPath, const bool sRGB, const uint32_t filterMin, const uint32_t filterMag)
 		: m_path("res/")
 	{
+		//ENG_CORE_INFO("Constructed \"GLtexture3d\"");
 		m_path.append(folderPath);
 		GLCALL(glGenTextures(1, &m_renderer_id));
 		GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_renderer_id));
@@ -145,16 +152,19 @@ namespace Engine
 
 	GLtexture3d::~GLtexture3d()
 	{
+		//ENG_CORE_INFO("Destructed \"GLtexture3d\"");
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
 
 	void GLtexture3d::bind(uint8_t slot) const
 	{
+		//ENG_CORE_INFO("Bound \"GLtexture3d\"");
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
 
 	void GLtexture3d::clear(const vec4& color) const
 	{
+		//ENG_CORE_INFO("Cleared \"GLtexture3d\"");
 		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color));//test this
 	}
 
@@ -162,6 +172,7 @@ namespace Engine
 	GLtexture3d_hdr::GLtexture3d_hdr(const std::string& folderPath)
 		: m_path("res/")
 	{
+		//ENG_CORE_INFO("Constructed \"GLtexture3d_hdr\"");
 		m_path.append(folderPath);
 		GLCALL(glGenTextures(1, &m_renderer_id));
 		GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_renderer_id));
@@ -193,16 +204,19 @@ namespace Engine
 
 	GLtexture3d_hdr::~GLtexture3d_hdr()
 	{
+		//ENG_CORE_INFO("Destructed \"GLtexture3d_hdr\"");
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
 
 	void GLtexture3d_hdr::bind(const uint8_t slot) const
 	{
+		//ENG_CORE_INFO("Bound \"GLtexture3d_hdr\"");
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
 
 	void GLtexture3d_hdr::clear(const vec4& color) const
 	{
+		//ENG_CORE_INFO("Cleared \"GLtexture3d_hdr\"");
 		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color));
 	}
 	
@@ -210,6 +224,7 @@ namespace Engine
 	GLShadowMap2d::GLShadowMap2d(const uint32_t width, const uint32_t height)
 		: m_width(width), m_height(height)
 	{
+		//ENG_CORE_INFO("Constructed \"GLShadowMap2d\"");
 		GLCALL(glGenTextures(1, &m_renderer_id));
 		GLCALL(glBindTexture(GL_TEXTURE_2D, m_renderer_id));
 		GLCALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, m_width, m_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr));//maybe switch this with glTexStorage2D
@@ -222,16 +237,19 @@ namespace Engine
 	}
 	GLShadowMap2d::~GLShadowMap2d()
 	{
+		//ENG_CORE_INFO("Destructed \"GLShadowMap2d\"");
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
 
 	void GLShadowMap2d::bind(const uint8_t slot) const
 	{
+		//ENG_CORE_INFO("Bound \"GLShadowMap2d\"");
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
 
 	void GLShadowMap2d::clear(const vec4& color) const
 	{
+		//ENG_CORE_INFO("Cleared \"GLShadowMap2d\"");
 		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_FLOAT, &color));
 	}
 
@@ -239,6 +257,7 @@ namespace Engine
 	GLShadowMap3d::GLShadowMap3d(const uint32_t width, const uint32_t height)
 		: m_width(width), m_height(height)
 	{
+		//ENG_CORE_INFO("Constructed \"GLShadowMap3d\"");
 		GLCALL(glGenTextures(1, &m_renderer_id));
 		GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP, m_renderer_id));
 		for (uint8_t i = 0; i < 6; i++)
@@ -253,21 +272,25 @@ namespace Engine
 	}
 	GLShadowMap3d::~GLShadowMap3d()
 	{
+		//ENG_CORE_INFO("Destructed \"GLShadowMap3d\"");
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
 
 	void GLShadowMap3d::bind(const uint8_t slot) const
 	{
+		//ENG_CORE_INFO("Bound \"GLShadowMap3d\"");
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
 
 	void GLShadowMap3d::clear(const vec4& color) const
 	{
+		//ENG_CORE_INFO("Cleared \"GLShadowMap3d\"");
 		GLCALL(glClearTexImage(m_renderer_id, 0, GL_RGBA, GL_FLOAT, &color));
 	}
 	//ShadowMap2dArray::::::::::::
 	GLShadowMap2dArray::GLShadowMap2dArray(const uint32_t width, const uint32_t height, const uint8_t layerCount)
 	{
+		//ENG_CORE_INFO("Constructed \"GLShadowMap2dArray\"");
 		GLCALL(glGenTextures(1, &m_renderer_id));
 		GLCALL(glBindTexture(GL_TEXTURE_2D_ARRAY, m_renderer_id));
 		GLCALL(glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT32, width, height, static_cast<uint32_t>(layerCount)));//<-maybe use GL_DEPTH_COMPONENT without the 32, or with the F in the back
@@ -282,16 +305,19 @@ namespace Engine
 	}
 	GLShadowMap2dArray::~GLShadowMap2dArray()
 	{
+		//ENG_CORE_INFO("Destructed \"GLShadowMap2dArray\"");
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
 
 	void GLShadowMap2dArray::bind(const uint8_t slot) const
 	{
+		//ENG_CORE_INFO("Bound \"GLShadowMap2dArray\"");
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
 	//ShadowMap3dArray::::::::::::
 	GLShadowMap3dArray::GLShadowMap3dArray(const uint32_t size, const uint8_t layerCount)
 	{
+		//ENG_CORE_INFO("Constructed \"GLShadowMap3dArray\"");
 		GLCALL(glGenTextures(1, &m_renderer_id));
 		GLCALL(glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, m_renderer_id));
 		GLCALL(glTexStorage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 1, GL_DEPTH_COMPONENT32, size, size, layerCount * 6));//<-maybe use GL_DEPTH_COMPONENT without the 32, or with the F in the back
@@ -303,11 +329,13 @@ namespace Engine
 	}
 	GLShadowMap3dArray::~GLShadowMap3dArray()
 	{
+		//ENG_CORE_INFO("Destructed \"GLShadowMap3dArray\"");
 		GLCALL(glDeleteTextures(1, &m_renderer_id));
 	}
 
 	void GLShadowMap3dArray::bind(const uint8_t slot) const
 	{
+		//ENG_CORE_INFO("Bound \"GLShadowMap3dArray\"");
 		GLCALL(glBindTextureUnit(slot, m_renderer_id));
 	}
 }

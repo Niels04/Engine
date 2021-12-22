@@ -142,9 +142,12 @@
   <ItemGroup>
     <ClInclude Include="src\Engine.hpp" />
     <ClInclude Include="src\Engine\Application.hpp" />
-    <ClInclude Include="src\Engine\ECS\Entitiy.hpp" />
-    <ClInclude Include="src\Engine\ECS\registry.hpp" />
-    <ClInclude Include="src\Engine\ECS\util.hpp" />
+    <ClInclude Include="src\Engine\ECS\Component.hpp" />
+    <ClInclude Include="src\Engine\ECS\ComponentContainer.hpp" />
+    <ClInclude Include="src\Engine\ECS\Entity.hpp" />
+    <ClInclude Include="src\Engine\ECS\EntityContainer.hpp" />
+    <ClInclude Include="src\Engine\ECS\Registry.hpp" />
+    <ClInclude Include="src\Engine\ECS\System.hpp" />
     <ClInclude Include="src\Engine\EntryPoint.hpp" />
     <ClInclude Include="src\Engine\Events\ApplicationEvent.hpp" />
     <ClInclude Include="src\Engine\Events\Event.hpp" />
@@ -152,6 +155,7 @@
     <ClInclude Include="src\Engine\Events\MouseEvent.hpp" />
     <ClInclude Include="src\Engine\ImGui\ImGuiLayer.hpp" />
     <ClInclude Include="src\Engine\Log.hpp" />
+    <ClInclude Include="src\Engine\objects\components.hpp" />
     <ClInclude Include="src\Engine\Rendering\GraphicsContext.hpp" />
     <ClInclude Include="src\Engine\Rendering\LightMatrixStructs.hpp" />
     <ClInclude Include="src\Engine\Rendering\buffers.hpp" />
@@ -162,6 +166,9 @@
     <ClInclude Include="src\Engine\Rendering\renderCommand.hpp" />
     <ClInclude Include="src\Engine\Rendering\renderer.hpp" />
     <ClInclude Include="src\Engine\Rendering\rendererAPI.hpp" />
+    <ClInclude Include="src\Engine\Rendering\ObjectSubmitSystem.hpp" />
+    <ClInclude Include="src\Engine\Rendering\RenderLayer.hpp" />
+    <ClInclude Include="src\Engine\Rendering\SceneGraphSystem.hpp" />
     <ClInclude Include="src\Engine\Rendering\shader.hpp" />
     <ClInclude Include="src\Engine\Rendering\texture.hpp" />
     <ClInclude Include="src\Engine\Rendering\vertexArray.hpp" />
@@ -171,7 +178,6 @@
     <ClInclude Include="src\Engine\datatypes\include.hpp" />
     <ClInclude Include="src\Engine\datatypes\mat3.hpp" />
     <ClInclude Include="src\Engine\datatypes\mat4.hpp" />
-    <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp" />
     <ClInclude Include="src\Engine\datatypes\types.hpp" />
     <ClInclude Include="src\Engine\datatypes\vec3.hpp" />
     <ClInclude Include="src\Engine\datatypes\vec4.hpp" />
@@ -181,10 +187,6 @@
     <ClInclude Include="src\Engine\layer.hpp" />
     <ClInclude Include="src\Engine\layerStack.hpp" />
     <ClInclude Include="src\Engine\mouseButtonCodes.hpp" />
-    <ClInclude Include="src\Engine\nodeEditor\nodeEditorLayer.hpp" />
-    <ClInclude Include="src\Engine\objects\light_effects.hpp" />
-    <ClInclude Include="src\Engine\objects\mesh.hpp" />
-    <ClInclude Include="src\Engine\objects\movement.hpp" />
     <ClInclude Include="src\Engine\objects\scene.hpp" />
     <ClInclude Include="src\Engine\perspectiveCameraController.hpp" />
     <ClInclude Include="src\Engine\window.hpp" />
@@ -203,9 +205,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp" />
+    <ClCompile Include="src\Engine\datatypes\mat4.cpp" />
+    <ClCompile Include="src\Engine\ECS\Component.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuiBuild.cpp" />
     <ClCompile Include="src\Engine\ImGui\ImGuyLayer.cpp" />
     <ClCompile Include="src\Engine\Log.cpp" />
+    <ClCompile Include="src\Engine\objects\components.cpp" />
     <ClCompile Include="src\Engine\Rendering\GraphicsContext.cpp" />
     <ClCompile Include="src\Engine\Rendering\buffers.cpp" />
     <ClCompile Include="src\Engine\Rendering\lights.cpp" />
@@ -215,6 +220,9 @@
     <ClCompile Include="src\Engine\Rendering\renderCommand.cpp" />
     <ClCompile Include="src\Engine\Rendering\renderer.cpp" />
     <ClCompile Include="src\Engine\Rendering\rendererAPI.cpp" />
+    <ClCompile Include="src\Engine\Rendering\ObjectSubmitSystem.cpp" />
+    <ClCompile Include="src\Engine\Rendering\RenderLayer.cpp" />
+    <ClCompile Include="src\Engine\Rendering\SceneGraphSystem.cpp" />
     <ClCompile Include="src\Engine\Rendering\shader.cpp" />
     <ClCompile Include="src\Engine\Rendering\texture.cpp" />
     <ClCompile Include="src\Engine\Rendering\vertexArray.cpp" />
@@ -222,10 +230,6 @@
     <ClCompile Include="src\Engine\hdr_imageLoader\hdr_imageLoader.cpp" />
     <ClCompile Include="src\Engine\layer.cpp" />
     <ClCompile Include="src\Engine\layerStack.cpp" />
-    <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp" />
-    <ClCompile Include="src\Engine\objects\light_effects.cpp" />
-    <ClCompile Include="src\Engine\objects\mesh.cpp" />
-    <ClCompile Include="src\Engine\objects\movement.cpp" />
     <ClCompile Include="src\Engine\objects\scene.cpp" />
     <ClCompile Include="src\Engine\perspectiveCameraController.cpp" />
     <ClCompile Include="src\Engpch.cpp">

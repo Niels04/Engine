@@ -27,6 +27,8 @@ namespace Engine
 
 		m_ImGuiLayer = new imGuiLayer;//we create the imGuiLayer by default and push it as an overlay onto the layerstack
 		pushOverlay(m_ImGuiLayer);
+		m_renderLayer = new RenderLayer;
+		pushLayer(m_renderLayer);
 	}
 
 	Application::~Application()
@@ -59,6 +61,11 @@ namespace Engine
 
 			for (layer* layer : m_layerStack)//can use a range-based for-loop, because we implemented layerStack::begin() and layerStack::end()
 				layer->onUpdate(Timestep);
+			
+			m_renderLayer->begin();
+			for (layer* layer : m_layerStack)
+				layer->onRender();
+			m_renderLayer->end();
 
 			m_ImGuiLayer->begin();//we begin a new frame in our ImGuiLayer
 			for (layer* layer : m_layerStack)//we iterate through all layers and call each layer's onImGuiRender func

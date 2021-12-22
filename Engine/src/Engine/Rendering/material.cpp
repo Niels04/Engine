@@ -217,7 +217,7 @@ namespace Engine
 
 	void material::setTexture(const std::string& name, const Ref_ptr<texture>& tex)
 	{
-		ENG_CORE_ASSERT(m_textures.count(name), "Tried to set texture that the shader doesn't expect.");//make sure the shader even accepts this texture
+		ENG_CORE_ASSERT(m_textures.count(name), "Tried to set a texture, which the shader doesn't expect.");//make sure the shader even accepts this texture
 		m_textures[name] = tex;
 	}
 
@@ -226,6 +226,65 @@ namespace Engine
 		m_globalBuffer->bind();
 		m_globalBuffer->updateAll(m_data);
 		m_globalBuffer->unbind();
+	}
+
+	void material::renderMaterial(WeakRef_ptr<material>& mat)
+	{
+		if (mat->getShader()->getMaterialUniformsSize())
+		{
+			const unsigned char* data = (unsigned char*)mat->getData();
+			const std::unordered_map<std::string, shader::uniformProps> uniforms = mat->getShader()->getMaterialUniforms();
+			for (const auto& uniform : uniforms)
+			{
+				renderComponent(uniform, data);
+			}
+			mat->flushAll();//update the material after all the values have been set in the rendering functions
+		}
+		for (const auto& texture : mat->m_textures)
+		{
+			ImGui::Text(texture.first.c_str());
+			ImGui::Image((void*)texture.second->getRenderer_id(), { 128, 128 });
+		}
+		uint32_t flags_packed = mat->getFlags();
+		ImGui::CheckboxFlags("depth_test", &flags_packed, flag_depth_test);
+		ImGui::CheckboxFlags("cast_shadow", &flags_packed, flag_cast_shadow);
+		ImGui::CheckboxFlags("no_backface_cull", &flags_packed, flag_no_backface_cull);
+		mat->setFlags(flags_packed);
+	}
+
+	void material::renderComponent(const std::pair<std::string, shader::uniformProps>& props, const unsigned char* data)
+	{
+		switch (props.second.type)
+		{
+		case(ENG_FLOAT):
+		{
+			ImGui::DragFloat(props.first.c_str(), (float*)(data + props.second.offset), 2.0f, 0.0f, 100.0f);
+		}break;
+		case(ENG_INT):
+		{
+			ImGui::DragInt(props.first.c_str(), (int*)(data + props.second.offset), 2.0f, -100.0f, 100.0f);
+		}break;
+		case(ENG_BOOL):
+		{
+			ImGui::Checkbox(props.first.c_str(), (bool*)(data + props.second.offset));
+		}break;
+		case(ENG_FLOAT_VEC2):
+		{
+			ImGui::DragFloat2(props.first.c_str(), (float*)(data + props.second.offset), 2.0f, -100.0f, 100.0f);
+		}break;
+		case(ENG_FLOAT_VEC3):
+		{
+			ImGui::ColorEdit3(props.first.c_str(), (float*)(data + props.second.offset));
+		}break;
+		case(ENG_FLOAT_VEC4):
+		{
+			ImGui::ColorEdit4(props.first.c_str(), (float*)(data + props.second.offset));
+		}break;
+		default:
+		{
+			ImGui::Text("Unknown material property type.");
+		}break;
+		}
 	}
 
 	//:::::::::MATERIAL::LIB:::::::::::::

@@ -5,6 +5,9 @@
 #include "shader.hpp"
 #include "LightMatrixStructs.hpp"
 
+#include "Engine/ECS/Registry.hpp"
+#include "Engine/objects/components.hpp"
+
 #define MAX_DIR_LIGHTS 3
 #define MAX_POINT_LIGHTS 10
 #define MAX_SPOT_LIGHTS 10
@@ -12,115 +15,19 @@
 #define POINT_LIGHTS_BIND 2
 #define SPOT_LIGHTS_BIND 3
 
+//defines for shadows
 #define Shadow_Width 2048U
 #define Shadow_Height 2048U
 
-namespace Engine
-{
-	class directionalLight
-	{
-		friend class LightManager;
-	public:
-		directionalLight() = default;
-		directionalLight(vec3& lightDirection, vec3& ambientColor, vec3& diffuseColor, vec3& specularColor)
-			: direction(lightDirection, 0.0f), ambient(ambientColor, 0.0f), diffuse(diffuseColor, 0.0f), specular(specularColor)
-		{
-
-		}
-		vec4 direction;
-		vec4 ambient;
-		vec4 diffuse;
-		vec3 specular;
-	private:
-		uint32_t uid;
-
-		directionalLight(const vec4& lightDirection, const vec4& ambientColor, const vec4& diffuseColor, const vec3& specularColor)
-			: direction(lightDirection), ambient(ambientColor), diffuse(diffuseColor), specular(specularColor)
-		{
-
-		}
-
-		static directionalLight* create(const directionalLight& light)
-		{
-			return new directionalLight(light.direction, light.ambient, light.diffuse, light.specular);
-		}
-	};
-
-	class pointLight
-	{
-		friend class LightManager;
-	public:
-		pointLight() = default;
-		pointLight(vec3& lightPosition, vec3& ambientColor, vec3& diffuseColor, vec3& specularColor, vec3& INattenuation)
-			: position(lightPosition, 1.0f), ambient(ambientColor, 1.0f), diffuse(diffuseColor, 1.0f), specular(specularColor, 1.0f), attenuation(INattenuation)
-		{
-
-		}
-		pointLight(vec3& lightPosition, vec3& ambientColor, vec3& diffuseColor, vec3& specularColor, float Constant, float LinearFactor, float QuadraticFactor)
-			: position(lightPosition, 1.0f), ambient(ambientColor, 1.0f), diffuse(diffuseColor, 1.0f), specular(specularColor, 1.0f), attenuation({Constant, LinearFactor, QuadraticFactor})
-		{
-
-		}
-		vec4 position;
-		vec4 ambient;
-		vec4 diffuse;
-		vec4 specular;
-		vec3 attenuation;//first is constant, second is linear, third is quadratic
-	private:
-		uint32_t uid;
-
-		pointLight(const vec4& lightPosition, const vec4& ambientColor, const vec4& diffuseColor, const vec4& specularColor, const vec3& INattenuation)
-			: position(lightPosition), ambient(ambientColor), diffuse(diffuseColor), specular(specularColor), attenuation(INattenuation)
-		{
-
-		}
-
-		static pointLight* create(const pointLight& light)
-		{
-			return new pointLight(light.position, light.ambient, light.diffuse, light.specular, light.attenuation);
-		}
-	};
-
-	class spotLight
-	{
-		friend class LightManager;
-	public:
-		spotLight() = default;
-		spotLight(vec3& lightPosition, vec3& spotDirection, vec3& ambientColor, vec3& diffuseColor, vec3& specularColor, float cutOffAngle)
-			: position(lightPosition, 1.0f), direction(spotDirection, 0.0f), cutOff(cutOffAngle), ambient(ambientColor, 1.0f), diffuse(diffuseColor, 1.0f), specular(specularColor)
-		{
-
-		}
-		vec4 position;
-		vec4 direction;
-		vec4 ambient;
-		vec4 diffuse;
-		vec3 specular;
-		float cutOff;//the cosine of the spotLight's cutOff angle
-	private:
-		uint32_t uid;
-		float padd[3];
-
-		spotLight(const vec4& lightPosition, const vec4& lightDirection, const vec4& ambientColor, const vec4& diffuseColor, const vec3& specularColor, const float cutOffAngle)
-			: position(lightPosition), direction(lightDirection), ambient(ambientColor), diffuse(diffuseColor), specular(specularColor), cutOff(cutOffAngle)
-		{
-
-		}
-
-		static spotLight* create(const spotLight& light)
-		{
-			return new spotLight(light.position, light.direction, light.ambient, light.diffuse, light.specular, light.cutOff);
-		}
-	};
-
-//defines for shadows
 #define SPOT_LIGHT_CAM 1.0f, 20.0f, 90.0f, 90.0f//default projectionMatrix for a spotLight
 #define POINT_LIGHT_CAM 1.0f, 60.0f, 90.0f, 90.0f//default camera for a pointLight
 
+namespace Engine
+{
 	class lightMatrixCalculator
 	{
 	public:
-		inline static const cascadedDirLightMatrices getMatrix(const directionalLight& light)
+		inline static const cascadedDirLightMatrices getMatrix(const DirLightComponent& light)
 		{
 			vec3 frustaPoints_lightSpace[3][8];
 			mat4 toLightSpace = mat4::lookAt(light.direction);
@@ -143,7 +50,7 @@ namespace Engine
 			matrices.farCascade = mat4::transposed(mat4::projMatOrtho(dimensions[0], dimensions[1], dimensions[2], dimensions[3], dimensions[4], dimensions[5]) * toLightSpace);
 			return matrices;
 		}
-		inline static const pointLightMatrices getMatrix(const pointLight& light)//maybe let this function take a ptr to pointLightMatrices and instead of returning just modify that ptr
+		inline static const pointLightMatrices getMatrix(const PointLightComponent& light)//maybe let this function take a ptr to pointLightMatrices and instead of returning just modify that ptr
 		{
 			vec4 upvector(0.0f, -1.0f, 0.0f, 0.0f);
 			pointLightMatrices matrices;
@@ -153,10 +60,10 @@ namespace Engine
 			matrices.positiveY = mat4::transposed(s_projPoint * mat4::transposed(mat4::lookAt({ 0.0f, 1.0f, 0.0f, 0.0f })) * translation);//looking at positive y
 			matrices.negativeY = mat4::transposed(s_projPoint * mat4::transposed(mat4::lookAt({ 0.0f, -1.0f, 0.0f, 0.0f }, { 0.0f, -0.7071067f, -0.07071067f, 0.0f })) * translation);//looking at negative y
 			matrices.positiveZ = mat4::transposed(s_projPoint * mat4::transposed(mat4::lookAt({ 0.0f, 0.0f, 1.0f, 0.0f }, upvector)) * translation);//looking at positive z
-			matrices.negativeZ = mat4::transposed(s_projPoint * mat4::transposed(mat4::lookAt({0.0f, 0.0f, -1.0f, 0.0f}, upvector)) * translation);//looking at negative z
+			matrices.negativeZ = mat4::transposed(s_projPoint * mat4::transposed(mat4::lookAt({ 0.0f, 0.0f, -1.0f, 0.0f }, upvector)) * translation);//looking at negative z
 			return matrices;
 		}
-		inline static const mat4 getMatrix(const spotLight& light)
+		inline static const mat4 getMatrix(const SpotLightComponent& light)
 		{
 			return s_projSpot * mat4::transposed(mat4::lookAt(light.direction)) * mat4::transMat(-light.position);
 		}
@@ -182,7 +89,7 @@ namespace Engine
 			dimensionsOut[4] = -100000.0f;
 			dimensionsOut[5] = std::numeric_limits<float>::min();//far
 			dimensionsOut[5] = -10.0f;//a value that is between znear and zfar from which we can go in the negative direction
-			for(uint8_t i = 0; i < 8; i++)
+			for (uint8_t i = 0; i < 8; i++)
 			{
 				dimensionsOut[0] = std::fmin(dimensionsOut[0], points[i].x);//left
 				dimensionsOut[1] = std::fmax(dimensionsOut[1], points[i].x);//right
@@ -204,94 +111,44 @@ namespace Engine
 		static vec3 frustaPoints_worldSpace[3][8];//gets calculated once per frame
 	};
 
-	class LightManager
+	class LightRenderingSystem : public System<5, 3>//somehow automatically retrieve these numbers
 	{
 	public:
+		LightRenderingSystem(Registry<5, 3>& reg)
+			: m_registry(reg)
+		{
+			//technically we don't need to set any requirements here because this doesn't even manage any entities. It just get's all components of a certain type and performs calculations with them
+			//gonna set requirements anyways because the current system requires it
+			setRequirements<TransformComponent, MeshComponent, DirLightComponent, PointLightComponent, SpotLightComponent>();//just require all types because we won't use the feature
+		}
 		void init();
-		//get the index of a dynamicLight in the globalBuffer: get the index and add the amount of static lights atm
-		[[nodiscard]] inline directionalLight** addStaticDirLight(const directionalLight& light) {
-			m_staticDirLights.push_back(std::make_pair(light, lightMatrixCalculator::getMatrix(light))); m_staticDirLights.back().first.uid = uid();
-			m_staticDirLightPtrs.push_back(&m_staticDirLights.back().first); updatePtrs();
-			updateNewDirLight(true); updateDynamicDirLights(); updateDirLightCount();//in case of a new static light the new light itself needs to be updated and all lights after it(the dynamic ones as well)
-			//here a texture was added. Does something else need to be updated now with array textures?
-			return &m_staticDirLightPtrs.back();
-		}
-		[[nodiscard]] inline pointLight** addStaticPointLight(const pointLight& light) {
-			m_staticPointLights.push_back(std::make_pair(light, lightMatrixCalculator::getMatrix(light))); m_staticPointLights.back().first.uid = uid();
-			m_staticPointLightPtrs.push_back(&m_staticPointLights.back().first); updatePtrs();
-			updateNewPointLight(true); updateDynamicPointLights(); updatePointLightCount();
-			//here a texture was added. Does something else need to be updated now with array textures?
-			return &m_staticPointLightPtrs.back();
-		}
-		[[nodiscard]] inline spotLight** addStaticSpotLight(const spotLight& light) {
-			m_staticSpotLights.push_back(std::make_pair(light, mat4::transposed(lightMatrixCalculator::getMatrix(light)))); m_staticSpotLights.back().first.uid = uid();
-			m_staticSpotLightPtrs.push_back(&m_staticSpotLights.back().first); updatePtrs();
-			updateNewSpotLight(true); updateDynamicSpotLights(); updateSpotLightCount();
-			//here a texture was added. Does something else need to be updated now with array textures?
-			return &m_staticSpotLightPtrs.back();
-		}
-		
-		[[nodiscard]] inline directionalLight** addDynamicDirLight(const directionalLight& light) {
-			m_dynamicDirLights.push_back(std::make_pair(light, lightMatrixCalculator::getMatrix(light))); m_dynamicDirLights.back().first.uid = uid();
-			m_dynamicDirLightPtrs.push_back(&m_dynamicDirLights.back().first); updatePtrs();
-			updateNewDirLight(false); updateDirLightCount();//in case of a new dynamic light the light itself needs to be updated and the overall count
-			//here a texture was added. Does something else need to be updated now with array textures?
-			return &m_dynamicDirLightPtrs.back();
-		}
-		[[nodiscard]] inline pointLight** addDynamicPointLight(const pointLight& light) {
-			m_dynamicPointLights.push_back(std::make_pair(light, lightMatrixCalculator::getMatrix(light))); m_dynamicPointLights.back().first.uid = uid();
-			m_dynamicPointLightPtrs.push_back(&m_dynamicPointLights.back().first); updatePtrs();
-			updateNewPointLight(false); updatePointLightCount();
-			//here a texture was added. Does something else need to be updated now with array textures?
-			return &m_dynamicPointLightPtrs.back();
-		}
-		[[nodiscard]] inline spotLight** addDynamicSpotLight(const spotLight& light) {
-			m_dynamicSpotLights.push_back(std::make_pair(light, lightMatrixCalculator::getMatrix(light))); m_dynamicSpotLights.back().first.uid = uid();
-			m_dynamicSpotLightPtrs.push_back(&m_dynamicSpotLights.back().first); updatePtrs();
-			updateNewSpotLight(false); updateSpotLightCount();
-			//here a texture was added. Does something else need to be updated now with array textures?
-			return &m_dynamicSpotLightPtrs.back();
-		}
-
 		void clear();
 
-		void rmStaticDirLight(directionalLight* toRemove);
-		void rmStaticPointLight(pointLight* toRemove);
-		void rmStaticSpotLight(spotLight* toRemove);
+		const std::vector<DirLightComponent>& getDirLights() const { return m_registry.getAllOf<DirLightComponent>(); }
+		const std::vector<PointLightComponent>& getPointLights() const { return m_registry.getAllOf<PointLightComponent>(); }
+		const std::vector<SpotLightComponent>& getSpotLights() const { return m_registry.getAllOf<SpotLightComponent>(); }
+		WeakRef_ptr<ShadowMap2dArray> getDirLightMapArray() { return m_dirLightMapArray; }
+		WeakRef_ptr<ShadowMap3dArray> getPointLightMapArray() { return m_pointLightMapArray; }
+		WeakRef_ptr<ShadowMap2dArray> getSpotLightMapArray() { return m_spotLightMapArray; }
+		WeakRef_ptr<FrameBuffer> getDepthFB() { return m_depthFrameBuffer; }
+		WeakRef_ptr<shader> getDepthShader_dir() { return m_depthShader_dir; }
+		WeakRef_ptr<shader> getDepthShader_point() { return m_depthShader_point; }
+		WeakRef_ptr<shader> getDepthShader_spot() { return m_depthShader_spot; }
 
-		void rmDynamicDirLight(directionalLight* toRemove);
-		void rmDynamicPointLight(pointLight* toRemove);
-		void rmDynamicSpotLight(spotLight* toRemove);
-
-		void updateLights() { updateDynamicLightMatrices(); updateDynamicDirLights(); updateDynamicPointLights(); updateDynamicSpotLights(); }
-
-		inline iterator<std::pair<directionalLight, cascadedDirLightMatrices>> dirLightBegin() const { return {m_staticDirLights, m_dynamicDirLights}; }
-		inline iterator<std::pair<directionalLight, cascadedDirLightMatrices>> dirLightEnd() const { return iterator<std::pair<directionalLight, cascadedDirLightMatrices>>::endIterator(m_dynamicDirLights); }
-		inline iterator<std::pair<pointLight, pointLightMatrices>> pointLightBegin() const { return { m_staticPointLights, m_dynamicPointLights}; }
-		inline iterator<std::pair<pointLight, pointLightMatrices>> pointLightEnd() const { return iterator<std::pair<pointLight, pointLightMatrices>>::endIterator(m_dynamicPointLights); }
-		inline iterator<std::pair<spotLight, mat4>> spotLightBegin() const { return { m_staticSpotLights, m_dynamicSpotLights}; }
-		inline iterator<std::pair<spotLight, mat4>> spotLightEnd() const { return iterator<std::pair<spotLight, mat4>>::endIterator(m_dynamicSpotLights); }
-
-		inline const uint32_t getDirLightCount() const { return m_staticDirLights.size() + m_dynamicDirLights.size(); }
-		inline const uint32_t getPointLightCount() const { return m_staticPointLights.size() + m_dynamicPointLights.size(); }
-		inline const uint32_t getSpotLightCount() const { return m_staticSpotLights.size() + m_dynamicSpotLights.size(); }
-
-		inline Ref_ptr<FrameBuffer> getDepthFB() const { return m_depthFrameBuffer; }
-		inline Ref_ptr<shader> getDepthShader_dir() const { return m_depthShader_dir; }
-		inline Ref_ptr<shader> getDepthShader_point() const { return m_depthShader_point; }
-		inline Ref_ptr<shader> getDepthShader_spot() const { return m_depthShader_spot; }
-
-		inline Ref_ptr<ShadowMap2dArray> getDirLightMapArray() const { return m_dirLightMapArray; }
-		inline Ref_ptr<ShadowMap3dArray> getPointLightMapArray() const { return m_pointLightMapArray; }
-		inline Ref_ptr<ShadowMap2dArray> getSpotLightMapArray() const { return m_spotLightMapArray; }
-
+		void updateAndFlush()//update the lightMatrices and flush everything over to the GPU
+		{
+			applyTransforms(); updateLightCount(); updateLightMatrices(); flushDirLights(); flushPointLights(); flushSpotLights();
+		}
+		void onImGuiRender();
 	private:
-		std::vector<std::pair<directionalLight, cascadedDirLightMatrices>> m_staticDirLights;
-		std::vector<std::pair<pointLight, pointLightMatrices>> m_staticPointLights;
-		std::vector<std::pair<spotLight, mat4>> m_staticSpotLights;
-		std::vector<std::pair<directionalLight, cascadedDirLightMatrices>> m_dynamicDirLights;
-		std::vector<std::pair<pointLight, pointLightMatrices>> m_dynamicPointLights;
-		std::vector<std::pair<spotLight, mat4>> m_dynamicSpotLights;
+		void updateLightMatrices();
+		void flushDirLights();
+		void flushPointLights();
+		void flushSpotLights();
+		void updateLightCount();
+		void applyTransforms();//for lights we have to apply the global transforms manually
+
+		Registry<5, 3>& m_registry;
 
 		Ref_ptr<ShadowMap2dArray> m_dirLightMapArray;
 		Ref_ptr<ShadowMap3dArray> m_pointLightMapArray;
@@ -302,90 +159,8 @@ namespace Engine
 		Ref_ptr<shader> m_depthShader_point;
 		Ref_ptr<shader> m_depthShader_spot;
 
-		inline void LightManager::updatePtrs()
-		{
-			{
-				auto itP = m_staticDirLightPtrs.begin();
-				for (auto it = m_staticDirLights.begin(); it != m_staticDirLights.end(); it++, itP++)
-				{
-					*itP = &it->first;
-				}
-			}
-			{
-				auto itP = m_staticPointLightPtrs.begin();
-				for (auto it = m_staticPointLights.begin(); it != m_staticPointLights.end(); it++, itP++)
-				{
-					*itP = &it->first;
-				}
-			}
-			{
-				auto itP = m_staticSpotLightPtrs.begin();
-				for (auto it = m_staticSpotLights.begin(); it != m_staticSpotLights.end(); it++, itP++)
-				{
-					*itP = &it->first;
-				}
-			}
-			{
-				auto itP = m_dynamicDirLightPtrs.begin();
-				for (auto it = m_dynamicDirLights.begin(); it != m_dynamicDirLights.end(); it++, itP++)
-				{
-					*itP = &it->first;
-				}
-			}
-			{
-				auto itP = m_dynamicPointLightPtrs.begin();
-				for (auto it = m_dynamicPointLights.begin(); it != m_dynamicPointLights.end(); it++, itP++)
-				{
-					*itP = &it->first;
-				}
-			}
-			{
-				auto itP = m_dynamicSpotLightPtrs.begin();
-				for (auto it = m_dynamicSpotLights.begin(); it != m_dynamicSpotLights.end(); it++, itP++)
-				{
-					*itP = &it->first;
-				}
-			}
-		}
-
-		//these are lists, because we don't want the elements to be reallocated all the time(cuz we wanna give out pointers to the elements(or maybe references?))
-		std::list<directionalLight*> m_staticDirLightPtrs;
-		std::list<pointLight*> m_staticPointLightPtrs;
-		std::list<spotLight*> m_staticSpotLightPtrs;
-		std::list<directionalLight*> m_dynamicDirLightPtrs;
-		std::list<pointLight*> m_dynamicPointLightPtrs;
-		std::list<spotLight*> m_dynamicSpotLightPtrs;
-
 		Scope_ptr<globalBuffer> directionalLightBuffer;
 		Scope_ptr<globalBuffer> pointLightBuffer;
 		Scope_ptr<globalBuffer> spotLightBuffer;
-
-		//in case of adding a new staticLight-> the new staticLight gets updated + all dynamicLights get updated
-		void updateNewDirLight(bool Static);//one new light to update(if its a static one all dynamic ones will have to be updated as well)
-		void updateDynamicDirLights();//every frame, cuz theire dynamic but also when a static light got added/removed
-		void updateStaticDirLights(std::vector<std::pair<directionalLight, cascadedDirLightMatrices>>::iterator it);//in case a static light gets removed update all static elements after it and call updateDynamicLights() as well
-		void updateDynamicDirLights(std::vector<std::pair<directionalLight, cascadedDirLightMatrices>>::iterator it);//in case a dynamic light gets removed update all dynamic elements after it
-
-		void updateNewPointLight(bool Static);
-		void updateDynamicPointLights();
-		void updateStaticPointLights(std::vector<std::pair<pointLight, pointLightMatrices>>::iterator it);
-		void updateDynamicPointLights(std::vector<std::pair<pointLight, pointLightMatrices>>::iterator it);
-
-		void updateNewSpotLight(bool Static);
-		void updateDynamicSpotLights();
-		void updateStaticSpotLights(std::vector<std::pair<spotLight, mat4>>::iterator it);
-		void updateDynamicSpotLights(std::vector<std::pair<spotLight, mat4>>::iterator it);
-
-		void updateDynamicLightMatrices();
-
-		inline void updateDirLightCount() { int count = m_staticDirLights.size() + m_dynamicDirLights.size(); directionalLightBuffer->bind(); 
-			directionalLightBuffer->updateElement(0, &count); directionalLightBuffer->unbind(); }
-		inline void updatePointLightCount() { int count = m_staticPointLights.size() + m_dynamicPointLights.size();  pointLightBuffer->bind();
-			pointLightBuffer->updateElement(0, &count); pointLightBuffer->unbind(); }
-		inline void updateSpotLightCount() { int count = m_staticSpotLights.size() + m_dynamicSpotLights.size(); spotLightBuffer->bind();
-		spotLightBuffer->updateElement(0, &count); spotLightBuffer->unbind(); }
-
-		uint32_t m_next_uid = 0;
-		inline uint32_t uid() { m_next_uid++; return m_next_uid - 1; }
 	};
 }

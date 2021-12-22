@@ -7,6 +7,9 @@
     <Filter Include="src\Engine">
       <UniqueIdentifier>{12A1320E-FE58-745B-6760-4DB753370F4C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Engine\ECS">
+      <UniqueIdentifier>{5CCEFB39-489C-EF3F-3130-60661D9DCBA4}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\Engine\Events">
       <UniqueIdentifier>{B624EAB0-223B-E846-6BB2-7368D707B9CE}</UniqueIdentifier>
     </Filter>
@@ -132,9 +135,6 @@
     <ClInclude Include="src\Engine\datatypes\mat4.hpp">
       <Filter>src\Engine\datatypes</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\datatypes\two_vector_iterator.hpp">
-      <Filter>src\Engine\datatypes</Filter>
-    </ClInclude>
     <ClInclude Include="src\Engine\datatypes\types.hpp">
       <Filter>src\Engine\datatypes</Filter>
     </ClInclude>
@@ -161,18 +161,6 @@
     </ClInclude>
     <ClInclude Include="src\Engine\mouseButtonCodes.hpp">
       <Filter>src\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\nodeEditor\nodeEditorLayer.hpp">
-      <Filter>src\Engine\nodeEditor</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\objects\light_effects.hpp">
-      <Filter>src\Engine\objects</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\objects\mesh.hpp">
-      <Filter>src\Engine\objects</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Engine\objects\movement.hpp">
-      <Filter>src\Engine\objects</Filter>
     </ClInclude>
     <ClInclude Include="src\Engine\objects\scene.hpp">
       <Filter>src\Engine\objects</Filter>
@@ -219,9 +207,16 @@
     <ClInclude Include="vendor\stb_image\stb_image.hpp">
       <Filter>vendor\stb_image</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\ECS\Entitiy.hpp" />
-    <ClInclude Include="src\Engine\ECS\registry.hpp" />
-    <ClInclude Include="src\Engine\ECS\util.hpp" />
+    <ClInclude Include="src\Engine\objects\components.hpp" />
+    <ClInclude Include="src\Engine\ECS\Component.hpp" />
+    <ClInclude Include="src\Engine\ECS\ComponentContainer.hpp" />
+    <ClInclude Include="src\Engine\ECS\Entity.hpp" />
+    <ClInclude Include="src\Engine\ECS\EntityContainer.hpp" />
+    <ClInclude Include="src\Engine\ECS\Registry.hpp" />
+    <ClInclude Include="src\Engine\ECS\System.hpp" />
+    <ClInclude Include="src\Engine\Rendering\SceneGraphSystem.hpp" />
+    <ClInclude Include="src\Engine\Rendering\ObjectSubmitSystem.hpp" />
+    <ClInclude Include="src\Engine\Rendering\RenderLayer.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Engine\Application.cpp">
@@ -284,18 +279,6 @@
     <ClCompile Include="src\Engine\layerStack.cpp">
       <Filter>src\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="src\Engine\nodeEditor\nodeEditorLayer.cpp">
-      <Filter>src\Engine\nodeEditor</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine\objects\light_effects.cpp">
-      <Filter>src\Engine\objects</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine\objects\mesh.cpp">
-      <Filter>src\Engine\objects</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Engine\objects\movement.cpp">
-      <Filter>src\Engine\objects</Filter>
-    </ClCompile>
     <ClCompile Include="src\Engine\objects\scene.cpp">
       <Filter>src\Engine\objects</Filter>
     </ClCompile>
@@ -338,5 +321,11 @@
     <ClCompile Include="vendor\stb_image\stb_image.cpp">
       <Filter>vendor\stb_image</Filter>
     </ClCompile>
+    <ClCompile Include="src\Engine\objects\components.cpp" />
+    <ClCompile Include="src\Engine\ECS\Component.cpp" />
+    <ClCompile Include="src\Engine\Rendering\SceneGraphSystem.cpp" />
+    <ClCompile Include="src\Engine\Rendering\ObjectSubmitSystem.cpp" />
+    <ClCompile Include="src\Engine\Rendering\RenderLayer.cpp" />
+    <ClCompile Include="src\Engine\datatypes\mat4.cpp" />
   </ItemGroup>
 </Project>

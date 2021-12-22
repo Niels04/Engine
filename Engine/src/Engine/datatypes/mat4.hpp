@@ -5,6 +5,8 @@
 
 #define RAD(x) x * 0.0174533f
 
+struct mat3;
+
 //a 4x4 matrix
 struct mat4
 {
@@ -310,6 +312,15 @@ struct mat4
 		mat[2][0] = PCzx; mat[2][1] = PCzy; mat[2][2] = 1.0;
 		mat[3][3] = 1.0;
 	}
+	static mat4 shearMat(real PCxy, real PCxz, real PCyx, real PCyz, real PCzx, real PCzy)//PC stands for proportionality constant
+	{
+		mat4 matOut;
+		matOut.mat[0][0] = 1.0; matOut.mat[0][1] = PCxy; matOut.mat[0][2] = PCxz;
+		matOut.mat[1][0] = PCyx; matOut.mat[1][1] = 1.0; matOut.mat[1][2] = PCyz;
+		matOut.mat[2][0] = PCzx; matOut.mat[2][1] = PCzy; matOut.mat[2][2] = 1.0;
+		matOut.mat[3][3] = 1.0;
+		return matOut;
+	}
 	void setRotx(real angle/*input in radians*/)//rotation around the x-axis
 	{
 		mat[0][0] = 1.0;
@@ -320,7 +331,7 @@ struct mat4
 		mat[1][1] = close0(std::cosf(angle));
 		mat[1][2] = close0(std::sinf(-angle));
 #endif
-		mat[2][1] = -mat[1][2];//avoid calling trigonometric functions again, since the need time to calculate
+		mat[2][1] = -mat[1][2];//avoid calling trigonometric functions again, since they need time to calculate
 		mat[2][2] = mat[1][1];//same here
 		mat[3][3] = 1.0;
 	}
@@ -335,7 +346,7 @@ struct mat4
 		out.mat[1][1] = close0(std::cosf(angle));
 		out.mat[1][2] = close0(std::sinf(-angle));
 #endif
-		out.mat[2][1] = -out.mat[1][2];//avoid calling trigonometric functions again, since the need time to calculate
+		out.mat[2][1] = -out.mat[1][2];//avoid calling trigonometric functions again, since they need time to calculate
 		out.mat[2][2] = out.mat[1][1];//same here
 		out.mat[3][3] = 1.0;
 		return out;
@@ -350,7 +361,7 @@ struct mat4
 		mat[0][2] = close0(std::sinf(angle));
 #endif
 		mat[1][1] = 1.0;
-		mat[2][0] = -mat[0][2];//avoid calling trigonometric functions again, since the need time to calculate
+		mat[2][0] = -mat[0][2];//avoid calling trigonometric functions again, since they need time to calculate
 		mat[2][2] = mat[0][0];//same here
 		mat[3][3] = 1.0;
 	}
@@ -523,6 +534,9 @@ struct mat4
 		mat[3][3] = 1.0f;
 #endif
 	}
+
+	static mat3 NormalFromModel(const mat4& model);
+	
 	void Identity()
 	{
 		for (uint8_t i = 0; i < 4; i++)

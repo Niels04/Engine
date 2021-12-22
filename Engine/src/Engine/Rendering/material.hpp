@@ -23,7 +23,7 @@ namespace Engine
 	class material
 	{
 		friend class materialLib;
-		friend class NodeEditorLayer;
+		//friend class NodeEditorLayer;
 	public:
 		material(Ref_ptr<shader>& shader, const std::string& name, uint32_t flags, uint32_t blend_src, uint32_t blend_dest);//take by reference to avoid unnessecary incrementing the ref-count
 		~material();
@@ -75,7 +75,9 @@ namespace Engine
 
 		void flushAll() const;//flush the whole data Stored on cpu-side onto the GPU(useful when loading the material)->add it so that a setUniform... -function also uploads that specific uniform on the GPU
 
+		static void renderMaterial(WeakRef_ptr<material>& mat);//render the imGuiPanel for a material
 	private:
+		static void renderComponent(const std::pair<std::string, shader::uniformProps>& props, const unsigned char* data);
 		inline const void* getData() const { return m_data; }
 		const std::string m_name;
 		WeakRef_ptr<shader> m_shaderRef;//store a weak_ptr because a material shouldn't take ownership over it's shader(if one would delete the shaderLib for some reason)
@@ -87,7 +89,7 @@ namespace Engine
 
 	class materialLib
 	{
-		friend class NodeEditorLayer;
+		//friend class NodeEditorLayer;
 	public:
 		static void init();
 		//____________________

@@ -9,7 +9,8 @@ namespace Engine
 {
 	Renderer::sceneData* Renderer::s_sceneData = new Renderer::sceneData;
 	shaderLib* Renderer::s_shaderLib = new shaderLib;
-	std::vector<Ref_ptr<mesh>> Renderer::s_renderQueue = {  };
+	//const std::vector<MeshComponent>* Renderer::s_renderQueue = nullptr;
+	std::vector<std::pair<const MeshComponent&, const TransformComponent&>> Renderer::s_renderQueue = {};
 	uint32_t Renderer::s_mainViewport[2] = { 0, 0 };
 	uint32_t Renderer::s_maxViewportSize[2] = { 0, 0 };
 	Ref_ptr<FrameBuffer> Renderer::s_hdr_fbo = nullptr;
@@ -24,7 +25,6 @@ namespace Engine
 	Ref_ptr<shader> Renderer::s_blur_shader[2] = { nullptr, nullptr };
 	bool Renderer::s_bloom = false;
 	float Renderer::s_exposure = 1.0f;
-	//bool Renderer::s_drawLights = false;
 	//G-Buffer:::::::::::
 	Ref_ptr<FrameBuffer> Renderer::s_gBuffer = nullptr;
 	Ref_ptr<texture2d> Renderer::s_gPosition = nullptr;
@@ -50,6 +50,17 @@ namespace Engine
 	float lerp(float a, float b, float f)
 	{
 		return a + f * (b - a);
+	}
+
+	void Renderer::sceneData::init()
+	{
+		//initialize buffer for viewProjection
+		viewProjBuffer = globalBuffer::create(sizeof(mat4) + sizeof(vec4) + sizeof(mat4), DYNAMIC_DRAW);
+		viewProjBuffer->lAddMat4B();//viewProjMat
+		viewProjBuffer->lAddVec4B();//viewPosition
+		viewProjBuffer->lAddMat4B();//viewMat
+		viewProjBuffer->bindToPoint(VIEWPROJ_BIND);//binding point for viewProjectionBuffer always is 0
+		viewProjBuffer->unbind();
 	}
 
 	void Renderer::init(uint32_t viewportWidth, uint32_t viewportHeight, uint32_t maxViewportWidth, uint32_t maxViewportHeight/*this is the resolution that everything is rendered at*/)
@@ -218,9 +229,6 @@ namespace Engine
 		s_skyboxVa->load("cube.model");
 		s_skyboxVa->unbind();
 		s_skyboxShader = s_shaderLib->load("skybox/skybox_hdr.shader");
-
-		//setup pcf
-		//create a random jitter-texture
 	}
 
 	/*void Renderer::setupCascadeDisplay()
@@ -327,7 +335,8 @@ namespace Engine
 		//s_pcfJitter.reset();
 	}
 
-	void Renderer::beginScene(const perspectiveCamera& cam)
+	//set the current camera position and orientation for the next rendering process
+	void Renderer::setCam(const perspectiveCamera& cam)
 	{
 		s_sceneData->viewProjMat = cam.getViewProjMat();
 		s_sceneData->viewPos = { cam.getPos(), 1.0f };
@@ -358,9 +367,13 @@ namespace Engine
 		s_SSAO_shader->setUniformMat4("u_viewMat", cam.getViewMat(), 1);
 		s_SSAO_shader->setUniformMat4("u_projMat", cam.getProjMat(), 1);
 		s_SSAO_shader->unbind();
+	}
+
+	void Renderer::beginScene()
+	{
 		//update dynamic lights
-		s_sceneData->lightManager.updateLights();//update lights for all shaders
-		//update the exposure
+		s_sceneData->lightRenderingSystem->updateAndFlush();
+		//update the exposure parameter in the shaders
 		s_hdr_quad_shader->bind();
 		s_hdr_quad_shader->setUniform1f("u_exposure", s_exposure);
 		s_hdr_quad_shader_bloom->bind();
@@ -372,20 +385,30 @@ namespace Engine
 	{
 	}
 
-	void Renderer::sub(const Ref_ptr<vertexArray> va, const Ref_ptr<shader> shader, const mat4& transform)
+	void Renderer::sub(const MeshComponent& mesh, const TransformComponent& transform)
 	{
-		ENG_CORE_WARN("Using deprecated \"Renderer::sub(const Ref_ptr<vertexArray> va, const Ref_ptr<shader> shader, const mat4& transform)\".");
-		//there will be some kind of sorting algorythm, but for now just draw everything, that gets submited
-		shader->bind();//bind the shader(!!!important to do before uploading uniforms!!!)
-		shader->setUniformMat4("u_modelMat", transform);//this is set once per submited geometry, so upload it here
-
-		va->bind();//bind the vertexArray
-		renderCommand::drawIndexed(va);//draw it
+		//s_renderQueue.push_back(std::make_pair(mesh, transform));
+		s_renderQueue.push_back({ mesh, transform });//avoid using std::make_pair because it lead to an unwanted copy somehow(at least I suppose)
 	}
-	
-	void Renderer::sub(const Ref_ptr<mesh> Mesh)
+
+	void Renderer::test()
 	{
-		s_renderQueue.push_back(Mesh);
+		renderCommand::setViewport(s_mainViewport[0], s_mainViewport[1]);
+		renderCommand::clear();
+		renderCommand::setBlend(ENG_ONE, ENG_ZERO);
+		renderCommand::setDepth(ENG_ALWAYS);
+		renderCommand::enableCullFace(false);
+		for (auto& data : s_renderQueue)
+		{
+			auto& Mesh = data.first;
+			auto& Transform = data.second;
+			const auto& mat = Mesh.getMaterial();
+			mat->bind(10);
+			const auto& geometry = Mesh.getVa();
+			geometry->bind();
+			renderCommand::drawIndexed(geometry);
+		}
+		s_renderQueue.clear();
 	}
 
 	void Renderer::Flush()
@@ -395,9 +418,11 @@ namespace Engine
 		s_gBuffer->bind();
 		renderCommand::clear();
 		renderCommand::setBlend(ENG_ONE, ENG_ZERO);//->because the specular intensity value is interpreted as alpha, this has to be set manually
-		for (const auto& Mesh : s_renderQueue)
+		for (auto& data : s_renderQueue)
 		{
-			const auto mat = Mesh->getMaterial();
+			auto& Mesh = data.first;
+			auto& Transform = data.second;
+			const auto mat = Mesh.getMaterial();
 			if (!(mat->getFlags() & flag_no_deferred))
 			{
 				if (mat->getFlags() & flag_depth_test)
@@ -406,9 +431,9 @@ namespace Engine
 					renderCommand::setDepth(ENG_ALWAYS);
 				renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
 				mat->bind(10);//always use the 0th shader with deferred shading
-				mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-				mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
-				const auto geometry = Mesh->getVa();
+				mat->getShader()->setUniformMat4("u_modelMat", Transform, 1);
+				mat->getShader()->setUniformMat3("u_normalMat", mat4::NormalFromModel(Transform), 1);
+				const auto geometry = Mesh.getVa();
 				geometry->bind();
 				renderCommand::drawIndexed(geometry);
 			}
@@ -440,9 +465,9 @@ namespace Engine
 		s_gNormal->bind(1);
 		s_gAlbSpec->bind(2);
 		//bind the shadowMaps
-		s_sceneData->lightManager.getDirLightMapArray()->bind(3);
-		s_sceneData->lightManager.getPointLightMapArray()->bind(4);
-		s_sceneData->lightManager.getSpotLightMapArray()->bind(5);
+		s_sceneData->lightRenderingSystem->getDirLightMapArray()->bind(3);
+		s_sceneData->lightRenderingSystem->getPointLightMapArray()->bind(4);
+		s_sceneData->lightRenderingSystem->getSpotLightMapArray()->bind(5);
 		//bind the skybox for reflections
 		s_skyboxTex->bind(6);//wow, we actually have 7 textures attached
 		//////
@@ -454,8 +479,10 @@ namespace Engine
 		s_hdr_fbo->bind();//bind the hdr_fbo to both read and draw again
 		for (auto& it = s_renderQueue.rbegin(); it != s_renderQueue.rend(); it++)//NOTE THAT iterating through this backwards is important, so that the skybox is drawn last!!!
 		{
-			const auto& Mesh = *it;
-			const auto mat = Mesh->getMaterial();
+			auto& data = *it;
+			const auto& Mesh = data.first;
+			const auto& Transform = data.second;
+			const auto& mat = Mesh.getMaterial();
 			if (mat->getFlags() & flag_no_deferred)
 			{
 				if (mat->getFlags() & flag_depth_test)
@@ -464,15 +491,15 @@ namespace Engine
 					renderCommand::setDepth(ENG_ALWAYS);
 				renderCommand::enableCullFace(!(mat->getFlags() & flag_no_backface_cull));//dissable face culling if the object has no backface-culling enabled
 				mat->bind(10);
-				mat->getShader()->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-				mat->getShader()->setUniformMat3("u_normalMat", Mesh->getNormalMat(), 1);
-				const auto geometry = Mesh->getVa();
+				mat->getShader()->setUniformMat4("u_modelMat", Transform, 1);
+				mat->getShader()->setUniformMat3("u_normalMat", mat4::NormalFromModel(Transform), 1);
+				const auto geometry = Mesh.getVa();
 				geometry->bind();
 				renderCommand::drawIndexed(geometry);
 			}
 		}
 		/////////////////end of forward-rendering part
-		s_renderQueue.clear();
+		s_renderQueue.clear();//clear the renderQueue again
 		s_hdr_fbo->unbind();//don't remove this
 		//post-processing:
 		if (s_bloom)
@@ -524,115 +551,110 @@ namespace Engine
 		s_hdr_quad_va->unbind();*/
 	}
 
-	void Renderer::sceneData::init()
-	{
-		//initialize buffer for viewProjection
-		viewProjBuffer = globalBuffer::create(sizeof(mat4) + sizeof(vec4) + sizeof(mat4), DYNAMIC_DRAW);
-		viewProjBuffer->lAddMat4B();//viewProjMat
-		viewProjBuffer->lAddVec4B();//viewPosition
-		viewProjBuffer->lAddMat4B();//viewMat
-		viewProjBuffer->bindToPoint(VIEWPROJ_BIND);//binding point for viewProjectionBuffer always is 0
-		viewProjBuffer->unbind();
-		//initialize lights
-		lightManager.init();
-	}
-
 	void Renderer::RenderDepthMaps()
 	{
 		renderCommand::enableCullFace(true);
 		renderCommand::cullFace(ENG_FRONT);
 		renderCommand::setViewport(Shadow_Width, Shadow_Height);
-		WeakRef_ptr<FrameBuffer> depth_fbo = s_sceneData->lightManager.getDepthFB();
+		WeakRef_ptr<FrameBuffer> depth_fbo = s_sceneData->lightRenderingSystem->getDepthFB();
 		depth_fbo->bind();
-		WeakRef_ptr<shader> depthShader_dir = s_sceneData->lightManager.getDepthShader_dir();
+		WeakRef_ptr<shader> depthShader_dir = s_sceneData->lightRenderingSystem->getDepthShader_dir();
 		depthShader_dir->bind();
-		for (auto& it = s_sceneData->lightManager.dirLightBegin(); it != s_sceneData->lightManager.dirLightEnd(); ++it)
+		uint32_t loopIndex = 0;//it is useful to always now the index of the current light in order to attach the right texture to the depthFrameBuffer
+		for (const auto& light : s_sceneData->lightRenderingSystem->getDirLights())
 		{
-			const auto& data = *it;
 			//near cascade
-			depthShader_dir->setUniformMat4("u_toLightSpace", data.it->second.nearCascade);
-			depth_fbo->attachTexture(s_sceneData->lightManager.getDirLightMapArray(), data.texIndex * 3 + 0);
+			depthShader_dir->setUniformMat4("u_toLightSpace", light.shadowMatrices.nearCascade);
+			depth_fbo->attachTexture(s_sceneData->lightRenderingSystem->getDirLightMapArray(), loopIndex * 3 + 0);
 			renderCommand::clearDepth();
-			for (const auto& Mesh : s_renderQueue)
+			for (auto& data : s_renderQueue)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
+				auto& Mesh = data.first;
+				if (Mesh.getMaterial()->getFlags() & flag_cast_shadow)
 				{
-					depthShader_dir->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-					Ref_ptr<vertexArray> geometry = Mesh->getVa();
+					depthShader_dir->setUniformMat4("u_modelMat", data.second, 1);
+					Ref_ptr<vertexArray> geometry = Mesh.getVa();
 					geometry->bind();
 					renderCommand::drawIndexed(geometry);
 				}
 			}
 			//middle cascade
-			depthShader_dir->setUniformMat4("u_toLightSpace", data.it->second.middleCascade);
-			depth_fbo->attachTexture(s_sceneData->lightManager.getDirLightMapArray(), data.texIndex * 3 + 1);
+			depthShader_dir->setUniformMat4("u_toLightSpace", light.shadowMatrices.middleCascade);
+			depth_fbo->attachTexture(s_sceneData->lightRenderingSystem->getDirLightMapArray(), loopIndex * 3 + 1);
 			renderCommand::clearDepth();
-			for (const auto& Mesh : s_renderQueue)
+			for (auto& data : s_renderQueue)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
+				auto& Mesh = data.first;
+				if (Mesh.getMaterial()->getFlags() & flag_cast_shadow)
 				{
-					depthShader_dir->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-					Ref_ptr<vertexArray> geometry = Mesh->getVa();
+					depthShader_dir->setUniformMat4("u_modelMat", data.second, 1);
+					Ref_ptr<vertexArray> geometry = Mesh.getVa();
 					geometry->bind();
 					renderCommand::drawIndexed(geometry);
 				}
 			}
 			//far cascade
-			depthShader_dir->setUniformMat4("u_toLightSpace", data.it->second.farCascade);
-			depth_fbo->attachTexture(s_sceneData->lightManager.getDirLightMapArray(), data.texIndex * 3 + 2);
+			depthShader_dir->setUniformMat4("u_toLightSpace", light.shadowMatrices.farCascade);
+			depth_fbo->attachTexture(s_sceneData->lightRenderingSystem->getDirLightMapArray(), loopIndex * 3 + 2);
 			renderCommand::clearDepth();
-			for (const auto& Mesh : s_renderQueue)
+			for (auto& data : s_renderQueue)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
+				auto& Mesh = data.first;
+				if (Mesh.getMaterial()->getFlags() & flag_cast_shadow)
 				{
-					depthShader_dir->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-					Ref_ptr<vertexArray> geometry = Mesh->getVa();
+					depthShader_dir->setUniformMat4("u_modelMat", data.second, 1);
+					Ref_ptr<vertexArray> geometry = Mesh.getVa();
 					geometry->bind();
 					renderCommand::drawIndexed(geometry);
 				}
 			}
+			loopIndex++;
 		}
+		loopIndex = 0;
 		depthShader_dir->unbind();
-		WeakRef_ptr<shader> depthShader_point = s_sceneData->lightManager.getDepthShader_point();
+		WeakRef_ptr<shader> depthShader_point = s_sceneData->lightRenderingSystem->getDepthShader_point();
 		depthShader_point->bind();
-		depth_fbo->attachTexture(s_sceneData->lightManager.getPointLightMapArray());//->don't specify any layer here, because of weird opengl-api -> do that with a uniform
+		depth_fbo->attachTexture(s_sceneData->lightRenderingSystem->getPointLightMapArray());//->don't specify any layer here, because of weird opengl-api -> do that with a uniform
 		renderCommand::clearDepth();
-		for (auto& it = s_sceneData->lightManager.pointLightBegin(); it != s_sceneData->lightManager.pointLightEnd(); ++it)
+		for (const auto& light : s_sceneData->lightRenderingSystem->getPointLights())
 		{
-			const auto& data = *it;
-			depthShader_point->setUniformMat4_6("u_toLightSpace", data.it->second);
-			depthShader_point->setUniform4f("u_lightPos", data.it->first.position);
-			depthShader_point->setUniform1ui("u_layer", data.texIndex * 6);
-			for (const auto& Mesh : s_renderQueue)
+			depthShader_point->setUniformMat4_6("u_toLightSpace", light.shadowMatrices);
+			depthShader_point->setUniform4f("u_lightPos", light.position);
+			depthShader_point->setUniform1ui("u_layer", loopIndex * 6);
+			for (auto& data : s_renderQueue)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
+				auto& Mesh = data.first;
+				if (Mesh.getMaterial()->getFlags() & flag_cast_shadow)
 				{
-					depthShader_point->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-					Ref_ptr<vertexArray> geometry = Mesh->getVa();
+					depthShader_point->setUniformMat4("u_modelMat", data.second, 1);
+					Ref_ptr<vertexArray> geometry = Mesh.getVa();
 					geometry->bind();
 					renderCommand::drawIndexed(geometry);
 				}
 			}
+			loopIndex++;
 		}
+		loopIndex = 0;
 		depthShader_point->unbind();
-		WeakRef_ptr<shader> depthShader_spot = s_sceneData->lightManager.getDepthShader_spot();
+		WeakRef_ptr<shader> depthShader_spot = s_sceneData->lightRenderingSystem->getDepthShader_spot();
 		depthShader_spot->bind();
-		for (auto& it = s_sceneData->lightManager.spotLightBegin(); it != s_sceneData->lightManager.spotLightEnd(); ++it)
+		for (const auto& light : s_sceneData->lightRenderingSystem->getSpotLights())
 		{
-			const auto& data = *it;
-			depthShader_spot->setUniformMat4("u_toLightSpace", data.it->second);
-			depth_fbo->attachTexture(s_sceneData->lightManager.getSpotLightMapArray(), data.texIndex);
+			depthShader_spot->setUniformMat4("u_toLightSpace", light.shadowMat);
+			depth_fbo->attachTexture(s_sceneData->lightRenderingSystem->getSpotLightMapArray(), loopIndex);
 			renderCommand::clearDepth();
-			for (const auto& Mesh : s_renderQueue)
+			for (auto& data : s_renderQueue)
 			{
-				if (Mesh->getMaterial()->getFlags() & flag_cast_shadow)
+				auto& Mesh = data.first;
+				if (Mesh.getMaterial()->getFlags() & flag_cast_shadow)
 				{
-					depthShader_spot->setUniformMat4("u_modelMat", Mesh->getModelMat(), 1);
-					Ref_ptr<vertexArray> geometry = Mesh->getVa();
+					depthShader_spot->setUniformMat4("u_modelMat", data.second, 1);
+					Ref_ptr<vertexArray> geometry = Mesh.getVa();
 					geometry->bind();
 					renderCommand::drawIndexed(geometry);
 				}
 			}
+			loopIndex++;
 		}
 		depthShader_spot->bind();
 		depth_fbo->unbind();
@@ -642,6 +664,7 @@ namespace Engine
 
 	void Renderer::onImGuiRender()
 	{
+		//s_sceneData->lightRenderingSystem->onImGuiRender();
 		ImGui::Begin("Rendering options");
 		ImGui::Checkbox("bloom", &s_bloom);
 		ImGui::SliderFloat("exposure", &s_exposure, 0.01f, 100.0f);
@@ -650,11 +673,11 @@ namespace Engine
 		ImGui::Image((ImTextureID)s_gPosition->getRenderer_id(), { 128, 128 });
 		ImGui::Image((ImTextureID)s_gNormal->getRenderer_id(), { 128, 128 });
 		ImGui::Image((ImTextureID)s_gAlbSpec->getRenderer_id(), { 128, 118 });
-		ImGui::End();*/
-		/*ImGui::Begin("HDR_texture");
+		ImGui::End();
+		ImGui::Begin("HDR_texture");
 		ImGui::Image((ImTextureID)s_hdr_tex->getRenderer_id(), { 512, 512 });
-		ImGui::End();*/
-		/*ImGui::Begin("Bright_texture");
+		ImGui::End();
+		ImGui::Begin("Bright_texture");
 		ImGui::Image((ImTextureID)s_bright_tex->getRenderer_id(), { 512, 512 });
 		ImGui::End();*/
 		/*ImGui::Begin("PingPongTex0");

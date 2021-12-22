@@ -6,11 +6,13 @@ namespace Engine
 {
 	GLvertexArray::GLvertexArray()
 	{
+		//ENG_CORE_INFO("Constructed \"GlvertexArray\"");
 		GLCALL(glGenVertexArrays(1, &m_renderer_id));
 	}
 
 	GLvertexArray::~GLvertexArray()
 	{
+		//ENG_CORE_INFO("Destructed \"GLvertexArray\"");
 		GLCALL(glDeleteVertexArrays(1, &m_renderer_id));
 	}
 
@@ -31,11 +33,13 @@ namespace Engine
 
 	void GLvertexArray::bind() const
 	{
+		//ENG_CORE_INFO("Bound \"GLvertexArray\"");
 		GLCALL(glBindVertexArray(m_renderer_id));
 	}
 
 	void GLvertexArray::unbind() const
 	{
+		//ENG_CORE_INFO("Unbound \"GLvertexArray\"");
 		GLCALL(glBindVertexArray(0));
 	}
 

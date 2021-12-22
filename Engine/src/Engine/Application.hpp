@@ -10,6 +10,8 @@
 #include "layerStack.hpp"
 #include "ImGui/ImGuiLayer.hpp"
 
+#include "Rendering/RenderLayer.hpp"
+
 #include "Engine/core/timeStep.hpp"
 
 namespace Engine
@@ -35,6 +37,7 @@ namespace Engine
 	private:
 		std::unique_ptr<window> m_window;
 		imGuiLayer* m_ImGuiLayer;
+		RenderLayer* m_renderLayer;
 		bool m_running = true;
 		layerStack m_layerStack;//created on the stack-> inherits the lifetime of the ApplicationClass
 		float m_lastFrameTime = 0.0f;
